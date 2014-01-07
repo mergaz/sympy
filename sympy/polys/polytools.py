@@ -865,7 +865,6 @@ class Poly(Expr):
 
         """
         terms = {}
-
         for monom, coeff in f.terms():
             result = func(monom, coeff)
 

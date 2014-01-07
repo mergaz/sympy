@@ -23,15 +23,14 @@ from sympy.simplify import simplify, powsimp
 from sympy.utilities import default_sort_key, public
 
 from sympy.core.compatibility import reduce, xrange
-from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment
+from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, debug
 
 def roots_linear(f):
     """Returns a list of roots of a linear polynomial."""
-    
     add_comment('linear polynomial')
-    add_eq(f.as_expr(), 0)
 
     r = -f.nth(0)/f.nth(1)
+    add_eq(f.slice(1,2).as_expr(), -f.nth(0))
     dom = f.get_domain()
 
     if not dom.is_Numerical:
@@ -917,19 +916,17 @@ def roots(f, *gens, **flags):
 
         return result
 
-    tmp = f
+    original_func = f # save original poly to variable
     (k,), f = f.terms_gcd()
-    if (tmp != f):
-        add_eq(f.as_expr(), 0)
+    if (original_func != f):
+        add_eq(repr(original_func.as_expr()), 0)
+        add_eq(original_func.gen, 0)
     if not k:
         zeros = {}
     else:
         zeros = {S(0): k}
 
     coeff, f = preprocess_roots(f)
-
-    if (coeff is not S.One):
-        add_step(coeff)
 
     if auto and f.get_domain().has_Ring:
         f = f.to_field()
@@ -938,7 +935,8 @@ def roots(f, *gens, **flags):
     translate_x = None
 
     result = {}
-
+    if (coeff is not S.One):
+        f = original_func
     if not f.is_ground:
 #        add_comment('Poly is not ground')
         if not f.get_domain().is_Exact:
@@ -984,11 +982,12 @@ def roots(f, *gens, **flags):
                     for r in _try_heuristics(Poly(factor, f.gen, field=True)):
                         _update_dict(result, r, k)
 
-    if coeff is not S.One:
-        _result, result, = result, {}
+    #if coeff is not S.One:
+     #   _result, result, = result, {}
 
-        for root, k in _result.items():
-            result[coeff*root] = k
+#        for root, k in _result.items():
+ #           result[coeff*root] = k
+  #          add_eq("root", str(coeff*root))
 
     result.update(zeros)
 
@@ -1031,7 +1030,6 @@ def roots(f, *gens, **flags):
 
         for zero, k in result.items():
             zeros.extend([zero]*k)
-
         return sorted(zeros, key=default_sort_key)
 
 
