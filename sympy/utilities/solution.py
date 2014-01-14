@@ -36,16 +36,16 @@ def add_comment(cm):
 def add_step(variable):
     """Add a variable and its value into solution"""
     var = find_name(variable)
+    print "-> "+str(var) + " = " + str(variable)
     try:
         r = latex(variable)
     except:
         r = repr(variable)
-    print "-> "+var + " = " + r
     solution_list.append(var + " = " + r)
 
 def add_eq(l, r):
     """Add an equality into solution"""
-    print "-> "+ str(l) + " = " + str(r)
+    print "-> " + str(l) + " = " + str(r)
     try:
         l = latex(l)
     except:
@@ -59,11 +59,11 @@ def add_eq(l, r):
     
 def add_exp(exp):
     """Add an expression into solution"""
+    print "-> " + str(exp)
     try:
         r = latex(exp)
     except:
         r = repr(exp)
-    print "-> " + r
     solution_list.append(r)
 
 def reset_solution():
@@ -87,4 +87,4 @@ def last_solution():
     return solution_list
 
 def debug(arg):
-    print "------DEBUG----- "+arg
+    print "------DEBUG----- "+str(arg)

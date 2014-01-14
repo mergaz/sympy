@@ -1,4 +1,5 @@
-from sympy import reset_solution, last_solution, symbols, roots, Poly, roots
+from sympy.utilities.solution import reset_solution, last_solution
+from sympy import symbols, roots, Poly
 
 x, y = symbols('x, y')
 

@@ -64,3 +64,5 @@ doc/src/modules/physics/mechanics/*.pdf
 
 # Temp output of sympy/printing/preview.py:
 sample.tex
+
+.idea/

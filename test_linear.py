@@ -4,7 +4,7 @@ from sympy import *
 x = Symbol('x')
 
 eqs = [
-6*x - 12 - 5*x - 4,
+'(x + 4)',
 -9*x + 8 - -10*x + 2,
 7*x + 1 - 8*x - 9,
 -12*x - 3 - 11*x + 3,
@@ -17,7 +17,7 @@ eqs = [
 2*x**2 - 4*x - 3
 ]
 
-for i,eq in enumerate(eqs):
-    print 20*"="
-    print '=== Equation_'+str(i)+': ' + latex(eq)
-    roots(eq)
+for i, eq in enumerate(eqs):
+    print 40*"="
+    print '=== Equation_'+str(i) + ":"
+    roots(eval(str(eq)))
