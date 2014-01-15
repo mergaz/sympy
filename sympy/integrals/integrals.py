@@ -31,6 +31,8 @@ from sympy.series import limit
 
 # TODO get these helper functions into a super class for sum-like
 # objects: Sum, Product, Integral (issue 3662)
+from sympy.utilities.solution import add_comment, add_exp
+
 
 class Integral(AddWithLimits):
     """Represents unevaluated integral."""
@@ -464,6 +466,7 @@ class Integral(AddWithLimits):
 
         # check for the trivial case of equal upper and lower limits
         if self.is_zero:
+            add_comment("The function is equal 0 therefore the integral of this function is 0")
             return S.Zero
 
         # now compute and check the function
@@ -768,6 +771,7 @@ class Integral(AddWithLimits):
         """
         from sympy.integrals.risch import risch_integrate
 
+        manual = True # force manual integration
         if risch:
             try:
                 return risch_integrate(f, x, conds=conds)
@@ -804,7 +808,10 @@ class Integral(AddWithLimits):
         poly = f.as_poly(x)
 
         if poly is not None and not meijerg:
-            return poly.integrate().as_expr()
+            add_comment("The function is a polinomial therefore the antiderivative is")
+            ad = poly.integrate().as_expr()
+            add_exp(ad)
+            return ad
 
         if risch is not False:
             try:
