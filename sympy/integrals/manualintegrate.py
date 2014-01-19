@@ -960,7 +960,6 @@ def print_integral_steps(step):
         add_comment("Use the invert substitution we get")
         add_exp(_manualintegrate(step))
     elif isinstance(step, CyclicPartsRule):
-        add_comment(repr(step))
         add_comment("Use the method of integration by parts")
         f = step.context
         result = 0
@@ -993,7 +992,6 @@ def print_integral_steps(step):
         add_comment("The function is a derivative therefore the integral is")
         add_exp(_manualintegrate(step))
     elif isinstance(step, PiecewiseRule):
-        add_comment(str(step))
         if len(step.subfunctions) == 1:
             print_integral_steps(step.subfunctions[0][0])
         else:
