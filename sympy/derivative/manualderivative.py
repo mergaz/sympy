@@ -53,7 +53,6 @@ def derivative(f, x):
             add_comment("Finally we get")
             add_eq(Derivative(f, x), f.diff(x))
     elif f.func == log:
-        print(len(f.args))
         if len(f.args) == 1:
             _table_derivative(f.func, f.args[0], x)
         elif len(f.args) == 2:
