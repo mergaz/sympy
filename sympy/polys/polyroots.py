@@ -27,7 +27,6 @@ from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, deb
 
 def roots_linear(f):
     """Returns a list of roots of a linear polynomial."""
-    add_comment("Type: linear polynomial")
     add_comment("Set it equal to zero and find roots")
     add_eq(f.as_expr(), 0)
 
@@ -48,7 +47,6 @@ def roots_quadratic(f):
     """Returns a list of roots of a quadratic polynomial."""
     a, b, c = f.all_coeffs()
     dom = f.get_domain()
-    add_comment("Type: quadratic polynomial")
     add_comment("Set it equal to zero and find roots")
     add_eq(f.as_expr(), 0)
     add_comment("Coefficients of the poly:")
@@ -132,7 +130,6 @@ def roots_cubic(f):
     """Returns a list of roots of a cubic polynomial."""
     _, a, b, c = f.monic().all_coeffs()
     # coeffs_list = f.monic().all_coeffs()
-    add_comment("Type: cubic polynomial")
     add_comment("Set it equal to zero and find roots")
     add_eq(f.as_expr(), 0)
     add_comment("Coefficients of the poly:")
@@ -906,7 +903,7 @@ def roots(f, *gens, **flags):
     def _try_heuristics(f):
         """Find roots using formulas and some tricks. """
         
-        add_comment('Try heuristics')
+        #add_comment('Try heuristics')
         # add_eq(f.as_expr(), 0)
         if f.is_ground:
             add_comment('Polinomial is ground')
@@ -930,7 +927,21 @@ def roots(f, *gens, **flags):
 
         result = []
         if f.degree() == 3:
-            add_comment("Try to find the root of turning over divisors of of free factor \"d\" of Poly")
+            a, b, c, d, x = symbols("a b c d x")
+            common_form = Poly(a*x**3 + b*x**2 + c*x + d)
+            add_comment("Common form of the cubic polinomial is:")
+            add_eq(common_form.as_expr(), 0)
+            add_comment("Coefficients of current polynomial are:")
+            a, b, c, d = f.all_coeffs()
+            add_step(a)
+            add_step(b)
+            add_step(c)
+            add_step(d)
+            a.clear_repr()
+            b.clear_repr()
+            c.clear_repr()
+            d.clear_repr()
+            add_comment("Try to find the root of turning over divisors of free factor \"d\" of Poly")
             # Solve poly by using Bezout theorem and divisors of free factor "d" of Poly
             if isinstance(f.nth(0), Integer) and f.nth(0) != S.Zero:
                 d = f.nth(0)
@@ -941,17 +952,18 @@ def roots(f, *gens, **flags):
                     begin = -d
                     end = d + 1
                 divisors = [i for i in xrange(begin, end) if isinstance(d/i, Integer)]
-                debug(divisors)
+                # debug(divisors)
 
             for i in divisors:
                 add_comment("x = " + str(i))
                 if not f.eval(i):
                     add_comment(str(i) + " is a first root, By using Bezout theorem, "
-                                         "let's divide the original poly by " + str((Poly(f.gen - i, f.gen).as_expr())))
+                                         "let's divide the original poly by")
+                    add_exp(Poly(f.gen - i, f.gen).as_expr())
                     f = f.quo(Poly(f.gen - i, f.gen))
                     add_comment("Result of division:")
                     add_exp(f.as_expr())
-                    result.append(i)
+                    result.append(Integer(i))
                     break
                 add_comment("Not a root")
 
@@ -976,14 +988,12 @@ def roots(f, *gens, **flags):
     (k,), f = f.terms_gcd()
     if original_func != f and original_func.degree() == 1:
         add_eq(original_func.as_expr(), 0)
-        add_eq(original_func.gen, 0)
     if not k:
         zeros = {}
     else:
         add_comment("Found common divisor and first root.")
         add_eq(original_func.gen, 0)
-        add_comment("Found common divisor and first root. Divide original polynomial by common divisor"
-                    " and find roots of the resulting polynomial")
+        add_eq("root", 0)
         zeros = {S(0): k}
     coeff, f = preprocess_roots(f)
     if auto and f.get_domain().has_Ring:

@@ -15,4 +15,4 @@ eqs = [
 for i, eq in enumerate(eqs):
     print 40*"="
     print '=== Equation_'+str(i) + ":"
-    print roots(eval(str(eq)))
+    roots(eval(str(eq)))
