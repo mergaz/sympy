@@ -13,6 +13,8 @@ from __future__ import print_function, division
 from sympy.core.function import Function, Derivative, AppliedUndef
 from sympy.core.relational import Equality, Eq
 from sympy.core.symbol import Wild
+from sympy.utilities.solution import start_subroutine, cancel_subroutine
+
 
 def _preprocess(expr, func=None, hint='_Integral'):
     """Prepare expr for solving by making sure that differentiation
@@ -199,10 +201,10 @@ def _desolve(eq, func=None, hint="default", ics=None, simplify=True, **kwargs):
     # Magic that should only be used internally.  Prevents classify_ode from
     # being called more than it needs to be by passing its results through
     # recursive calls.
+    start_subroutine("Classify ode")
     if kwargs.get('classify', True):
         hints = classifier(eq, func, dict=True, ics=ics, xi=xi, eta=eta,
         n=terms, x0=x0, prep=prep)
-
     else:
         # Here is what all this means:
         #
@@ -220,6 +222,7 @@ def _desolve(eq, func=None, hint="default", ics=None, simplify=True, **kwargs):
                            {'default': hint,
                             hint: kwargs['match'],
                             'order': kwargs['order']})
+    cancel_subroutine()
     if hints['order'] == 0:
         raise ValueError(
             str(eq) + " is not a differential equation in " + str(func))

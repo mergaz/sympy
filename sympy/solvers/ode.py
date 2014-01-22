@@ -275,6 +275,8 @@ from sympy.solvers.deutils import _preprocess, ode_order, _desolve
 #: (which go near the end of the list anyway).  ``default``, ``all``,
 #: ``best``, and ``all_Integral`` meta-hints should not be included in this
 #: list, but ``_best`` and ``_Integral`` hints should be included.
+from sympy.utilities.solution import add_comment, add_exp, add_eq, start_subroutine, commit_subroutine, cancel_subroutine
+
 allhints = (
     "separable",
     "1st_exact",
@@ -517,6 +519,10 @@ def dsolve(eq, func=None, hint="default", simplify=True,
     [f(x) == -acos(-sqrt(C1/cos(x)**2)) + 2*pi, f(x) == -acos(sqrt(C1/cos(x)**2)) + 2*pi,
     f(x) == acos(-sqrt(C1/cos(x)**2)), f(x) == acos(sqrt(C1/cos(x)**2))]
     """
+
+    add_comment("Solve the equation")
+    add_eq(eq, 0)
+
     given_hint = hint  # hint given by the user
 
     # See the docstring of _desolve for more details.
@@ -558,6 +564,7 @@ def dsolve(eq, func=None, hint="default", simplify=True,
         hint = hints['hint']
         return _helper_simplify(eq, hint, hints, simplify)
 
+
 def _helper_simplify(eq, hint, match, simplify=True, **kwargs):
     r"""
     Helper function of dsolve that calls the respective
@@ -586,6 +593,7 @@ def _helper_simplify(eq, hint, match, simplify=True, **kwargs):
         rv = _handle_Integral(solvefunc(eq, func, order, match),
             func, order, hint)
         return rv
+
 
 def classify_ode(eq, func=None, dict=False, ics=None, **kwargs):
     r"""
@@ -1307,6 +1315,7 @@ def odesimp(eq, func, order, hint):
     if len(eq) == 1:
         eq = eq[0]
     return eq
+
 
 def checkodesol(ode, sol, func=None, order='auto', solve_for_func=True):
     r"""
@@ -2103,14 +2112,28 @@ def ode_1st_exact(eq, func, order, match):
     r = match  # d+e*diff(f(x),x)
     e = r[r['e']]
     d = r[r['d']]
+    aeq = d+e*diff(f(x),x)
+    if eq != aeq:
+        add_comment("Rewrite the equation")
+        add_eq(aeq, 0)
+    add_comment("This equation is a 1st order exact ordinary differential equation")
     global y  # This is the only way to pass dummy y to _handle_Integral
     y = r['y']
     C1 = Symbol('C1')
     # Refer Joel Moses, "Symbolic Integration - The Stormy Decade",
     # Communications of the ACM, Volume 14, Number 8, August 1971, pp. 558
     # which gives the method to solve an exact differential equation.
+    add_comment("The solution has the form")
+    F = Dummy("F")
+    add_eq(F(f(x), x), C1)
+    add_comment("where")
+    add_eq(F(y, x).diff(x), d)
+    add_eq(F(y, x).diff(y), e)
     sol = C.Integral(d, x) + C.Integral((e - (C.Integral(d, x).diff(y))), y)
-    return Eq(sol, C1)
+    eq = Eq(sol, C1)
+    add_comment("We have")
+    add_exp(eq)
+    return eq
 
 
 def ode_1st_homogeneous_coeff_best(eq, func, order, match):
@@ -2153,22 +2176,30 @@ def ode_1st_homogeneous_coeff_best(eq, func, order, match):
 
     # indirect doctest
 
+
     """
+    simplify = match.get('simplify', True)
     # There are two substitutions that solve the equation, u1=y/x and u2=x/y
     # They produce different integrals, so try them both and see which
     # one is easier.
-    sol1 = ode_1st_homogeneous_coeff_subs_indep_div_dep(eq,
-    func, order, match)
-    sol2 = ode_1st_homogeneous_coeff_subs_dep_div_indep(eq,
-    func, order, match)
-    simplify = match.get('simplify', True)
+    start_subroutine("Select a way to solve eq")
+    sol1 = ode_1st_homogeneous_coeff_subs_indep_div_dep(eq, func, order, match)
+    sol2 = ode_1st_homogeneous_coeff_subs_dep_div_indep(eq, func, order, match)
     if simplify:
-        sol1 = odesimp(
-            sol1, func, order, "1st_homogeneous_coeff_subs_indep_div_dep")
-        sol2 = odesimp(
-            sol2, func, order, "1st_homogeneous_coeff_subs_dep_div_indep")
-    return min([sol1, sol2], key=lambda x: ode_sol_simplicity(x, func,
-        trysolving=not simplify))
+        sol1 = odesimp(sol1, func, order, "1st_homogeneous_coeff_subs_indep_div_dep")
+        sol2 = odesimp(sol2, func, order, "1st_homogeneous_coeff_subs_dep_div_indep")
+    sol = min([sol1, sol2], key=lambda x: ode_sol_simplicity(x, func, trysolving=not simplify))
+    cancel_subroutine()
+    if sol == sol1:
+        sol1 = ode_1st_homogeneous_coeff_subs_indep_div_dep(eq, func, order, match)
+        if simplify:
+            sol1 = odesimp(sol1, func, order, "1st_homogeneous_coeff_subs_indep_div_dep")
+        return sol1
+    else:
+        sol2 = ode_1st_homogeneous_coeff_subs_dep_div_indep(eq, func, order, match)
+        if simplify:
+            sol2 = odesimp(sol2, func, order, "1st_homogeneous_coeff_subs_dep_div_indep")
+        return sol2
 
 
 def ode_1st_homogeneous_coeff_subs_dep_div_indep(eq, func, order, match):
@@ -2252,6 +2283,8 @@ def ode_1st_homogeneous_coeff_subs_dep_div_indep(eq, func, order, match):
     f = func.func
     u = Dummy('u')
     u1 = Dummy('u1')  # u1 == f(x)/x
+    add_comment("Use the substitution")
+    add_eq(u1, f(x) / x)
     r = match  # d+e*diff(f(x),x)
     C1 = Symbol('C1')
     xarg = match.get('xarg', 0)
@@ -2261,6 +2294,8 @@ def ode_1st_homogeneous_coeff_subs_dep_div_indep(eq, func, order, match):
         (u1, None, f(x)/x))
     sol = logcombine(Eq(log(x), int + log(C1)), force=True)
     sol = sol.subs(f(x), u).subs(((u, u - yarg), (x, x - xarg), (u, f(x))))
+    add_comment("We have")
+    add_exp(sol)
     return sol
 
 
@@ -2348,6 +2383,8 @@ def ode_1st_homogeneous_coeff_subs_indep_div_dep(eq, func, order, match):
     f = func.func
     u = Dummy('u')
     u2 = Dummy('u2')  # u2 == x/f(x)
+    add_comment("Use the substitution")
+    add_eq(u2, x / f(x))
     r = match  # d+e*diff(f(x),x)
     C1 = Symbol('C1')
     xarg = match.get('xarg', 0)  # If xarg present take xarg, else zero
@@ -2358,6 +2395,8 @@ def ode_1st_homogeneous_coeff_subs_indep_div_dep(eq, func, order, match):
         (u2, None, x/f(x)))
     sol = logcombine(Eq(log(f(x)), int + log(C1)), force=True)
     sol = sol.subs(f(x), u).subs(((u, u - yarg), (x, x - xarg), (u, f(x))))
+    add_comment("We have")
+    add_exp(sol)
     return sol
 
 # XXX: Should this function maybe go somewhere else?
@@ -2506,6 +2545,7 @@ def ode_1st_linear(eq, func, order, match):
     # indirect doctest
 
     """
+    add_comment("This is 1st order linear differential equation")
     x = func.args[0]
     f = func.func
     r = match  # a*diff(f(x),x) + b*f(x) + c
@@ -2513,7 +2553,10 @@ def ode_1st_linear(eq, func, order, match):
     t = exp(C.Integral(r[r['b']]/r[r['a']], x))
     tt = C.Integral(t*(-r[r['c']]/r[r['a']]), x)
     f = match.get('u', f(x))  # take almost-linear u if present, else f(x)
-    return Eq(f, (tt + C1)/t)
+    add_comment("We have")
+    e = Eq(f, (tt + C1)/t)
+    add_exp(e)
+    return e
 
 
 def ode_Bernoulli(eq, func, order, match):
@@ -2592,13 +2635,25 @@ def ode_Bernoulli(eq, func, order, match):
     # indirect doctest
 
     """
+    add_comment("This equation is a Bernoulli differential equation")
     x = func.args[0]
     f = func.func
     r = match  # a*diff(f(x),x) + b*f(x) + c*f(x)**n, n != 1
+    add_comment("Use the substitution")
+    z = Dummy("z")
+    add_eq(z(x), f(x)**(1 - r[r['n']]))
+    add_comment("We have")
+    add_eq(Derivative(z(x), x) + (1 - r[r['n']]) * r[r['b']]/r[r['a']] * z(x) - (1 - r[r['n']]) * r[r['c']]/r[r['a']], 0)
+    add_comment("This is a linear equation")
     C1 = Symbol('C1')
     t = exp((1 - r[r['n']])*C.Integral(r[r['b']]/r[r['a']], x))
     tt = (r[r['n']] - 1)*C.Integral(t*r[r['c']]/r[r['a']], x)
-    return Eq(f(x), ((tt + C1)/t)**(1/(1 - r[r['n']])))
+    add_comment("The solution of this equation is")
+    add_eq(z(x), ((tt + C1)/t))
+    add_comment("Using the invert substitution we have")
+    eq = Eq(f(x), ((tt + C1)/t)**(1/(1 - r[r['n']])))
+    add_exp(eq)
+    return eq
 
 
 def ode_Riccati_special_minus2(eq, func, order, match):
@@ -2640,14 +2695,17 @@ def ode_Riccati_special_minus2(eq, func, order, match):
     2. http://eqworld.ipmnet.ru/en/solutions/ode/ode0106.pdf -
        http://eqworld.ipmnet.ru/en/solutions/ode/ode0123.pdf
     """
-
+    add_comment("This equation is a Riccati differential equation")
     x = func.args[0]
     f = func.func
     r = match  # a2*diff(f(x),x) + b2*f(x) + c2*f(x)/x + d2/x**2
     a2, b2, c2, d2 = [r[r[s]] for s in 'a2 b2 c2 d2'.split()]
     C1 = Symbol('C1')
     mu = sqrt(4*d2*b2 - (a2 - c2)**2)
-    return Eq(f(x), (a2 - c2 - mu*tan(mu/(2*a2)*log(x) + C1))/(2*b2*x))
+    add_comment("Rewrite the equation")
+    eq = Eq(f(x), (a2 - c2 - mu*tan(mu/(2*a2)*log(x) + C1))/(2*b2*x))
+    add_exp(eq)
+    return eq
 
 
 def ode_Liouville(eq, func, order, match):
@@ -2712,6 +2770,7 @@ def ode_Liouville(eq, func, order, match):
     # See Goldstein and Braun, "Advanced Methods for the Solution of
     # Differential Equations", pg. 98, as well as
     # http://www.maplesoft.com/support/help/view.aspx?path=odeadvisor/Liouville
+    add_comment("This equation is a 2nd order Liouville differential equation")
     x = func.args[0]
     f = func.func
     r = match  # f(x).diff(x, 2) + g*f(x).diff(x)**2 + h*f(x).diff(x)
@@ -2720,6 +2779,8 @@ def ode_Liouville(eq, func, order, match):
     C2 = Symbol('C2')
     int = C.Integral(exp(C.Integral(r['g'], y)), (y, None, f(x)))
     sol = Eq(int + C1*C.Integral(exp(-C.Integral(r['h'], x)), x) + C2, 0)
+    add_comment("Rewrite the equation")
+    add_exp(sol)
     return sol
 
 
@@ -2868,7 +2929,6 @@ def ode_2nd_power_series_ordinary(eq, func, order, match):
     return Eq(f(x), series)
 
 
-
 def ode_2nd_power_series_regular(eq, func, order, match):
     r"""
     Gives a power series solution to a second order homogeneous differential
@@ -2992,6 +3052,7 @@ def ode_2nd_power_series_regular(eq, func, order, match):
                 finalseries2 = (x - x0)**m2*finalseries2
             return Eq(f(x), collect(finalseries1 + finalseries2,
                 [C0, C1]) + Order(x**terms))
+
 
 def _frobenius(n, m, p0, q0, p, q, x0, x, c, check=None):
     r"""
@@ -3165,6 +3226,10 @@ def ode_nth_linear_euler_eq_homogeneous(eq, func, order, match, returns='sol'):
     f = func.func
     r = match
 
+    add_comment("This equation is a homogeneous Euler differential equation")
+    add_comment("Find the solution in the form")
+    add_eq(f(x), x ** Dummy("r"))
+
     # A generator of constants
     constants = numbered_symbols(prefix='C', cls=Symbol, start=1)
 
@@ -3176,8 +3241,13 @@ def ode_nth_linear_euler_eq_homogeneous(eq, func, order, match, returns='sol'):
             chareq += (r[i]*diff(x**symbol, x, i)*x**-symbol).expand()
 
     chareq = Poly(chareq, symbol)
+    add_comment("The characteristic equation is")
+    add_eq(chareq.as_expr(), 0)
+    start_subroutine("Solve the characteristic equation")
     chareqroots = [RootOf(chareq, k) for k in xrange(chareq.degree())]
-
+    commit_subroutine()
+    add_comment("Therefore the roots of the characteristic equation are")
+    add_exp(chareqroots)
     # Create a dict root: multiplicity or charroots
     charroots = defaultdict(int)
     for root in chareqroots:
@@ -3205,6 +3275,8 @@ def ode_nth_linear_euler_eq_homogeneous(eq, func, order, match, returns='sol'):
                 # It will be assumed implicitly when constructing
                 # fundamental solution sets.
                 collectterms = [(i, reroot, imroot)] + collectterms
+    add_comment("Hence we get the following solution")
+    add_eq(f(x), gsol)
     if returns == 'sol':
         return Eq(f(x), gsol)
     elif returns in ('list' 'both'):
@@ -3228,6 +3300,7 @@ def ode_nth_linear_euler_eq_homogeneous(eq, func, order, match, returns='sol'):
             return {'sol': Eq(f(x), gsol), 'list': gensols}
     else:
         raise ValueError('Unknown value for key "returns".')
+
 
 def ode_almost_linear(eq, func, order, match):
     r"""
@@ -3297,6 +3370,7 @@ def ode_almost_linear(eq, func, order, match):
     # classify_ode, just passing eq, func, order and match to
     # ode_1st_linear will give the required output.
     return ode_1st_linear(eq, func, order, match)
+
 
 def _linear_coeff_match(expr, func):
     r"""
@@ -3378,6 +3452,7 @@ def _linear_coeff_match(expr, func):
         a1, b1, c1, a2, b2, c2, denom = m1
         return (b2*c1 - b1*c2)/denom, (a1*c2 - a2*c1)/denom
 
+
 def ode_linear_coefficients(eq, func, order, match):
     r"""
     Solves a differential equation with linear coefficients.
@@ -3429,7 +3504,7 @@ def ode_linear_coefficients(eq, func, order, match):
     - Joel Moses, "Symbolic Integration - The Stormy Decade", Communications
       of the ACM, Volume 14, Number 8, August 1971, pp. 558
     """
-
+    add_comment("This equation is a differential equation with linear coefficients")
     return ode_1st_homogeneous_coeff_best(eq, func, order, match)
 
 
@@ -3662,6 +3737,7 @@ def ode_nth_linear_constant_coeff_homogeneous(eq, func, order, match,
     # indirect doctest
 
     """
+    add_comment("This is a linear homogeneous differential equation with constant coefficients")
     x = func.args[0]
     f = func.func
     r = match
@@ -3678,9 +3754,19 @@ def ode_nth_linear_constant_coeff_homogeneous(eq, func, order, match,
         else:
             chareq += r[i]*symbol**i
 
+    add_comment("The chracteristic equation is")
     chareq = Poly(chareq, symbol)
+    add_eq(chareq.as_expr(), 0)
+    start_subroutine("Solve the characteristic equation")
     chareqroots = [ RootOf(chareq, k) for k in range(chareq.degree()) ]
-
+    commit_subroutine()
+    add_comment("The roots of the characteristic equation are")
+    add_exp(chareqroots)
+    crs = []
+    for r in chareqroots:
+        if r == r.conjugate() or not r.conjugate() in crs:
+            crs.append(r)
+    chareqroots = crs
     # Create a dict root: multiplicity or charroots
     charroots = defaultdict(int)
     for root in chareqroots:
@@ -3688,8 +3774,10 @@ def ode_nth_linear_constant_coeff_homogeneous(eq, func, order, match,
     gsol = S(0)
     # We need keep track of terms so we can run collect() at the end.
     # This is necessary for constantsimp to work properly.
+
     global collectterms
     collectterms = []
+    add_comment("Therefore the solution is")
     for root, multiplicity in charroots.items():
         for i in range(multiplicity):
             if isinstance(root, RootOf):
@@ -3703,6 +3791,7 @@ def ode_nth_linear_constant_coeff_homogeneous(eq, func, order, match,
                     next(constants) * cos(imroot*x))
                 # This ordering is important
                 collectterms = [(i, reroot, imroot)] + collectterms
+    add_eq(f(x), gsol)
     if returns == 'sol':
         return Eq(f(x), gsol)
     elif returns in ('list' 'both'):
@@ -3782,6 +3871,10 @@ def ode_nth_linear_constant_coeff_undetermined_coefficients(eq, func, order, mat
     # indirect doctest
 
     """
+    add_comment("This is a linear differential equation with constant coefficients")
+    add_comment("Solve it using the method of undetermined coefficients")
+    add_comment("At first solve the coressponding homogeneous equation")
+    add_eq(eq -match[-1], 0)
     gensol = ode_nth_linear_constant_coeff_homogeneous(eq, func, order, match,
         returns='both')
     match.update(gensol)
@@ -3869,6 +3962,8 @@ def _solve_undetermined_coefficients(eq, func, order, match):
         c = next(coeffs)
         coefflist.append(c)
         trialfunc += c*i
+    add_comment("Find a particular solution in the form")
+    add_eq(f(x), trialfunc)
 
     eqs = sub_func_doit(eq, f(x), trialfunc)
 
@@ -3889,8 +3984,10 @@ def _solve_undetermined_coefficients(eq, func, order, match):
             "(unable to solve for coefficients)." % eq)
 
     psol = trialfunc.subs(coeffvals)
-
-    return Eq(f(x), gsol.rhs + psol)
+    add_comment("Finally, we have")
+    e = Eq(f(x), gsol.rhs + psol)
+    add_exp(e)
+    return e
 
 
 def _undetermined_coefficients_match(expr, x):
@@ -4113,7 +4210,10 @@ def ode_nth_linear_constant_coeff_variation_of_parameters(eq, func, order, match
     # indirect doctest
 
     """
-
+    add_comment("This is a linear differential equation with constant coefficients")
+    add_comment("Solve it using the method of variation of parameters")
+    add_comment("At first, solve the corresponding homogeneous equation")
+    add_eq(eq - match[-1], 0)
     gensol = ode_nth_linear_constant_coeff_homogeneous(eq, func, order, match,
         returns='both')
     match.update(gensol)
@@ -4149,7 +4249,6 @@ def _solve_variation_of_parameters(eq, func, order, match):
     gensols = r['list']
     gsol = r['sol']
     wr = wronskian(gensols, x)
-
     if r.get('simplify', True):
         wr = simplify(wr)  # We need much better simplification for
                            # some ODEs. See issue 1563, for example.
@@ -4167,15 +4266,35 @@ def _solve_variation_of_parameters(eq, func, order, match):
         " solutions to the homogeneous equation nessesary to apply " +
         "variation of parameters to " +
         str(eq) + " (number of terms != order)")
+    add_comment("Find the particular solution in the form")
+    ps = 0
+    for ind, i in enumerate(gensols):
+        ps += Dummy("Z" + str(ind))(x) * i
+    add_eq(f(x), ps)
+
+    add_comment("Solve the system of equations")
+    for j, s in enumerate(gensols):
+        e = 0
+        for ind, i in enumerate(gensols):
+            e += Derivative(Dummy("Z_" + str(ind))(x), x) * i.diff(x, j)
+        if j + 1 == len(gensols):
+            add_eq(e, r[-1] / r[order])
+        else:
+            add_eq(e, 0)
+
     negoneterm = (-1)**(order)
     for i in gensols:
         psol += negoneterm*C.Integral(wronskian([sol for sol in gensols if sol != i], x)*r[-1]/wr, x)*i/r[order]
         negoneterm *= -1
-
+    add_comment("We have")
+    add_eq(f(x), psol)
     if r.get('simplify', True):
         psol = simplify(psol)
         psol = trigsimp(psol, deep=True)
-    return Eq(f(x), gsol.rhs + psol)
+    add_comment("Therefore")
+    e = Eq(f(x), gsol.rhs + psol)
+    add_exp(e)
+    return e
 
 
 def ode_separable(eq, func, order, match):
@@ -4233,11 +4352,15 @@ def ode_separable(eq, func, order, match):
     # indirect doctest
 
     """
+    add_comment("This is a separable 1st order differential equation")
     x = func.args[0]
     f = func.func
     C1 = Symbol('C1')
     r = match  # {'m1':m1, 'm2':m2, 'y':y}
     u = r.get('hint', f(x))  # get u from separable_reduced else get f(x)
+    add_comment("Rewrite the equation")
+    add_exp(Eq(C.Integral(r['m2']['coeff']*r['m2'][r['y']]/r['m1'][r['y']],
+        r['y']), C.Integral(-r['m1']['coeff']*r['m1'][x]/ r['m2'][x], x) + C1))
     return Eq(C.Integral(r['m2']['coeff']*r['m2'][r['y']]/r['m1'][r['y']],
         (r['y'], None, u)), C.Integral(-r['m1']['coeff']*r['m1'][x]/
         r['m2'][x], x) + C1)
@@ -4318,6 +4441,7 @@ def checkinfsol(eq, infinitesimals, func=None, order=None):
                 else:
                     soltup.append((True, 0))
             return soltup
+
 
 def ode_lie_group(eq, func, order, match):
     r"""
@@ -4536,6 +4660,7 @@ def _lie_group_remove(coords):
                 mulargs.append(_lie_group_remove(arg))
         return Mul(*mulargs)
     return coords
+
 
 def infinitesimals(eq, func=None, order=None, hint='default', match=None):
     r"""
@@ -4785,6 +4910,7 @@ def lie_heuristic_abaco1_simple(match, comp=False):
     if xieta:
         return xieta
 
+
 def lie_heuristic_abaco1_product(match, comp=False):
     r"""
     The second heuristic uses the following two assumptions on `\xi` and `\eta`
@@ -4859,6 +4985,7 @@ def lie_heuristic_abaco1_product(match, comp=False):
     if xieta:
         return xieta
 
+
 def lie_heuristic_bivariate(match, comp=False):
     r"""
     The third heuristic assumes the infinitesimals `\xi` and `\eta`
@@ -4931,6 +5058,7 @@ def lie_heuristic_bivariate(match, comp=False):
                         xi: xired.subs(dict_).subs(y, func)}
                     return [inf]
 
+
 def lie_heuristic_chi(match, comp=False):
     r"""
     The aim of the fourth heuristic is to find the function `\chi(x, y)`
@@ -5002,6 +5130,7 @@ def lie_heuristic_chi(match, comp=False):
                         xic, etac = div(chieq, h)
                         inf = {eta: etac.subs(y, func), xi: -xic.subs(y, func)}
                         return [inf]
+
 
 def lie_heuristic_function_sum(match, comp=False):
     r"""
@@ -5094,6 +5223,7 @@ def lie_heuristic_function_sum(match, comp=False):
 
         if xieta:
             return xieta
+
 
 def lie_heuristic_abaco2_similar(match, comp=False):
     r"""

@@ -952,7 +952,7 @@ def solve(f, *symbols, **flags):
             s_new = s
         else:
             symbol_swapped = True
-            s_new = Dummy('X%d' % i)
+            s_new = Dummy(str(s)) #Dummy('X%d' % i)
         symbols_new.append(s_new)
 
     if symbol_swapped:
@@ -1476,7 +1476,7 @@ def _solve(f, *symbols, **flags):
                 result = []
                 for r in result_p:
                     v = abss[0].args[0].subs(symbol, r)
-                    if v.is_real and v >= 0:
+                    if flags.get('real', False) == False or v.is_real and v >= 0:
                         add_comment('The value ' + str(r) + ' is a root')
                         result.append(r)
                     else:
@@ -1485,7 +1485,7 @@ def _solve(f, *symbols, **flags):
                 result_m = _solve(f_num_m, symbol, **flags)
                 for r in result_m:
                     v = abss[0].args[0].subs(symbol, r)
-                    if v.is_real and v <= 0:
+                    if flags.get('real', False) == False or v.is_real and v <= 0:
                         add_comment('The value ' + str(r) + ' is a root')
                         result.append(r)
                     else:
@@ -1725,7 +1725,7 @@ def _solve(f, *symbols, **flags):
                                         inv_f.append([s, f_arg, asin(-1, evaluate=False) + 2 * pi * _k])
                                     elif s == 0:
                                         inv_f.append([s, f_arg, asin(0, evaluate=False) + pi * _k])
-                                    elif -1 <= s <= 1:
+                                    elif flags.get('real', False) == False or -1 <= s <= 1:
                                         inv_f.append([s, f_arg, asin(s, evaluate=False) + 2 * pi * _k])
                                         inv_f.append([s, f_arg, pi - asin(s, evaluate=False) + 2 * pi * _k])
                                     else:
@@ -1741,7 +1741,7 @@ def _solve(f, *symbols, **flags):
                                         inv_f.append([s, f_arg, acos(-1, evaluate=False) + 2 * pi * _k])
                                     elif s == 0:
                                         inv_f.append([s, f_arg, acos(0, evaluate=False) + pi * _k])
-                                    elif -1 <= s <= 1:
+                                    elif flags.get('real', False) == False or -1 <= s <= 1:
                                         inv_f.append([s, f_arg, acos(s, evaluate=False) + 2 * pi * _k])
                                         inv_f.append([s, f_arg, -acos(s, evaluate=False) + 2 * pi * _k])
                                     else:
@@ -1750,7 +1750,7 @@ def _solve(f, *symbols, **flags):
                                 # If we are here, then equation has the form tan(f(x)) = s1, s2, ..., sk.
                                 is_trig = True
                                 for s in soln:
-                                    if s.is_real:
+                                    if flags.get('real', False) == False or s.is_real:
                                         inv_f.append([s, f_arg, atan(s, evaluate=False) + pi * _k])
                                     else:
                                         inv_f.append([s, f_arg, None])
@@ -1758,14 +1758,14 @@ def _solve(f, *symbols, **flags):
                                 # If we are here, then equation has the form cot(f(x)) = s1, s2, ..., sk.
                                 is_trig = True
                                 for s in soln:
-                                    if s.is_real:
+                                    if flags.get('real', False) == False or s.is_real:
                                         inv_f.append([s, f_arg, acot(s, evaluate=False) + pi * _k])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == Pow:
                                 # if we are here, then equation has the form y**f(x) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if s.is_real and s > 0:
+                                    if flags.get('real', False) == False or s.is_real and s > 0:
                                         inv_f.append([s, gen.args[1], log(s, f_arg, evaluate=False)])
                                     else:
                                         inv_f.append([s, gen.args[1], None])
@@ -1776,35 +1776,35 @@ def _solve(f, *symbols, **flags):
                                 else:
                                     base = S.Exp1
                                 for s in soln:
-                                    if s.is_real:
-                                        inv_f.append([s, f_arg,Pow(base, s, evaluate=False)])
+                                    if flags.get('real', False) == False or s.is_real:
+                                        inv_f.append([s, f_arg, Pow(base, s, evaluate=False)])
                                     else:
-                                        re.append([s, f_arg, None])
+                                        inv_f.append([s, f_arg, None])
                             elif f == asin:
                                 # If we are here, then equation has the form asin(f(x)) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if -pi / 2 <= s <= pi / 2:
+                                    if flags.get('real', False) == False or -pi / 2 <= s <= pi / 2:
                                         inv_f.append([s, f_arg, sin(s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == acos:
                                 # If we are here, then equation has the form asin(f(x)) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if 0 <= s <= pi:
+                                    if flags.get('real', False) == False or 0 <= s <= pi:
                                         inv_f.append([s, f_arg, cos(s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == atan:
                                 # If we are here, then equation has the form asin(f(x)) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if -pi / 2 <= s <= pi / 2:
+                                    if flags.get('real', False) == False or -pi / 2 <= s <= pi / 2:
                                         inv_f.append([s, f_arg, tan(s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == acot:
                                 # If we are here, then equation has the form asin(f(x)) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if 0 <= s <= pi:
+                                    if flags.get('real', False) == False or 0 <= s <= pi:
                                         inv_f.append([s, f_arg, sin(s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
