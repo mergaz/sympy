@@ -19,19 +19,19 @@ from sympy.integrals.deltafunctions import deltaintegrate
 from sympy.integrals.rationaltools import ratint
 from sympy.integrals.heurisch import heurisch, heurisch_wrapper
 from sympy.integrals.meijerint import meijerint_definite, meijerint_indefinite
+from sympy.simplify.fu import fu
 from sympy.utilities import xthreaded, flatten
 from sympy.utilities.misc import filldedent
 from sympy.polys import Poly, PolynomialError
 from sympy.solvers.solvers import solve, posify
 from sympy.functions import Piecewise, sqrt, sign
 from sympy.geometry import Curve
-from sympy.functions.elementary.piecewise import piecewise_fold
 from sympy.series import limit
 
 
 # TODO get these helper functions into a super class for sum-like
 # objects: Sum, Product, Integral (issue 3662)
-from sympy.utilities.solution import add_comment, add_exp
+from sympy.utilities.solution import add_comment, add_exp, add_eq
 
 
 class Integral(AddWithLimits):
@@ -464,6 +464,7 @@ class Integral(AddWithLimits):
         if risch and any(len(xab) > 1 for xab in self.limits):
             raise ValueError('risch=True is only allowed for indefinite integrals.')
 
+
         # check for the trivial case of equal upper and lower limits
         if self.is_zero:
             add_comment("The function is equal 0 therefore the integral of this function is 0")
@@ -595,7 +596,8 @@ class Integral(AddWithLimits):
                             # This can happen if _eval_interval depends in a
                             # complicated way on limits that cannot be computed
                             undone_limits.append(xab)
-
+                    add_comment("Therefore")
+                    add_eq(self, function)
         if undone_limits:
             return self.func(*([function] + undone_limits))
         return function
