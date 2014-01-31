@@ -23,10 +23,13 @@ import sympy
 
 from sympy.core.compatibility import reduce
 from sympy.core.symbol import Symbol
+from sympy.functions.elementary.exponential import log
+from sympy.functions.elementary.miscellaneous import sqrt
 from sympy.functions.elementary.trigonometric import TrigonometricFunction
+from sympy.polys.polytools import cancel
 from sympy.simplify import fraction
-from sympy.strategies.core import (switch, identity, do_one, null_safe,
-                                   condition, tryit)
+from sympy.strategies.core import (switch, do_one, null_safe,
+                                   condition)
 from sympy.utilities.solution import add_comment, add_exp, add_eq
 
 
@@ -51,6 +54,8 @@ TrigRule = Rule("TrigRule", "func arg")
 ExpRule = Rule("ExpRule", "base exp")
 LogRule = Rule("LogRule", "func")
 ArctanRule = Rule("ArctanRule")
+Sqrt1Rule = Rule("Sqrt1Rule", "a b")
+Sqrt2Rule = Rule("Sqrt2Rule", "a b")
 AlternativeRule = Rule("AlternativeRule", "alternatives")
 DontKnowRule = Rule("DontKnowRule")
 DerivativeRule = Rule("DerivativeRule")
@@ -300,6 +305,26 @@ def arctan_rule(integral):
                 ], integrand, symbol)
 
             return ArctanRule(integrand, symbol)
+
+
+
+def sqrt_rule(integral):
+    integrand, symbol = integral
+    base, exp = integrand.as_base_exp()
+
+    if sympy.simplify(exp + 0.5) == 0:
+        a = sympy.Wild('a', exclude=[symbol])
+        b = sympy.Wild('b', exclude=[symbol])
+        match = base.match(a + b*symbol**2)
+        if match:
+            a, b = match[a], match[b]
+            if not isinstance(a, sympy.Number) and not isinstance(b, sympy.Number):
+                return
+            if b > 0:
+                return Sqrt1Rule(a, b, integral, symbol)
+            elif a > 0:
+                return Sqrt2Rule(a, b, integral, symbol)
+
 
 def add_rule(integral):
     integrand, symbol = integral
@@ -751,6 +776,18 @@ def integral_steps(integrand, symbol, **options):
         to obtain a result.
 
     """
+    if integrand.is_Mul:
+        num, den = integrand.as_numer_denom()
+        if num.is_Pow and den.is_Pow and num.args[1] == den.args[1]:
+            p = den.args[1]
+            e = cancel(num.args[0] / den.args[0])
+            n, d = e.as_numer_denom()
+            if n < 0:
+                integrand = pow(-n, p) / pow(-d, p)
+            else:
+                integrand = pow(n, p) / pow(d, p)
+            add_comment("Rewrite the integrand")
+            add_exp(integrand)
     cachekey = (integrand, symbol)
     if cachekey in _integral_cache:
         if _integral_cache[cachekey] is None:
@@ -786,7 +823,7 @@ def integral_steps(integrand, symbol, **options):
 
     result = do_one(
         null_safe(switch(key, {
-            sympy.Pow: do_one(null_safe(power_rule), null_safe(arctan_rule)),
+            sympy.Pow: do_one(null_safe(power_rule), null_safe(arctan_rule), null_safe(sqrt_rule)),
             sympy.Symbol: power_rule,
             sympy.exp: exp_rule,
             sympy.Add: add_rule,
@@ -875,6 +912,14 @@ def eval_log(func, integrand, symbol):
 def eval_arctan(integrand, symbol):
     return sympy.atan(symbol)
 
+@evaluates(Sqrt1Rule)
+def eval_sqrt1(a, b, integrand, symbol):
+    return log(sqrt(b)*symbol + sqrt(b*symbol**2 + a)) / sqrt(b)
+
+@evaluates(Sqrt2Rule)
+def eval_sqrt2(a, b, integrand, symbol):
+    return sympy.asin(sqrt(-b)*symbol / sqrt(a)) / sqrt(-b)
+
 @evaluates(AlternativeRule)
 def eval_alternative(alternatives, integrand, symbol):
     return _manualintegrate(alternatives[0])
@@ -926,6 +971,8 @@ def print_integral_steps(step):
             isinstance(step, TrigRule) or \
             isinstance(step, ExpRule) or \
             isinstance(step, ArctanRule) or \
+            isinstance(step, Sqrt1Rule) or \
+            isinstance(step, Sqrt2Rule) or \
             isinstance(step, LogRule):
         add_comment("The integral of this function can be found in the integral table and is equal to")
         add_exp(_manualintegrate(step))
@@ -1046,5 +1093,6 @@ def manualintegrate(f, var):
     sympy.integrals.integrals.Integral.doit
     sympy.integrals.integrals.Integral
     """
-    print_integral_steps(integral_steps(f, var))
-    return _manualintegrate(integral_steps(f, var))
+    st = integral_steps(f, var)
+    print_integral_steps(st)
+    return _manualintegrate(st)
