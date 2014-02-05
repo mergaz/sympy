@@ -1986,8 +1986,11 @@ class One(with_metaclass(Singleton, IntegerConstant)):
         return res
 
     def _eval_power(self, expt):
-        make_repr(self, "**", expt, self)
-        return self
+        if expt != oo:
+            make_repr(self, "**", expt, self)
+            return self
+        else:
+            return nan
 
     def _eval_order(self, *symbols):
         return

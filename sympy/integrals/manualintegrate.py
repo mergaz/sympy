@@ -17,14 +17,21 @@ and returns the antiderivative, and decorate it with
 from __future__ import print_function, division
 
 from collections import namedtuple
+from string import strip
 
 import sympy
 
 from sympy.core.compatibility import reduce
+from sympy.core.symbol import Symbol
+from sympy.functions.elementary.exponential import log
+from sympy.functions.elementary.miscellaneous import sqrt
 from sympy.functions.elementary.trigonometric import TrigonometricFunction
+from sympy.polys.polytools import cancel
 from sympy.simplify import fraction
-from sympy.strategies.core import (switch, identity, do_one, null_safe,
-                                   condition, tryit)
+from sympy.strategies.core import (switch, do_one, null_safe,
+                                   condition)
+from sympy.utilities.solution import add_comment, add_exp, add_eq
+
 
 def Rule(name, props=""):
     # GOTCHA: namedtuple class name not considered!
@@ -47,6 +54,8 @@ TrigRule = Rule("TrigRule", "func arg")
 ExpRule = Rule("ExpRule", "base exp")
 LogRule = Rule("LogRule", "func")
 ArctanRule = Rule("ArctanRule")
+Sqrt1Rule = Rule("Sqrt1Rule", "a b")
+Sqrt2Rule = Rule("Sqrt2Rule", "a b")
 AlternativeRule = Rule("AlternativeRule", "alternatives")
 DontKnowRule = Rule("DontKnowRule")
 DerivativeRule = Rule("DerivativeRule")
@@ -259,14 +268,18 @@ def arctan_rule(integral):
                           sympy.Q.is_true(a <= 0) | sympy.Q.is_true(b <= 0))):
                 return
 
+            #   /    dx       1  /   dx             1   /     dx                |                     |    1     1         /   du
+            #  | --------- = -- | -------------- = --  | -------------------- = | sqrt(b/a)x = u      | =  -- ----------  | -------
+            # /  a + bx^2    a /   1  + (b/a)x^2   a  /   1 + (sqrt(b/a)x)^2    | dx = du / sqrt(b/a) |    a   sqrt(b/a) /  1 + u^2
+
             if a != 1 or b != 1:
                 b_condition = b >= 0
                 u_var = sympy.Dummy("u")
                 rewritten = (sympy.Integer(1) / a) * (base / a) ** (-1)
                 u_func = sympy.sqrt(sympy.sympify(b) / a) * symbol
                 constant = 1 / sympy.sqrt(sympy.sympify(b) / a)
-                substituted = rewritten.subs(u_func, u_var)
-
+                # substituted = rewritten.subs(u_func, u_var)
+                substituted = 1 / (1 + u_var**2)
                 if a == b:
                     substep = ArctanRule(integrand, symbol)
                 else:
@@ -279,7 +292,7 @@ def arctan_rule(integral):
 
                     substep = URule(u_var, u_func, constant,
                                     subrule,
-                                    integrand, symbol)
+                                    (base / a) ** (-1), symbol)
 
                 if a != 1:
                     other = (base / a) ** (-1)
@@ -292,6 +305,26 @@ def arctan_rule(integral):
                 ], integrand, symbol)
 
             return ArctanRule(integrand, symbol)
+
+
+
+def sqrt_rule(integral):
+    integrand, symbol = integral
+    base, exp = integrand.as_base_exp()
+
+    if sympy.simplify(exp + 0.5) == 0:
+        a = sympy.Wild('a', exclude=[symbol])
+        b = sympy.Wild('b', exclude=[symbol])
+        match = base.match(a + b*symbol**2)
+        if match:
+            a, b = match[a], match[b]
+            if not isinstance(a, sympy.Number) and not isinstance(b, sympy.Number):
+                return
+            if b > 0:
+                return Sqrt1Rule(a, b, integral, symbol)
+            elif a > 0:
+                return Sqrt2Rule(a, b, integral, symbol)
+
 
 def add_rule(integral):
     integrand, symbol = integral
@@ -632,7 +665,7 @@ def substitution_rule(integral):
 
             if sympy.simplify(c - 1) != 0:
                 _, denom = c.as_numer_denom()
-                subrule = ConstantTimesRule(c, substituted, subrule, substituted, symbol)
+                subrule = ConstantTimesRule(c, substituted, subrule, integral, symbol)
 
                 if denom.free_symbols:
                     piecewise = []
@@ -743,6 +776,18 @@ def integral_steps(integrand, symbol, **options):
         to obtain a result.
 
     """
+    if integrand.is_Mul:
+        num, den = integrand.as_numer_denom()
+        if num.is_Pow and den.is_Pow and num.args[1] == den.args[1]:
+            p = den.args[1]
+            e = cancel(num.args[0] / den.args[0])
+            n, d = e.as_numer_denom()
+            if n < 0:
+                integrand = pow(-n, p) / pow(-d, p)
+            else:
+                integrand = pow(n, p) / pow(d, p)
+            add_comment("Rewrite the integrand")
+            add_exp(integrand)
     cachekey = (integrand, symbol)
     if cachekey in _integral_cache:
         if _integral_cache[cachekey] is None:
@@ -778,7 +823,7 @@ def integral_steps(integrand, symbol, **options):
 
     result = do_one(
         null_safe(switch(key, {
-            sympy.Pow: do_one(null_safe(power_rule), null_safe(arctan_rule)),
+            sympy.Pow: do_one(null_safe(power_rule), null_safe(arctan_rule), null_safe(sqrt_rule)),
             sympy.Symbol: power_rule,
             sympy.exp: exp_rule,
             sympy.Add: add_rule,
@@ -867,6 +912,14 @@ def eval_log(func, integrand, symbol):
 def eval_arctan(integrand, symbol):
     return sympy.atan(symbol)
 
+@evaluates(Sqrt1Rule)
+def eval_sqrt1(a, b, integrand, symbol):
+    return log(sqrt(b)*symbol + sqrt(b*symbol**2 + a)) / sqrt(b)
+
+@evaluates(Sqrt2Rule)
+def eval_sqrt2(a, b, integrand, symbol):
+    return sympy.asin(sqrt(-b)*symbol / sqrt(a)) / sqrt(-b)
+
 @evaluates(AlternativeRule)
 def eval_alternative(alternatives, integrand, symbol):
     return _manualintegrate(alternatives[0])
@@ -897,6 +950,102 @@ def _manualintegrate(rule):
     if not evaluator:
         raise ValueError("Cannot evaluate rule %s" % rule)
     return evaluator(*rule)
+
+def print_integral_steps(step):
+    if not isinstance(step, ConstantTimesRule):
+        add_comment("Evaluate the integral")
+        add_exp(sympy.Integral(step.context, step.symbol))
+    if isinstance(step, RewriteRule):
+        add_comment("Rewrite the function")
+        print_integral_steps(step.substep)
+    elif isinstance(step, ConstantRule):
+        add_comment("The function is constant therefore the integral is")
+        add_exp(_manualintegrate(step))
+    elif isinstance(step, ConstantTimesRule):
+        add_comment("Move the constant outside the integral sign")
+        add_eq(sympy.Integral(step.context, step.symbol), step.constant * sympy.Integral(step.other, step.symbol))
+        print_integral_steps(step.substep)
+        add_comment("Finally we get")
+        add_exp(_manualintegrate(step))
+    elif isinstance(step, PowerRule) or \
+            isinstance(step, TrigRule) or \
+            isinstance(step, ExpRule) or \
+            isinstance(step, ArctanRule) or \
+            isinstance(step, Sqrt1Rule) or \
+            isinstance(step, Sqrt2Rule) or \
+            isinstance(step, LogRule):
+        add_comment("The integral of this function can be found in the integral table and is equal to")
+        add_exp(_manualintegrate(step))
+    elif isinstance(step, AddRule):
+        add_comment("The function is a sum therefore the integral is equal to the sum of the integrals of the summands")
+        for s in step.substeps:
+            print_integral_steps(s)
+        add_comment("Therefore the integral of the sum is")
+        add_exp(_manualintegrate(step))
+    elif isinstance(step, PartsRule):
+        add_comment("Use the method of integration by parts")
+        u = Symbol("u")
+        v = Symbol("v")
+        dx = Symbol("d" + strip(str(step.symbol), "_"), commutative = False)
+        add_eq(sympy.integrals.Integral(u, v), u * v - sympy.integrals.Integral(v, u))
+        add_eq("u", step.u)
+        add_eq("dv", step.dv * dx)
+        add_eq("du", step.u.diff(step.symbol) * dx)
+        add_comment("Find v")
+        print_integral_steps(step.v_step)
+        add_comment("Find the subintegral")
+        print_integral_steps(step.second_step)
+        add_comment("Putting parts together we get")
+        add_exp(_manualintegrate(step))
+    elif isinstance(step, URule):
+        add_comment("Use the substitution")
+        add_eq(step.u_var, step.u_func)
+        du = Symbol("d" + strip(str(step.u_var), "_"), commutative=False)
+        dx = Symbol("d" + strip(str(step.symbol), "_"), commutative=False)
+        add_eq(du, step.u_func.diff(step.symbol) * dx)
+        print_integral_steps(step.substep)
+        add_comment("Use the invert substitution we get")
+        add_exp(_manualintegrate(step))
+    elif isinstance(step, CyclicPartsRule):
+        add_comment("Use the method of integration by parts")
+        f = step.context
+        result = 0
+        sgn = 1
+        dx = Symbol("d" + strip(str(step.symbol), "_"), commutative = False)
+        for s in step.parts_rules:
+            add_comment("Consider the function")
+            add_exp(f)
+            add_eq("u", s.u)
+            add_eq("dv", s.dv * dx)
+            du = s.u.diff(step.symbol) * dx
+            add_eq("du", du)
+            add_comment("Find v")
+            print_integral_steps(s.v_step)
+            v = _manualintegrate(s.v_step)
+            add_eq("v", v)
+            f = v * du
+            result += sgn * s.u * v
+            add_eq(sympy.Integral(step.context, step.symbol), result - sgn * sympy.Integral(f, step.symbol))
+            sgn *= -1
+        add_comment("The integrand has repeated itself, so we have")
+        add_eq((1 - step.coefficient) * sympy.Integral(step.context, step.symbol), result)
+        add_comment("Therefore we get")
+        add_exp(_manualintegrate(step))
+    elif isinstance(step, AlternativeRule):
+        print_integral_steps(step.alternatives[0]) # We use only the first way of evaluating
+    elif isinstance(step, DontKnowRule):
+        add_comment("The way of evaluating of the integral is unknown")
+    elif isinstance(step, DerivativeRule):
+        add_comment("The function is a derivative therefore the integral is")
+        add_exp(_manualintegrate(step))
+    elif isinstance(step, PiecewiseRule):
+        if len(step.subfunctions) == 1:
+            print_integral_steps(step.subfunctions[0][0])
+        else:
+            for s in step.subfunctions:
+                print_integral_steps(s[0])
+            add_comment("The integral is")
+            add_exp(_manualintegrate(step))
 
 def manualintegrate(f, var):
     """manualintegrate(f, var)
@@ -944,4 +1093,6 @@ def manualintegrate(f, var):
     sympy.integrals.integrals.Integral.doit
     sympy.integrals.integrals.Integral
     """
-    return _manualintegrate(integral_steps(f, var))
+    st = integral_steps(f, var)
+    print_integral_steps(st)
+    return _manualintegrate(st)
