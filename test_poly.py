@@ -1,11 +1,12 @@
-from sympy import reset_solution, last_solution, symbols, roots, Poly, roots
+from sympy.utilities.solution import reset_solution, last_solution
+from sympy import symbols, roots, Poly
 
 x, y = symbols('x, y')
 
 # 169 - 175 are pages in Vilenkin
 # Here are some tests
 # just change the value on "n"
-n = 7 # number of the test
+n = 3 # number of the test
 # 0 - 169 (1)
 # 1 - 169 (2)
 # 2 - 170 (1)

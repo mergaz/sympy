@@ -8,7 +8,7 @@ from sympy.core.symbol import Dummy, Symbol, symbols
 from sympy.core import S, I, pi, Pow, Add, Mul
 from sympy.core.mul import expand_2arg
 from sympy.core.sympify import sympify
-from sympy.core.numbers import Rational, igcd
+from sympy.core.numbers import Rational, igcd, Integer
 
 from sympy.ntheory import divisors, isprime, nextprime
 from sympy.functions import exp, sqrt, re, im, Abs, cos, sin
@@ -23,15 +23,15 @@ from sympy.simplify import simplify, powsimp
 from sympy.utilities import default_sort_key, public
 
 from sympy.core.compatibility import reduce, xrange
-from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment
+from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, debug
 
 def roots_linear(f):
     """Returns a list of roots of a linear polynomial."""
-    
-    add_comment('linear polynomial')
+    add_comment("Set it equal to zero and find roots")
     add_eq(f.as_expr(), 0)
 
     r = -f.nth(0)/f.nth(1)
+    add_eq(f.slice(1, 2).as_expr(), -f.nth(0))
     dom = f.get_domain()
 
     if not dom.is_Numerical:
@@ -39,7 +39,7 @@ def roots_linear(f):
             r = factor(r)
         else:
             r = simplify(r)
-    add_comment('root = ' + str(r))
+    add_eq('root', r)
     return [r]
 
 
@@ -47,26 +47,40 @@ def roots_quadratic(f):
     """Returns a list of roots of a quadratic polynomial."""
     a, b, c = f.all_coeffs()
     dom = f.get_domain()
-    add_comment('Solve the quadratic equation')
+    add_comment("Set it equal to zero and find roots")
     add_eq(f.as_expr(), 0)
+    add_comment("Coefficients of the poly:")
+    add_exp(a)
+    add_exp(b)
+    add_exp(c)
+    a.clear_repr()
+    b.clear_repr()
+    c.clear_repr()
 
     def _simplify(expr):
         if dom.is_Composite:
             s = factor(expr)
         else:
             s = simplify(expr)
-        add_step(s)
         return s
 
     if c is S.Zero:
-        add_comment('The free term is equal to 0')
         r0, r1 = S.Zero, -b/a
+        add_comment("Since c = 0, then root_0 = 0 and root_1 = -b/a")
 
         if not dom.is_Numerical:
             r1 = _simplify(r1)
     elif b is S.Zero:
-        add_comment('The linear coefficient is equal to 0')
+        add_comment("Since b = 0, then transfer c to the right of the equation")
+        r = -c
+        x = Symbol('x')
+        left = a*Poly(x**2, x).as_expr()
+        right = r
+        add_eq(left, right)
         r = -c/a
+        left = "x**2"
+        right = r
+        add_eq(left, right)
 
         if not dom.is_Numerical:
             R = sqrt(_simplify(r))
@@ -76,15 +90,27 @@ def roots_quadratic(f):
         r0 = R
         r1 = -R
     else:
-        d = b**2 - S(4)*a*c
-        add_comment('The discriminant is')
-        add_eq('d', d.simplify())
+        d = b**2 - 4*a*c
+        a, b, c = symbols('a b c')
+        add_comment("Formula of discriminant")
+        discriminant_expr = Poly(b**2 - 4*a*c).as_expr()
+        add_eq("D", discriminant_expr)
+        a, b, c = f.all_coeffs()
+        add_eq("D", d)
         d.clear_repr()
-
         if dom.is_Numerical:
+            a, b, c, D = symbols('a b c D')
+            add_comment("Formulas of roots")
+            r0 = Poly((-b + sqrt(D)) / (2*a)).as_expr()
+            r1 = Poly((-b - sqrt(D)) / (2*a)).as_expr()
+            add_eq("r0", r0)
+            add_eq("r1", r1)
+            a, b, c = f.all_coeffs()
+            r0.clear_repr()
+            r1.clear_repr()
             D = sqrt(d)
-            r0 = (-b + D) / (S(2)*a)
-            r1 = (-b - D) / (S(2)*a)
+            r0 = (-b + D) / (2*a)
+            r1 = (-b - D) / (2*a)
         else:
             D = sqrt(_simplify(d))
             A = 2*a
@@ -94,23 +120,28 @@ def roots_quadratic(f):
 
             r0 = E + F
             r1 = E - F
-        
-        if r0 != r1:
-	    add_comment('The roots are')
-            add_eq(f.gen, r0)
-            add_eq(f.gen, r1)
-        else:
-            add_comment('Both roots are equal to ')
-            add_eq(f.gen, r0)
+
+    add_eq("root_0", r0)
+    add_eq("root_1", r1)
 
     return sorted([expand_2arg(i) for i in (r0, r1)], key=default_sort_key)
 
 def roots_cubic(f):
     """Returns a list of roots of a cubic polynomial."""
-
-    add_comment('cubic polynomial')
-
     _, a, b, c = f.monic().all_coeffs()
+    # coeffs_list = f.monic().all_coeffs()
+    add_comment("Set it equal to zero and find roots")
+    add_eq(f.as_expr(), 0)
+    add_comment("Coefficients of the poly:")
+    add_eq("a", _)
+    add_eq("b", a)
+    add_eq("c", b)
+    add_eq("d", c)
+    _.clear_repr()
+    a.clear_repr()
+    b.clear_repr()
+    c.clear_repr()
+
 
     if c is S.Zero:
         x1, x2 = roots([1, a, b], multiple=True)
@@ -122,15 +153,15 @@ def roots_cubic(f):
     pon3 = p/3
     aon3 = a/3
 
-    add_step(p);
-    add_step(q);
+    # add_step(p);
+    # add_step(q);
 
     if p is S.Zero:
         add_comment('p is zero')
         if q is S.Zero:
             add_comment('q is zero')
             root = [-aon3]*3
-            add_step(root)
+            # add_step(root)
             return [-aon3]*3
         else:
             add_comment('q is not zero')
@@ -138,37 +169,37 @@ def roots_cubic(f):
                 add_comment('q is real')
                 if (q > 0) is True:
                     u1 = -q**Rational(1, 3)
-                    add_step(u1)
+                    # add_step(u1)
                 else:
                     u1 = (-q)**Rational(1, 3)
-                    add_step(u1)
+                    # add_step(u1)
             else:
                 add_comment('q is not real')
                 u1 = (-q)**Rational(1, 3)
-                add_step(u1)
+                # add_step(u1)
     elif q is S.Zero:
         add_comment('q is zero')
         y1, y2 = roots([1, 0, p], multiple=True)
         roots = [tmp - aon3 for tmp in [y1, S.Zero, y2]]
-        add_step(roots)
+        # add_step(roots)
         return roots
     elif q.is_real and q < 0:
         add_comment('q is real and q < 0')
         u1 = -(-q/2 + sqrt(q**2/4 + pon3**3))**Rational(1, 3)
-        add_step(u1)
+        # add_step(u1)
     else:
         u1 = (q/2 + sqrt(q**2/4 + pon3**3))**Rational(1, 3)
-        add_step(u1)
+        # add_step(u1)
     coeff = S.ImaginaryUnit*sqrt(3)/2
 
     u2 = u1*(-S.Half + coeff)
     u3 = u1*(-S.Half - coeff)
-    add_step(u2)
-    add_step(u3)
+    # add_step(u2)
+    # add_step(u3)
     if p is S.Zero:
         add_comment('p is zero')
         roots = [u1 - aon3, u2 - aon3, u3 - aon3]
-        add_step(roots)
+        # add_step(roots)
         return roots
 
     roots = [
@@ -360,19 +391,18 @@ def roots_quartic(f):
 def roots_binomial(f):
     """Returns a list of roots of a binomial polynomial."""
 
-    add_comment('binomial polynomial')
+    add_comment('Try to solve binomial polynomial')
     add_eq(f.as_expr(), 0)
 
     n = f.degree()
 
     a, b = f.nth(n), f.nth(0)
     alpha = (-cancel(b/a))**Rational(1, n)
-
     if alpha.is_number:
         alpha = alpha.expand(complex=True)
 
-    add_comment('first coefficient = ' + str(a))
-    add_comment('second coefficient = ' + str(b))
+    add_eq('first coefficient', a)
+    add_eq('second coefficient', b)
     add_step(alpha)
 
     roots, I = [], S.ImaginaryUnit
@@ -380,10 +410,9 @@ def roots_binomial(f):
     for k in xrange(n):
         zeta = exp(2*k*S.Pi*I/n).expand(complex=True)
         roots.append((alpha*zeta).expand(power_base=False))
+        add_eq("root_"+str(k), alpha*zeta)
 
     roots = sorted(roots, key=default_sort_key)
-
-    add_step(roots)
 
     return roots
 
@@ -740,8 +769,8 @@ def preprocess_roots(poly):
         if gens:
             poly = poly.eject(*gens)
     if poly.is_univariate and poly.get_domain().is_ZZ:
-        basis = _integer_basis(poly)
 
+        basis = _integer_basis(poly)
         if basis is not None:
             n = poly.degree()
 
@@ -804,7 +833,7 @@ def roots(f, *gens, **flags):
     from sympy.polys.polytools import to_rational_coeffs
     flags = dict(flags)
 
-    add_eq(f.as_expr(), 0)
+    
 
     auto = flags.pop('auto', True)
     cubics = flags.pop('cubics', True)
@@ -838,6 +867,9 @@ def roots(f, *gens, **flags):
         if f.is_multivariate:
             raise PolynomialError('multivariate polynomials are not supported')
 
+    add_comment("Begin to solve polynomial:")
+    add_exp(f.as_expr())
+
     def _update_dict(result, root, k):
 #        add_comment('add root: ' + str(root))
         if root in result:
@@ -848,11 +880,12 @@ def roots(f, *gens, **flags):
     def _try_decompose(f):
         """Find roots using functional decomposition. """
         
-        add_comment('try decompose')
+        add_comment('Try decompose')
 
         factors, roots = f.decompose(), []
-
+        # debug(factors)
         for root in _try_heuristics(factors[0]):
+            # debug(root)
             roots.append(root)
 
         for factor in factors[1:]:
@@ -863,20 +896,20 @@ def roots(f, *gens, **flags):
 
                 for root in _try_heuristics(g):
                     roots.append(root)
-        add_step(factors)
-        add_step(roots)
+        # add_step(factors)
+        # add_step(roots)
         return roots
 
     def _try_heuristics(f):
         """Find roots using formulas and some tricks. """
         
-#        add_comment('try heuristics')
-        add_eq(f.as_expr(), 0)
+        #add_comment('Try heuristics')
+        # add_eq(f.as_expr(), 0)
         if f.is_ground:
-#            add_comment('Polinomial is ground')
+            add_comment('Polinomial is ground')
             return []
         if f.is_monomial:
-#            add_comment('Polinomial is monomial')
+            add_comment('Polinomial is monomial')
             rr = [S(0)]*f.degree()
             add_step(rr)
             return rr
@@ -886,22 +919,56 @@ def roots(f, *gens, **flags):
             if f.degree() == 1:
 #                add_comment('degree == 1')
                 rr = list(map(cancel, roots_linear(f)))
-                add_step(rr)
+                # add_step(rr)
                 return rr
             else:
 #                add_comment('degree != 1')
                 return roots_binomial(f)
 
         result = []
+        if f.degree() == 3:
+            a, b, c, d, x = symbols("a b c d x")
+            common_form = Poly(a*x**3 + b*x**2 + c*x + d)
+            add_comment("Common form of the cubic polinomial is:")
+            add_eq(common_form.as_expr(), 0)
+            add_comment("Coefficients of current polynomial are:")
+            a, b, c, d = f.all_coeffs()
+            add_step(a)
+            add_step(b)
+            add_step(c)
+            add_step(d)
+            a.clear_repr()
+            b.clear_repr()
+            c.clear_repr()
+            d.clear_repr()
+            add_comment("Try to find the root of turning over divisors of free factor \"d\" of Poly")
+            # Solve poly by using Bezout theorem and divisors of free factor "d" of Poly
+            if isinstance(f.nth(0), Integer) and f.nth(0) != S.Zero:
+                d = f.nth(0)
+                if d < 0:
+                    begin = d
+                    end = -d + 1
+                else:
+                    begin = -d
+                    end = d + 1
+                divisors = [i for i in xrange(begin, end) if isinstance(d/i, Integer)]
+                # debug(divisors)
 
-        for i in [-1, 1]:
-            if not f.eval(i):
-                f = f.quo(Poly(f.gen - i, f.gen))
-                result.append(i)
-                break
+            for i in divisors:
+                add_comment("x = " + str(i))
+                if not f.eval(i):
+                    add_comment(str(i) + " is a first root, By using Bezout theorem, "
+                                         "let's divide the original poly by")
+                    add_exp(Poly(f.gen - i, f.gen).as_expr())
+                    f = f.quo(Poly(f.gen - i, f.gen))
+                    add_comment("Result of division:")
+                    add_exp(f.as_expr())
+                    result.append(Integer(i))
+                    break
+                add_comment("Not a root")
 
         n = f.degree()
-#        add_comment('degree == ' + str(n))
+        # add_comment('degree == ' + str(f.as_expr()))
         if n == 1:
             result += list(map(cancel, roots_linear(f)))
         elif n == 2:
@@ -917,27 +984,28 @@ def roots(f, *gens, **flags):
 
         return result
 
-    tmp = f
+    original_func = f                        # save original poly to variable
     (k,), f = f.terms_gcd()
-    if (tmp != f):
-        add_eq(f.as_expr(), 0)
+    if original_func != f and original_func.degree() == 1:
+        add_eq(original_func.as_expr(), 0)
     if not k:
         zeros = {}
     else:
+        add_comment("Found common divisor and first root.")
+        add_eq(original_func.gen, 0)
+        add_eq("root", 0)
         zeros = {S(0): k}
-
     coeff, f = preprocess_roots(f)
-
-    if (coeff is not S.One):
-        add_step(coeff)
-
     if auto and f.get_domain().has_Ring:
         f = f.to_field()
+
 
     rescale_x = None
     translate_x = None
 
     result = {}
+    if (coeff is not S.One):
+        f = original_func
 
     if not f.is_ground:
 #        add_comment('Poly is not ground')
@@ -954,12 +1022,12 @@ def roots(f, *gens, **flags):
             for r in roots_quadratic(f):
 #                add_comment('add root: ' + str(r))
                 _update_dict(result, r, 1)
-        elif f.length() == 2:
-            for r in roots_binomial(f):
-                _update_dict(result, r, 1)
+        # elif f.length() == 2:
+        #     for r in roots_binomial(f):
+        #         _update_dict(result, r, 1)
         else:
             _, factors = Poly(f.as_expr()).factor_list()
-
+            # debug((_, factors))
             if len(factors) == 1 and factors[0][1] == 1:
                 if f.get_domain().is_EX:
                     res = to_rational_coeffs(f)
@@ -974,21 +1042,19 @@ def roots(f, *gens, **flags):
                                 _update_dict(result, root, 1)
                 else:
                     for root in _try_decompose(f):
+                        # debug(root)
                         _update_dict(result, root, 1)
             else:
-#                add_comment('Factorization')
-                for factor, k in factors:
-                    add_eq(factor.as_expr(), 0)
-                for factor, k in factors:
-                    # add_eq(factor.as_expr(), 0)
-                    for r in _try_heuristics(Poly(factor, f.gen, field=True)):
-                        _update_dict(result, r, k)
-
-    if coeff is not S.One:
-        _result, result, = result, {}
-
-        for root, k in _result.items():
-            result[coeff*root] = k
+                if original_func.degree() == 3:
+                    for r in _try_heuristics(original_func):
+                         _update_dict(result, r, 1)
+                else:
+                    add_comment('Factorization')
+                    for factor, k in factors:
+                        add_eq(factor.as_expr(), 0)
+                    for factor, k in factors:
+                        for r in _try_heuristics(Poly(factor, f.gen, field=True)):
+                            _update_dict(result, r, k)
 
     result.update(zeros)
 
@@ -1031,7 +1097,6 @@ def roots(f, *gens, **flags):
 
         for zero, k in result.items():
             zeros.extend([zero]*k)
-
         return sorted(zeros, key=default_sort_key)
 
 

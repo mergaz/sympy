@@ -55,6 +55,7 @@ from sympy.polys.constructor import construct_domain
 from sympy.polys import polyoptions as options
 
 from sympy.core.compatibility import iterable
+from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, debug
 
 
 @public
@@ -865,7 +866,6 @@ class Poly(Expr):
 
         """
         terms = {}
-
         for monom, coeff in f.terms():
             result = func(monom, coeff)
 
