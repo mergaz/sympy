@@ -23,7 +23,7 @@ from sympy.simplify import simplify, powsimp
 from sympy.utilities import default_sort_key, public
 
 from sympy.core.compatibility import reduce, xrange
-from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, debug
+from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment
 
 def roots_linear(f):
     """Returns a list of roots of a linear polynomial."""
@@ -883,9 +883,8 @@ def roots(f, *gens, **flags):
         add_comment('Try decompose')
 
         factors, roots = f.decompose(), []
-        # debug(factors)
+
         for root in _try_heuristics(factors[0]):
-            # debug(root)
             roots.append(root)
 
         for factor in factors[1:]:
@@ -952,7 +951,6 @@ def roots(f, *gens, **flags):
                     begin = -d
                     end = d + 1
                 divisors = [i for i in xrange(begin, end) if isinstance(d/i, Integer)]
-                # debug(divisors)
 
             for i in divisors:
                 add_comment("x = " + str(i))
@@ -1027,7 +1025,6 @@ def roots(f, *gens, **flags):
         #         _update_dict(result, r, 1)
         else:
             _, factors = Poly(f.as_expr()).factor_list()
-            # debug((_, factors))
             if len(factors) == 1 and factors[0][1] == 1:
                 if f.get_domain().is_EX:
                     res = to_rational_coeffs(f)
@@ -1042,7 +1039,6 @@ def roots(f, *gens, **flags):
                                 _update_dict(result, root, 1)
                 else:
                     for root in _try_decompose(f):
-                        # debug(root)
                         _update_dict(result, root, 1)
             else:
                 if original_func.degree() == 3:
