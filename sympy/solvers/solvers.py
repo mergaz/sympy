@@ -58,7 +58,6 @@ import warnings
 
 from sympy import lcm
 
-from sympy.printing.str import StrPrinter
 from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine
 
 # An integer parameter for solutions of trig eqs.
@@ -1888,7 +1887,7 @@ def _solve(f, *symbols, **flags):
 
 
 def _solve_system(exprs, symbols, **flags):
-    add_comment('solve system')
+    add_comment('Solve the system of equations')
     for i in exprs:
         add_eq(i.as_expr(), 0)
 
@@ -1921,7 +1920,8 @@ def _solve_system(exprs, symbols, **flags):
         solved_syms = []
     else:
         if all(p.is_linear for p in polys):
-            add_comment('linear system')
+            add_comment('This system is a system of linear equations')
+            add_comment('Convert this system into an augmented matrix')
             n, m = len(polys), len(symbols)
             matrix = zeros(n, m + 1)
 
@@ -1936,7 +1936,7 @@ def _solve_system(exprs, symbols, **flags):
             if flags.pop('particular', False):
                 result = minsolve_linear_system(matrix, *symbols, **flags)
             else:
-                result = solve_linear_system(matrix, *symbols, **flags)
+                result = manual_solve_linear_system(matrix, *symbols, **flags)
             if result:
                 # it doesn't need to be checked but we need to see
                 # that it didn't set any denominators to 0
@@ -2360,14 +2360,8 @@ def solve_linear_system(system, *symbols, **flags):
 
     """
 
-    add_comment('Gauss solution')
-
     matrix = system[:, :]
     
-    add_comment('initial matrix')
-    printer = StrPrinter()
-    add_comment(matrix.table(printer))
-
     syms = list(symbols)
 
     i, m = 0, matrix.cols - 1  # don't count augmentation
@@ -2459,9 +2453,6 @@ def solve_linear_system(system, *symbols, **flags):
     # in row-echelon form so we can check how many solutions
     # there are and extract them using back substitution
     
-    add_comment('transformed matrix')
-    add_comment(matrix.table(printer))
-
     do_simplify = flags.get('simplify', True)
 
     if len(syms) == matrix.rows:
@@ -2481,7 +2472,6 @@ def solve_linear_system(system, *symbols, **flags):
                 solutions[syms[k]] = content
 
             k -= 1
-        add_step(solutions)
         return solutions
     elif len(syms) > matrix.rows:
         # this system will have infinite number of solutions
@@ -2505,10 +2495,140 @@ def solve_linear_system(system, *symbols, **flags):
                 solutions[syms[k]] = content
 
             k -= 1
-        add_step(solutions)
         return solutions
     else:
         return []   # no solutions
+
+def manual_solve_linear_system(system, *symbols, **flags):
+
+    matrix = system[:, :]
+
+    add_exp(matrix)
+    add_comment("Use the Gauss method")
+
+    prev = matrix.copy()
+
+    syms = list(symbols)
+
+    i, m = 0, matrix.cols - 1  # don't count augmentation
+
+    def th(i):
+        if i == 1:
+            return "1st"
+        elif i == 2:
+            return "2nd"
+        elif i == 3:
+            return "3rd"
+        else:
+            return str(i) + "th"
+
+    r = 0
+    c = 0
+    while r < matrix.rows:
+        t = r
+        while t < matrix.rows:
+            if not any(matrix[t, :m + 1]):
+                matrix.row_del(t)
+            else:
+                t += 1
+        if prev != matrix:
+            add_comment("Remove zeros rows")
+            add_exp(matrix)
+            prev = matrix.copy()
+        t = r
+        while t < matrix.rows:
+            if not any(matrix[t, :m]) and matrix[t, m]:
+                add_comment("Since the equation " + str(matrix[t, m]) + " = 0 is not be satisfied, the system is inconsistent.")
+                return None
+            t += 1
+
+        if matrix.rows == 0:
+            add_comment("All rows have removed. Therefore every choice of variable values is a solution")
+            return dict()
+
+        if r >= matrix.rows:
+            break
+
+        # find the pivot elem
+        for s in range(c, m + 1):
+            for t in range(r, matrix.rows):
+                if matrix[t, s]:
+                    c = s
+                    if r != t:
+                        matrix.row_swap(r, t)
+                        add_comment("Swap " + th(r + 1) + " row and " + th(t + 1) + " row")
+                        add_exp(matrix)
+                        prev = matrix.copy()
+                    break
+            if matrix[r, c]:
+                break
+
+        pivot_inv = S.One/matrix[r, c]
+        if pivot_inv != 1:
+            # divide all elements in the current row by the pivot
+            matrix.row_op(r, lambda x, _: x * pivot_inv)
+            add_comment("Multiply " + th(r + 1) + " row by " + str(pivot_inv))
+            add_exp(matrix)
+            prev = matrix.copy()
+
+        for k in xrange(r + 1, matrix.rows):
+            if matrix[k, r]:
+                coeff = matrix[k, r]
+                if coeff == 1:
+                    add_comment("Subtract " + th(r + 1) + " row from " + th(k + 1) + " row")
+                elif coeff == -1:
+                    add_comment("Add " + th(r + 1) + " row to " + th(k + 1) + " row")
+                elif coeff > 1:
+                    add_comment("Subtract " + th(r + 1) + " row multiplied by " + str(coeff) + " from " + th(k + 1) + " row")
+                elif coeff < -1:
+                    add_comment("Add " + th(r + 1) + " row multiplied by " + str(-coeff) + " to " + th(k + 1) + " row ")
+
+                # subtract from the current row the row containing
+                # pivot and multiplied by extracted coefficient
+                matrix.row_op(k, lambda x, j: simplify(x - matrix[r, j]*coeff))
+
+        if matrix != prev:
+            add_exp(matrix)
+            prev = matrix.copy()
+
+        r += 1
+
+    # if there weren't any problems, augmented matrix is now
+    # in row-echelon form so we can check how many solutions
+    # there are and extract them using back substitution
+    do_simplify = flags.get('simplify', True)
+
+    add_comment("Converting back to a system of equations")
+    for k in range(0, matrix.rows):
+        for c in range(0, m):
+            if matrix[k, c]:
+                break
+        s = matrix[k, m]
+        for j in range(c + 1, m):
+            s += -matrix[k, j]*syms[j]
+        add_eq(syms[c], s)
+
+    add_comment("Therefore we get")
+
+    solutions = {}
+    for k in reversed(range(0, matrix.rows)):
+        for c in range(0, m):
+            if matrix[k, c]:
+                break
+        s = matrix[k, m]
+        for j in range(c + 1, m):
+            if solutions.has_key(syms[j]):
+                s += -matrix[k, j]*solutions[syms[j]]
+            else:
+                s += -matrix[k, j]*syms[j]
+
+        if do_simplify:
+            s = simplify(s)
+        solutions[syms[k]] = s
+        add_eq(syms[k], s)
+
+    return solutions
+
 
 
 def solve_undetermined_coeffs(equ, coeffs, sym, **flags):
