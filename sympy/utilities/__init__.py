@@ -12,7 +12,7 @@ from .source import source
 
 from .decorator import threaded, xthreaded, public
 
-from .runtests import test, doctest
+#from .runtests import test, doctest
 
 from .timeutils import timed
 
