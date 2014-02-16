@@ -1696,8 +1696,6 @@ def _solve(f, *symbols, **flags):
                             for r in rts:
                                 rts_number += rts[r]
                             soln = list(rts.keys())
-                            add_comment('We have the following solutions')
-                            add_exp(soln)                            
                             # Here is some magic. I believe that we don't go to
                             # this 'if' in case of "school" equations. 
                             if rts_number < deg:
@@ -1960,6 +1958,7 @@ def _solve_system(exprs, symbols, **flags):
                 for syms in subsets(free, len(polys)):
                     try:
                         # returns [] or list of tuples of solutions for syms
+                        add_comment("This is a system of polynomial equations")
                         res = solve_poly_system(polys, *syms)
                         if res:
                             for r in res:
@@ -1981,6 +1980,7 @@ def _solve_system(exprs, symbols, **flags):
                     raise NotImplementedError('no valid subset found')
             else:
                 try:
+                    add_comment("This is a system of polynomial equations")
                     result = solve_poly_system(polys, *symbols)
                     solved_syms = symbols
                 except NotImplementedError:

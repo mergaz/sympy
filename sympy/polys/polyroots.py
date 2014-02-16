@@ -29,8 +29,7 @@ from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, sta
 def roots_linear(f):
     """Returns a list of roots of a linear polynomial."""
     
-    add_comment('Solve the linear equation')
-    add_eq(f.as_expr(), 0)
+    add_comment('This equation is linear')
 
     r = -f.nth(0)/f.nth(1)
     dom = f.get_domain()
@@ -40,7 +39,7 @@ def roots_linear(f):
             r = factor(r)
         else:
             r = simplify(r)
-    add_comment("The root this linear equation is")
+    add_comment("The root of this equation is")
     add_eq(f.gen, r)
     return [r]
 
@@ -49,15 +48,13 @@ def roots_quadratic(f):
     """Returns a list of roots of a quadratic polynomial."""
     a, b, c = f.all_coeffs()
     dom = f.get_domain()
-    add_comment('Solve the quadratic equation')
-    add_eq(f.as_expr(), 0)
+    add_comment('This equation is quadratic')
 
     def _simplify(expr):
         if dom.is_Composite:
             s = factor(expr)
         else:
             s = simplify(expr)
-       #add_step(s)
         return s
 
     if c is S.Zero:
@@ -111,9 +108,7 @@ def roots_quadratic(f):
 def roots_cubic(f):
     """Returns a list of roots of a cubic polynomial."""
 
-    add_comment('Solve the cubic equation')
-    add_eq(f.as_expr(), 0)
-
+    add_comment('This equation is cubic')
     _, a, b, c = f.monic().all_coeffs()
 
     if f.nth(3) != 1:
@@ -339,8 +334,7 @@ def roots_quartic(f):
     7. eqworld.ipmnet.ru/en/solutions/ae/ae0108.pdf
     """
 
-    add_comment("Solve the quartic equation")
-    add_eq(f.as_expr(), 0)
+    add_comment("This equation is quartic")
     _, a, b, c, d = f.monic().all_coeffs()
 
     if f.nth(4) != 1:
@@ -513,9 +507,7 @@ def roots_binomial(f):
 
     roots, I = [], S.ImaginaryUnit
 
-    add_comment("Since")
-    add_eq(f.gen, Pow(-b/a, Rational(1, n), evaluate=False))
-    add_comment("Therefore we have the following roots")
+    add_comment("We have the following roots")
     for k in xrange(n):
         zeta = exp(2*k*S.Pi*I/n).expand(complex=True)
         add_eq(f.gen, Mul(alpha, zeta, evaluate=False))
@@ -913,6 +905,8 @@ def find_rational_roots(f):
                     result += [Rational(-p, q)]
     if len(result) > 0:
         add_comment("Use the rational root test")
+        add_comment("Test all rational numbers in the form p/q")
+        add_comment("where p is a divisor of " + str(c.p) + " and q is a divisor of " + str(c.q))
         add_comment("We have the following roots")
         for r in result:
             add_eq(f.gen, r)
@@ -1020,7 +1014,7 @@ def roots(f, *gens, **flags):
         if len(factors) == 1:
             for root in _try_heuristics(factors[0]):
                 roots.append(root)
-            return roots
+            return (roots, False)
 
         add_comment("Use the substitution")
         t = Dummy("t1")
@@ -1058,19 +1052,15 @@ def roots(f, *gens, **flags):
                     roots.append(root)
             i += 1
 
-        return roots
+        return (roots, True)
 
     def _try_heuristics(f):
         """Find roots using formulas and some tricks. """
         
         if f.is_ground:
-            add_comment("Solve the equation")
-            add_eq(f.as_expr(), 0)
             add_comment("The polynomial is constant. Therefore there is no root.")
             return []
         if f.is_monomial:
-            add_comment("Solve the equation")
-            add_eq(f.as_expr(), 0)
             add_comment("The root of the equation is zero")
             rr = [S(0)]*f.degree()
             return rr
@@ -1113,12 +1103,21 @@ def roots(f, *gens, **flags):
     if not k:
         zeros = {}
     else:
-        add_comment("One of the roots is zero")
-        add_comment("Solve the equation")
-        add_eq(f.as_expr(), 0)
         zeros = {S(0): k}
+        if not f.is_ground:
+            add_comment("Solve the equation")
+            add_eq(f.as_expr(), 0)
+        else:
+            add_comment("The roots are")
+            for z in zeros:
+                add_eq(f.gen, 0)
+            return {S(0): k}
 
-    coeff, f = preprocess_roots(f)
+    coeff, fp = preprocess_roots(f)
+    if coeff.is_Rational or f.degree() <= 2:
+        coeff = S.One
+    else:
+        f = fp
 
     if (coeff is not S.One):
         add_comment("Use the substitution")
@@ -1135,7 +1134,7 @@ def roots(f, *gens, **flags):
     translate_x = None
 
     result = {}
-
+    print_all_roots = False
     if not f.is_ground:
         if not f.get_domain().is_Exact:
             add_comment("Use numerical methods")
@@ -1154,6 +1153,7 @@ def roots(f, *gens, **flags):
         else:
             rr = find_rational_roots(f)
             if len(rr) > 0:
+                print_all_roots = True
                 g = f
                 h = 1
                 for r in rr:
@@ -1163,8 +1163,10 @@ def roots(f, *gens, **flags):
                         _update_dict(result, r, 1)
                 add_comment("Rewrite the equation as")
                 add_eq(Mul(h, g.as_expr(), evaluate=False), 0)
+                if not g.is_ground:
+                    add_comment("Solve the equation")
+                    add_eq(g.as_expr(), 0)
                 f = g
-            factors = []
             if not f.is_ground:
                 _, factors = Poly(f.as_expr()).factor_list()
                 if len(factors) == 1 and factors[0][1] == 1:
@@ -1177,12 +1179,17 @@ def roots(f, *gens, **flags):
                                 rescale_x, f = res[1], res[-1]
                             result = roots(f)
                             if not result:
-                                for root in _try_decompose(f):
+                                td = _try_decompose(f)
+                                print_all_roots = td[1]
+                                for root in td[0]:
                                     _update_dict(result, root, 1)
                     else:
-                        for root in _try_decompose(f):
+                        td = _try_decompose(f)
+                        print_all_roots = td[1]
+                        for root in td[0]:
                             _update_dict(result, root, 1)
                 else:
+                    print_all_roots = True
                     add_comment("The equation can be rewritten as")
                     eq1 = 1
                     for factor, k in factors:
@@ -1192,14 +1199,10 @@ def roots(f, *gens, **flags):
                     for factor, k in factors:
                         for r in _try_heuristics(Poly(factor, f.gen, field=True)):
                             _update_dict(result, r, k)
-            if len(rr) > 0 or len(factors) > 0:
-                add_comment("Finally we have the following roots")
-                for r, k in result.items():
-                    for i in range(k):
-                        add_eq(f.gen, r)
+
     else:
         add_comment("Solve the equation")
-        add_comment(f.as_expr(), 0)
+        add_eq(f.as_expr(), 0)
         add_comment("Since the polynomial is constant, there are no roots")
 
     if coeff is not S.One:
@@ -1212,6 +1215,13 @@ def roots(f, *gens, **flags):
                 add_eq(tmp_.gen, coeff*root)
 
     result.update(zeros)
+
+    if tmp_ != f or print_all_roots:
+        add_comment("Finally we have the following roots")
+        for r, k in result.items():
+            for i in range(k):
+                add_eq(f.gen, r)
+
 
     if filter not in [None, 'C']:
         handlers = {
