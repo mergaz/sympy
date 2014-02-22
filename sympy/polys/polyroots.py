@@ -891,7 +891,7 @@ def preprocess_roots(poly):
 
 def find_rational_roots(f):
     if not all(x.is_rational for x in f.all_coeffs()):
-        return
+        return []
     a = f.nth(0)
     b = f.nth(f.degree())
     c = a/b
@@ -1197,6 +1197,8 @@ def roots(f, *gens, **flags):
                     add_eq(eq1, 0)
 
                     for factor, k in factors:
+                        add_comment("Solve the equation")
+                        add_eq(factor, 0)
                         for r in _try_heuristics(Poly(factor, f.gen, field=True)):
                             _update_dict(result, r, k)
 
