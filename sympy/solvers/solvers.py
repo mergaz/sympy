@@ -1262,7 +1262,7 @@ def solveAcosFpBsinGpC(f, symbol):
     if m[A] == m[B] and m[C] == 0:
         add_comment("Rewrite the equation as")
         add_eq(cos(m[F]), cos(pi/2 + m[G], evaluate=False))
-        add_comment("the solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
         add_eq(m[F], pi/2 + m[G] + 2*pi*_k)
         add_eq(m[F], -pi/2 - m[G] + 2*pi*_k)
         add_comment("where " + str(_k) + " can be any integer")
@@ -1280,7 +1280,7 @@ def solveAcosFpBsinGpC(f, symbol):
     if m[A] == -m[B] and m[C] == 0:
         add_comment("Rewrite the equation as")
         add_eq(cos(m[F]), cos(pi/2 - m[G], evaluate=False))
-        add_comment("the solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
         add_eq(m[F], pi/2 - m[G] + 2*pi*_k)
         add_eq(m[F], -pi/2 + m[G] + 2*pi*_k)
         add_comment("where " + str(_k) + " can be any integer")
@@ -1312,13 +1312,12 @@ def solveAcosFpBcosG(f, symbol):
     if m[A] == -m[B]:
         add_comment("Since")
         add_eq(cos(m[F]), cos(m[G]))
-        add_comment("the solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
         add_eq(m[F], m[G] + 2*pi*_k)
         add_eq(m[F], -m[G] + 2*pi*_k)
         add_comment("where " + str(_k) + " can be any integer")
         r1 = solve(m[F] - m[G] - 2*pi*_k, symbol)
         r2 = solve(m[F] + m[G] - 2*pi*_k, symbol)
-        add_comment("We have the following solution")
         result = r1 + r2
         if len(result) == 0:
             add_comment('Therefore the equation has no solution')
@@ -1336,7 +1335,6 @@ def solveAcosFpBcosG(f, symbol):
         add_eq(cos((m[F] - m[G])/2), 0)
         r1 = solve(cos((m[F] + m[G])/2), symbol)
         r2 = solve(cos((m[F] - m[G])/2), symbol)
-        add_comment("We have the following solution")
         result = r1 + r2
         if len(result) == 0:
             add_comment('Therefore the equation has no solution')
@@ -1363,13 +1361,12 @@ def solveAsinFpBsinG(f, symbol):
     if m[A] == -m[B]:
         add_comment("Since")
         add_eq(sin(m[F]), sin(m[G]))
-        add_comment("the solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
         add_eq(m[F], m[G] + 2*pi*_k)
         add_eq(m[F], pi - m[G] + 2*pi*_k)
         add_comment("where " + str(_k) + " can be any integer")
         r1 = solve(m[F] - m[G] - 2*pi*_k, symbol)
         r2 = solve(m[F] - pi + m[G] - 2*pi*_k, symbol)
-        add_comment("We have the following solution")
         result = r1 + r2
         if len(result) == 0:
             add_comment('Therefore the equation has no solution')
@@ -1386,7 +1383,6 @@ def solveAsinFpBsinG(f, symbol):
         add_eq(cos((m[F] - m[G])/2), 0)
         r1 = solve(sin((m[F] + m[G])/2), symbol)
         r2 = solve(cos((m[F] - m[G])/2), symbol)
-        add_comment("We have the following solution")
         result = r1 + r2
         if len(result) == 0:
             add_comment('Therefore the equation has no solution')
@@ -1602,11 +1598,15 @@ def _solve(f, *symbols, **flags):
                     check = flags.get('check', absent)
                     flags['check'] = False
                     sol = _solve(eq, isym, **flags)
+                    add_comment("Find the inverse substitution")
                     inv = _solve(ieq, symbol, **flags)
                     result = []
+                    add_comment("Therefore we have")
                     for s in sol:
                         for i in inv:
-                            result.append(i.subs(isym, s))
+                            r = i.subs(isym, s)
+                            result.append(r)
+                            add_eq(symbol, r)
                     if check == absent:
                         flags.pop('check')
                     else:
@@ -2673,6 +2673,18 @@ def solve_linear_system(system, *symbols, **flags):
     else:
         return []   # no solutions
 
+
+def th(i):
+    if i == 1:
+        return "1st"
+    elif i == 2:
+        return "2nd"
+    elif i == 3:
+        return "3rd"
+    else:
+        return str(i) + "th"
+
+
 def manual_solve_linear_system(system, *symbols, **flags):
 
     matrix = system[:, :]
@@ -2685,16 +2697,6 @@ def manual_solve_linear_system(system, *symbols, **flags):
     syms = list(symbols)
 
     i, m = 0, matrix.cols - 1  # don't count augmentation
-
-    def th(i):
-        if i == 1:
-            return "1st"
-        elif i == 2:
-            return "2nd"
-        elif i == 3:
-            return "3rd"
-        else:
-            return str(i) + "th"
 
     r = 0
     c = 0
@@ -3477,9 +3479,17 @@ def unrad(eq, *syms, **flags):
     # continue handling
     ok = True
     if len(rterms) == 1:
+        add_comment("Rewrite the equation as")
+        add_eq(rterms[0], -args)
+        add_comment("Raise both sides of the equation to the " + th(lcm) + " power")
+        add_eq(Pow(rterms[0], lcm, evaluate=False), Pow(-args, lcm, evaluate=False))
         eq = rterms[0]**lcm - (-args)**lcm
 
     elif len(rterms) == 2 and not args:
+        add_comment("Rewrite the equation as")
+        add_eq(rterms[0], rterms[1])
+        add_comment("Raise both sides of the equation to the " + th(lcm) + " power")
+        add_eq(Pow(rterms[0], lcm, evaluate=False), Pow(rterms[1], lcm, evaluate=False))
         eq = rterms[0]**lcm - rterms[1]**lcm
 
     elif log(lcm, 2).is_Integer and (not args and
@@ -3490,14 +3500,26 @@ def unrad(eq, *syms, **flags):
         if len(rterms) == 4:
             # (r0+r1)**2 - (r2+r3)**2
             r0, r1, r2, r3 = rterms
+            add_comment("Rewrite the equation as")
+            add_eq(r0 + r1, r2 + r3)
+            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_eq(Pow(r0 + r1, 2, evaluate=False), Pow(r2 + r3, 2, evaluate=False))
             eq = _norm2(r0, r1) - _norm2(r2, r3)
         elif len(rterms) == 3:
             # (r1+r2)**2 - (r0+args)**2
             r0, r1, r2 = rterms
+            add_comment("Rewrite the equation as")
+            add_eq(r0 + r1, r2 + args)
+            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_eq(Pow(r0 + r1, 2, evaluate=False), Pow(r2 + args, 2, evaluate=False))
             eq = _norm2(r1, r2) - _norm2(r0, args)
         elif len(rterms) == 2:
             # r0**2 - (r1+args)**2
             r0, r1 = rterms
+            add_comment("Rewrite the equation as")
+            add_eq(r0, r1 + args)
+            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_eq(Pow(r0, 2, evaluate=False), Pow(r1 + args, 2, evaluate=False))
             eq = r0**2 - _norm2(r1, args)
 
     elif len(bases) == 1:  # change of variables may work
@@ -3514,6 +3536,10 @@ def unrad(eq, *syms, **flags):
         else:
             p = Dummy('p', positive=True)
             cov.append((p, b - p**lcm))
+            add_comment("Introduce a new variable " + str(p))
+            add_eq(b, p**lcm)
+        add_comment("We have")
+        add_eq(poly.subs(b, Pow(p, lcm, evaluate=False)).as_expr(), 0)
         eq = poly.subs(b, p**lcm).as_expr()
         if not eq.free_symbols.intersection(syms):
             ok = True
