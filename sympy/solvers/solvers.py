@@ -57,7 +57,6 @@ import warnings
 
 from sympy import lcm
 
-from sympy.printing.str import StrPrinter
 from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine
 
 # An integer parameter for solutions of trig eqs.
@@ -417,7 +416,7 @@ def sub_trig_solution(solutions, subtrahend):
         if are_intersecting(s, t):
             add_comment('The intersection of the general solution')
             add_exp(s[2])
-            add_comment('and the set of unadmissible values')
+            add_comment('and the set of inadmissible values')
             add_exp(t[2])
             add_comment('is not emtpy')
             # We have
@@ -1228,6 +1227,172 @@ def solve(f, *symbols, **flags):
     return k, set([tuple([s[ki] for ki in k]) for s in solution])
 
 
+class DontKnowHowToSolve(Exception):
+    pass
+
+
+# Returns true iff the equation has the form Acos(F(x)) + Bsin(G(x)) + C = 0
+def isAcosFpBsinGpC(f, symbol):
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F) + B*sin(G) + C)
+    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and not m[C].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
+
+
+# Solve the equation in the form Asin(F(x)) + Bsin(G(x)) + C = 0
+def solveAcosFpBsinGpC(f, symbol):
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F) + B*sin(G) + C)
+    if m[F] == m[G]:
+        d = sqrt(m[A]**2 + m[B]**2)
+        if d != 1:
+            add_comment("Divide this equation by " + str(d))
+            add_eq(f / d, 0)
+        add_comment("Rewrite this equation as")
+        s = asin(m[A] / d)
+        t = acos(m[B] / d)
+        add_eq(sin(s, evaluate=False)*cos(m[F]) + cos(t, evaluate=False)*sin(m[G]), -m[C] / d)
+        add_comment("Using the formula for the sine of the sum we get")
+        add_eq(sin(s + m[F]), -m[C] / d)
+        r1 = solve(sin(s + m[F]) + m[C] / d, symbol)
+        #add_comment("We have the following solution")
+        #for r in r1:
+        #    add_eq(symbol, r)
+        return r1
+    if m[A] == m[B] and m[C] == 0:
+        add_comment("Rewrite the equation as")
+        add_eq(cos(m[F]), cos(pi/2 + m[G], evaluate=False))
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_eq(m[F], pi/2 + m[G] + 2*pi*_k)
+        add_eq(m[F], -pi/2 - m[G] + 2*pi*_k)
+        add_comment("where " + str(_k) + " can be any integer")
+        r1 = solve(m[F] - m[G] - pi/2 - 2*pi*_k, symbol)
+        r2 = solve(m[F] + m[G] + pi/2 - 2*pi*_k, symbol)
+        result = r1 + r2
+        if len(result) == 0:
+            add_comment('Therefore the equation has no solution')
+        else:
+            add_comment("We have the following solution")
+            for r in result:
+                add_eq(symbol, r)
+            add_comment("where " + str(_k) + " can be any integer")
+        return result
+    if m[A] == -m[B] and m[C] == 0:
+        add_comment("Rewrite the equation as")
+        add_eq(cos(m[F]), cos(pi/2 - m[G], evaluate=False))
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_eq(m[F], pi/2 - m[G] + 2*pi*_k)
+        add_eq(m[F], -pi/2 + m[G] + 2*pi*_k)
+        add_comment("where " + str(_k) + " can be any integer")
+        r1 = solve(m[F] + m[G] - pi/2 - 2*pi*_k, symbol)
+        r2 = solve(m[F] - m[G] + pi/2 - 2*pi*_k, symbol)
+        result = r1 + r2
+        if len(result) == 0:
+            add_comment('Therefore the equation has no solution')
+        else:
+            add_comment("We have the following solution")
+            for r in result:
+                add_eq(symbol, r)
+            add_comment("where " + str(_k) + " can be any integer")
+        return result
+    raise DontKnowHowToSolve()
+
+
+# Returns true iff the equation has the form Acos(F(x)) + Bcos(G(x)) = 0
+def isAcosFpBcosG(f, symbol):
+    A, B, F, G = Wild("A"), Wild("B"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F) + B*cos(G))
+    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
+
+
+# Solve the equation in the form Acos(F(x)) + Bcos(G(x)) = 0
+def solveAcosFpBcosG(f, symbol):
+    A, B, F, G = Wild("A"), Wild("B"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F) + B*cos(G))
+    if m[A] == -m[B]:
+        add_comment("Since")
+        add_eq(cos(m[F]), cos(m[G]))
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_eq(m[F], m[G] + 2*pi*_k)
+        add_eq(m[F], -m[G] + 2*pi*_k)
+        add_comment("where " + str(_k) + " can be any integer")
+        r1 = solve(m[F] - m[G] - 2*pi*_k, symbol)
+        r2 = solve(m[F] + m[G] - 2*pi*_k, symbol)
+        result = r1 + r2
+        if len(result) == 0:
+            add_comment('Therefore the equation has no solution')
+        else:
+            add_comment("We have the following solution")
+            for r in result:
+                add_eq(symbol, r)
+            add_comment("where " + str(_k) + " can be any integer")
+        return result
+    elif m[A] == m[B]:
+        add_comment("Using formula for the sum of two cosines we get")
+        add_eq(2*cos((m[F] + m[G])/2)*cos((m[F] - m[G])/2), 0)
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_eq(cos((m[F] + m[G])/2), 0)
+        add_eq(cos((m[F] - m[G])/2), 0)
+        r1 = solve(cos((m[F] + m[G])/2), symbol)
+        r2 = solve(cos((m[F] - m[G])/2), symbol)
+        result = r1 + r2
+        if len(result) == 0:
+            add_comment('Therefore the equation has no solution')
+        else:
+            add_comment("We have the following solution")
+            for r in result:
+                add_eq(symbol, r)
+            add_comment("where " + str(_k) + " can be any integer")
+        return result
+    raise DontKnowHowToSolve()
+
+
+# Returns true iff the equation has the form Asin(F(x)) + Bsin(G(x)) = 0
+def isAsinFpBsinG(f, symbol):
+    A, B, F, G = Wild("A"), Wild("B"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F) + B*sin(G))
+    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
+
+
+# Solve the equation in the form Asin(F(x)) + Bsin(G(x)) = 0
+def solveAsinFpBsinG(f, symbol):
+    A, B, F, G = Wild("A"), Wild("B"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F) + B*sin(G))
+    if m[A] == -m[B]:
+        add_comment("Since")
+        add_eq(sin(m[F]), sin(m[G]))
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_eq(m[F], m[G] + 2*pi*_k)
+        add_eq(m[F], pi - m[G] + 2*pi*_k)
+        add_comment("where " + str(_k) + " can be any integer")
+        r1 = solve(m[F] - m[G] - 2*pi*_k, symbol)
+        r2 = solve(m[F] - pi + m[G] - 2*pi*_k, symbol)
+        result = r1 + r2
+        if len(result) == 0:
+            add_comment('Therefore the equation has no solution')
+        else:
+            add_comment("We have the following solution")
+            for r in result:
+                add_eq(symbol, r)
+        return result
+    elif m[A] == m[B]:
+        add_comment("Using formula for the sum of two sines we get")
+        add_eq(2*sin((m[F] + m[G])/2)*cos((m[F] - m[G])/2), 0)
+        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_eq(sin((m[F] + m[G])/2), 0)
+        add_eq(cos((m[F] - m[G])/2), 0)
+        r1 = solve(sin((m[F] + m[G])/2), symbol)
+        r2 = solve(cos((m[F] - m[G])/2), symbol)
+        result = r1 + r2
+        if len(result) == 0:
+            add_comment('Therefore the equation has no solution')
+        else:
+            add_comment("We have the following solution")
+            for r in result:
+                add_eq(symbol, r)
+            add_comment("where " + str(_k) + " can be any integer")
+        return result
+    raise DontKnowHowToSolve()
+
 def _solve(f, *symbols, **flags):
     """Return a checked solution for f in terms of one or more of the
     symbols."""
@@ -1319,27 +1484,27 @@ def _solve(f, *symbols, **flags):
                 if contains_trig(d, symbols):
                     trig_dens.add(d)
             if len(tans) > 0 or len(cots) > 0 or len(trig_dens) > 0:
-                add_comment('Find unadmissible values')
+                add_comment('Find inadmissible values')
                 unadmissible_values = set()
                 for t in tans:
                     add_comment('Find the values when the following expression is undefined')
                     add_exp(t)
                     vs = _solve(t.args[0] - pi / 2 - pi * _k, symbol, **flags)
-                    add_comment('The following values are unadmissible')
+                    add_comment('The following values are inadmissible')
                     add_exp(vs)
                     unadmissible_values |= set(vs)
                 for c in cots:
                     add_comment('Find the values when the following expression is undefined')
                     add_exp(c)
                     vs = _solve(c.args[0] - pi * _k, symbol, **flags)
-                    add_comment('The following values are unadmissible')
+                    add_comment('The following values are inadmissible')
                     add_exp(vs)
                     unadmissible_values |= set(vs)
                 for d in trig_dens:
                     add_comment('Find the values when the following expression is undefined')
                     add_exp(1 / d)
                     vs = _solve(d, symbol, **flags)
-                    add_comment('The following values are unadmissible')
+                    add_comment('The following values are inadmissible')
                     add_exp(vs)
                     unadmissible_values |= set(vs)
                 for uv in unadmissible_values:
@@ -1392,6 +1557,9 @@ def _solve(f, *symbols, **flags):
             # no need to check but simplify if desired
             if flags.get('simplify', True):
                 sol = simplify(sol)
+            add_comment("This equation is linear")
+            add_comment("The solution of this equation is")
+            add_eq(symbol, sol)
             return [sol]
 
         result = False  # no solution was obtained
@@ -1429,11 +1597,15 @@ def _solve(f, *symbols, **flags):
                     check = flags.get('check', absent)
                     flags['check'] = False
                     sol = _solve(eq, isym, **flags)
+                    add_comment("Find the inverse substitution")
                     inv = _solve(ieq, symbol, **flags)
                     result = []
+                    add_comment("Therefore we have")
                     for s in sol:
                         for i in inv:
-                            result.append(i.subs(isym, s))
+                            r = i.subs(isym, s)
+                            result.append(r)
+                            add_eq(symbol, r)
                     if check == absent:
                         flags.pop('check')
                     else:
@@ -1508,19 +1680,15 @@ def _solve(f, *symbols, **flags):
                         gens = tr6_gens
                         add_eq(poly.as_expr(), 0)
 
-            # Transform equations of the forms cos(f(x)) + cos(g(x)) = 0
-            if f_num.func == Add and f_num.args[0].func == cos and f_num.args[1].func == cos:
-                newf = cos((f_num.args[0].args[0] + f_num.args[1].args[0]) / 2) * cos((f_num.args[0].args[0] - f_num.args[1].args[0]) / 2) * 2
-                add_comment('Rewrite equation')
-                add_eq(newf, 0)
-                return _solve(newf, symbol, **flags)
-            # Transform equations of the forms sin(f(x)) + sin(g(x)) = 0
-            if f_num.func == Add and f_num.args[0].func == sin and f_num.args[1].func == sin:
-                newf = sin((f_num.args[0].args[0] + f_num.args[1].args[0]) / 2) * cos((f_num.args[0].args[0] - f_num.args[1].args[0]) / 2) * 2
-                add_comment('Rewrite equation')
-                add_eq(newf, 0)
-                return _solve(newf, symbol, **flags)
-
+            try:
+                if isAcosFpBsinGpC(f_num, symbol):
+                    return solveAcosFpBsinGpC(f_num, symbol)
+                if isAcosFpBcosG(f_num, symbol):
+                    return solveAcosFpBcosG(f_num, symbol)
+                if isAsinFpBsinG(f_num, symbol):
+                    return solveAsinFpBsinG(f_num, symbol)
+            except DontKnowHowToSolve:
+                pass
 
             def is_log(gens):
                 for g in gens:
@@ -1589,6 +1757,8 @@ def _solve(f, *symbols, **flags):
                     if not other and len(funcs.intersection(trig)) > 1:
                         newf = TR1(f_num).rewrite(tan)
                         if newf != f_num:
+                            add_comment("Using the tangent half-angle substitution we get")
+                            add_eq(newf, 0)
                             return _solve(newf, symbol, **flags)
 
                     # just a simple case - see if replacement of single function
@@ -1679,8 +1849,9 @@ def _solve(f, *symbols, **flags):
                         gen = poly.gen
                         poly = Poly(poly.as_expr(), poly.gen, composite=True)
                         if poly.is_linear:
-                            if f != poly.as_expr():
-                                add_comment('Solve the equation')
+                            if (f / poly.as_expr()).cancel().has(symbol):
+                                add_eq(f, poly.as_expr())
+                                add_comment('Rewrite the equation as')
                                 add_eq(poly.gen, -poly.nth(0) / poly.nth(1))
                             soln = [-poly.nth(0) / poly.nth(1)]
                         else:
@@ -1689,6 +1860,8 @@ def _solve(f, *symbols, **flags):
                                 poly_y = poly.subs(gen, y)
                                 add_comment('Use the substitution')
                                 add_eq(y, gen)
+                                add_comment('We get')
+                                add_eq(poly_y.as_expr(), 0)
                             else:
                                 poly_y = poly
                             rts = roots(poly_y, cubics=True, quartics=True, quintics=True)
@@ -1696,8 +1869,6 @@ def _solve(f, *symbols, **flags):
                             for r in rts:
                                 rts_number += rts[r]
                             soln = list(rts.keys())
-                            add_comment('We have the following solutions')
-                            add_exp(soln)                            
                             # Here is some magic. I believe that we don't go to
                             # this 'if' in case of "school" equations. 
                             if rts_number < deg:
@@ -1724,7 +1895,7 @@ def _solve(f, *symbols, **flags):
                                         inv_f.append([s, f_arg, asin(-1, evaluate=False) + 2 * pi * _k])
                                     elif s == 0:
                                         inv_f.append([s, f_arg, asin(0, evaluate=False) + pi * _k])
-                                    elif flags.get('real', False) == False or -1 <= s <= 1:
+                                    elif not s.is_number or s.is_real and -1 <= s <= 1:
                                         inv_f.append([s, f_arg, asin(s, evaluate=False) + 2 * pi * _k])
                                         inv_f.append([s, f_arg, pi - asin(s, evaluate=False) + 2 * pi * _k])
                                     else:
@@ -1740,7 +1911,7 @@ def _solve(f, *symbols, **flags):
                                         inv_f.append([s, f_arg, acos(-1, evaluate=False) + 2 * pi * _k])
                                     elif s == 0:
                                         inv_f.append([s, f_arg, acos(0, evaluate=False) + pi * _k])
-                                    elif flags.get('real', False) == False or -1 <= s <= 1:
+                                    elif not s.is_number or s.is_real and -1 <= s <= 1:
                                         inv_f.append([s, f_arg, acos(s, evaluate=False) + 2 * pi * _k])
                                         inv_f.append([s, f_arg, -acos(s, evaluate=False) + 2 * pi * _k])
                                     else:
@@ -1749,7 +1920,7 @@ def _solve(f, *symbols, **flags):
                                 # If we are here, then equation has the form tan(f(x)) = s1, s2, ..., sk.
                                 is_trig = True
                                 for s in soln:
-                                    if flags.get('real', False) == False or s.is_real:
+                                    if not s.is_number or s.is_real:
                                         inv_f.append([s, f_arg, atan(s, evaluate=False) + pi * _k])
                                     else:
                                         inv_f.append([s, f_arg, None])
@@ -1757,14 +1928,14 @@ def _solve(f, *symbols, **flags):
                                 # If we are here, then equation has the form cot(f(x)) = s1, s2, ..., sk.
                                 is_trig = True
                                 for s in soln:
-                                    if flags.get('real', False) == False or s.is_real:
+                                    if not s.is_number or s.is_real:
                                         inv_f.append([s, f_arg, acot(s, evaluate=False) + pi * _k])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == Pow:
                                 # if we are here, then equation has the form y**f(x) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if flags.get('real', False) == False or s.is_real and s > 0:
+                                    if  not s.is_number or s.is_real and s > 0:
                                         inv_f.append([s, gen.args[1], log(s, f_arg, evaluate=False)])
                                     else:
                                         inv_f.append([s, gen.args[1], None])
@@ -1775,35 +1946,35 @@ def _solve(f, *symbols, **flags):
                                 else:
                                     base = S.Exp1
                                 for s in soln:
-                                    if flags.get('real', False) == False or s.is_real:
+                                    if not s.is_number or s.is_real:
                                         inv_f.append([s, f_arg, Pow(base, s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == asin:
                                 # If we are here, then equation has the form asin(f(x)) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if flags.get('real', False) == False or -pi / 2 <= s <= pi / 2:
+                                    if  not s.is_number or s.is_real and -pi / 2 <= s <= pi / 2:
                                         inv_f.append([s, f_arg, sin(s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == acos:
                                 # If we are here, then equation has the form asin(f(x)) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if flags.get('real', False) == False or 0 <= s <= pi:
+                                    if  not s.is_number or s.is_real and 0 <= s <= pi:
                                         inv_f.append([s, f_arg, cos(s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == atan:
                                 # If we are here, then equation has the form asin(f(x)) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if flags.get('real', False) == False or -pi / 2 <= s <= pi / 2:
+                                    if  not s.is_number or s.is_real and -pi / 2 <= s <= pi / 2:
                                         inv_f.append([s, f_arg, tan(s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
                             elif f == acot:
                                 # If we are here, then equation has the form asin(f(x)) = s1, s2, ..., sk.
                                 for s in soln:
-                                    if flags.get('real', False) == False or 0 <= s <= pi:
+                                    if  not s.is_number or s.is_real and 0 <= s <= pi:
                                         inv_f.append([s, f_arg, sin(s, evaluate=False)])
                                     else:
                                         inv_f.append([s, f_arg, None])
@@ -1830,11 +2001,11 @@ def _solve(f, *symbols, **flags):
                             result = list(map(simplify, result))
                             result = list(map(expand, result))
                             if len(result) > 0:
-                                add_comment('Therefore')
+                                add_comment('Therefore the solution is')
                                 for r in result:
                                     add_eq(symbol, r)
                                 if is_trig:
-                                    add_comment("Where " + str(_k) + " can be any integer")
+                                    add_comment("where " + str(_k) + " can be any integer")
                             else:
                                 add_comment('There are no real roots')
                             return result
@@ -1887,7 +2058,7 @@ def _solve(f, *symbols, **flags):
 
 
 def _solve_system(exprs, symbols, **flags):
-    add_comment('solve system')
+    add_comment('Solve the system of equations')
     for i in exprs:
         add_eq(i.as_expr(), 0)
 
@@ -1920,7 +2091,8 @@ def _solve_system(exprs, symbols, **flags):
         solved_syms = []
     else:
         if all(p.is_linear for p in polys):
-            add_comment('linear system')
+            add_comment('This system is a system of linear equations')
+            add_comment('Convert this system into an augmented matrix')
             n, m = len(polys), len(symbols)
             matrix = zeros(n, m + 1)
 
@@ -1935,7 +2107,7 @@ def _solve_system(exprs, symbols, **flags):
             if flags.pop('particular', False):
                 result = minsolve_linear_system(matrix, *symbols, **flags)
             else:
-                result = solve_linear_system(matrix, *symbols, **flags)
+                result = manual_solve_linear_system(matrix, *symbols, **flags)
             if result:
                 # it doesn't need to be checked but we need to see
                 # that it didn't set any denominators to 0
@@ -1959,6 +2131,7 @@ def _solve_system(exprs, symbols, **flags):
                 for syms in subsets(free, len(polys)):
                     try:
                         # returns [] or list of tuples of solutions for syms
+                        add_comment("This is a system of polynomial equations")
                         res = solve_poly_system(polys, *syms)
                         if res:
                             for r in res:
@@ -1980,6 +2153,7 @@ def _solve_system(exprs, symbols, **flags):
                     raise NotImplementedError('no valid subset found')
             else:
                 try:
+                    add_comment("This is a system of polynomial equations")
                     result = solve_poly_system(polys, *symbols)
                     solved_syms = symbols
                 except NotImplementedError:
@@ -2359,14 +2533,8 @@ def solve_linear_system(system, *symbols, **flags):
 
     """
 
-    add_comment('Gauss solution')
-
     matrix = system[:, :]
     
-    add_comment('initial matrix')
-    printer = StrPrinter()
-    add_comment(matrix.table(printer))
-
     syms = list(symbols)
 
     i, m = 0, matrix.cols - 1  # don't count augmentation
@@ -2458,9 +2626,6 @@ def solve_linear_system(system, *symbols, **flags):
     # in row-echelon form so we can check how many solutions
     # there are and extract them using back substitution
     
-    add_comment('transformed matrix')
-    add_comment(matrix.table(printer))
-
     do_simplify = flags.get('simplify', True)
 
     if len(syms) == matrix.rows:
@@ -2480,7 +2645,6 @@ def solve_linear_system(system, *symbols, **flags):
                 solutions[syms[k]] = content
 
             k -= 1
-        add_step(solutions)
         return solutions
     elif len(syms) > matrix.rows:
         # this system will have infinite number of solutions
@@ -2504,10 +2668,142 @@ def solve_linear_system(system, *symbols, **flags):
                 solutions[syms[k]] = content
 
             k -= 1
-        add_step(solutions)
         return solutions
     else:
         return []   # no solutions
+
+
+def th(i):
+    if i == 1:
+        return "1st"
+    elif i == 2:
+        return "2nd"
+    elif i == 3:
+        return "3rd"
+    else:
+        return str(i) + "th"
+
+
+def manual_solve_linear_system(system, *symbols, **flags):
+
+    matrix = system[:, :]
+
+    add_exp(matrix)
+    add_comment("Use the Gauss method")
+
+    prev = matrix.copy()
+
+    syms = list(symbols)
+
+    i, m = 0, matrix.cols - 1  # don't count augmentation
+
+    r = 0
+    c = 0
+    while r < matrix.rows:
+        t = r
+        while t < matrix.rows:
+            if not any(matrix[t, :m + 1]):
+                matrix.row_del(t)
+            else:
+                t += 1
+        if prev != matrix:
+            add_comment("Remove zeros rows")
+            add_exp(matrix)
+            prev = matrix.copy()
+        t = r
+        while t < matrix.rows:
+            if not any(matrix[t, :m]) and matrix[t, m]:
+                add_comment("Since the equation " + str(matrix[t, m]) + " = 0 is not be satisfied, the system is inconsistent.")
+                return None
+            t += 1
+
+        if matrix.rows == 0:
+            add_comment("All rows have removed. Therefore every choice of variable values is a solution")
+            return dict()
+
+        if r >= matrix.rows:
+            break
+
+        # find the pivot elem
+        for s in range(c, m + 1):
+            for t in range(r, matrix.rows):
+                if matrix[t, s]:
+                    c = s
+                    if r != t:
+                        matrix.row_swap(r, t)
+                        add_comment("Swap " + th(r + 1) + " row and " + th(t + 1) + " row")
+                        add_exp(matrix)
+                        prev = matrix.copy()
+                    break
+            if matrix[r, c]:
+                break
+
+        pivot_inv = S.One/matrix[r, c]
+        if pivot_inv != 1:
+            # divide all elements in the current row by the pivot
+            matrix.row_op(r, lambda x, _: x * pivot_inv)
+            add_comment("Multiply " + th(r + 1) + " row by " + str(pivot_inv))
+            add_exp(matrix)
+            prev = matrix.copy()
+
+        for k in xrange(r + 1, matrix.rows):
+            if matrix[k, r]:
+                coeff = matrix[k, r]
+                if coeff == 1:
+                    add_comment("Subtract " + th(r + 1) + " row from " + th(k + 1) + " row")
+                elif coeff == -1:
+                    add_comment("Add " + th(r + 1) + " row to " + th(k + 1) + " row")
+                elif coeff > 1:
+                    add_comment("Subtract " + th(r + 1) + " row multiplied by " + str(coeff) + " from " + th(k + 1) + " row")
+                elif coeff < -1:
+                    add_comment("Add " + th(r + 1) + " row multiplied by " + str(-coeff) + " to " + th(k + 1) + " row ")
+
+                # subtract from the current row the row containing
+                # pivot and multiplied by extracted coefficient
+                matrix.row_op(k, lambda x, j: simplify(x - matrix[r, j]*coeff))
+
+        if matrix != prev:
+            add_exp(matrix)
+            prev = matrix.copy()
+
+        r += 1
+
+    # if there weren't any problems, augmented matrix is now
+    # in row-echelon form so we can check how many solutions
+    # there are and extract them using back substitution
+    do_simplify = flags.get('simplify', True)
+
+    add_comment("Converting back to a system of equations")
+    for k in range(0, matrix.rows):
+        for c in range(0, m):
+            if matrix[k, c]:
+                break
+        s = matrix[k, m]
+        for j in range(c + 1, m):
+            s += -matrix[k, j]*syms[j]
+        add_eq(syms[c], s)
+
+    add_comment("Therefore we get")
+
+    solutions = {}
+    for k in reversed(range(0, matrix.rows)):
+        for c in range(0, m):
+            if matrix[k, c]:
+                break
+        s = matrix[k, m]
+        for j in range(c + 1, m):
+            if solutions.has_key(syms[j]):
+                s += -matrix[k, j]*solutions[syms[j]]
+            else:
+                s += -matrix[k, j]*syms[j]
+
+        if do_simplify:
+            s = simplify(s)
+        solutions[syms[k]] = s
+        add_eq(syms[k], s)
+
+    return solutions
+
 
 
 def solve_undetermined_coeffs(equ, coeffs, sym, **flags):
@@ -3182,9 +3478,17 @@ def unrad(eq, *syms, **flags):
     # continue handling
     ok = True
     if len(rterms) == 1:
+        add_comment("Rewrite the equation as")
+        add_eq(rterms[0], -args)
+        add_comment("Raise both sides of the equation to the " + th(lcm) + " power")
+        add_eq(Pow(rterms[0], lcm, evaluate=False), Pow(-args, lcm, evaluate=False))
         eq = rterms[0]**lcm - (-args)**lcm
 
     elif len(rterms) == 2 and not args:
+        add_comment("Rewrite the equation as")
+        add_eq(rterms[0], rterms[1])
+        add_comment("Raise both sides of the equation to the " + th(lcm) + " power")
+        add_eq(Pow(rterms[0], lcm, evaluate=False), Pow(rterms[1], lcm, evaluate=False))
         eq = rterms[0]**lcm - rterms[1]**lcm
 
     elif log(lcm, 2).is_Integer and (not args and
@@ -3195,14 +3499,26 @@ def unrad(eq, *syms, **flags):
         if len(rterms) == 4:
             # (r0+r1)**2 - (r2+r3)**2
             r0, r1, r2, r3 = rterms
+            add_comment("Rewrite the equation as")
+            add_eq(r0 + r1, r2 + r3)
+            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_eq(Pow(r0 + r1, 2, evaluate=False), Pow(r2 + r3, 2, evaluate=False))
             eq = _norm2(r0, r1) - _norm2(r2, r3)
         elif len(rterms) == 3:
             # (r1+r2)**2 - (r0+args)**2
             r0, r1, r2 = rterms
+            add_comment("Rewrite the equation as")
+            add_eq(r0 + r1, r2 + args)
+            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_eq(Pow(r0 + r1, 2, evaluate=False), Pow(r2 + args, 2, evaluate=False))
             eq = _norm2(r1, r2) - _norm2(r0, args)
         elif len(rterms) == 2:
             # r0**2 - (r1+args)**2
             r0, r1 = rterms
+            add_comment("Rewrite the equation as")
+            add_eq(r0, r1 + args)
+            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_eq(Pow(r0, 2, evaluate=False), Pow(r1 + args, 2, evaluate=False))
             eq = r0**2 - _norm2(r1, args)
 
     elif len(bases) == 1:  # change of variables may work
@@ -3219,6 +3535,10 @@ def unrad(eq, *syms, **flags):
         else:
             p = Dummy('p', positive=True)
             cov.append((p, b - p**lcm))
+            add_comment("Introduce a new variable " + str(p))
+            add_eq(b, p**lcm)
+        add_comment("We have")
+        add_eq(poly.subs(b, Pow(p, lcm, evaluate=False)).as_expr(), 0)
         eq = poly.subs(b, p**lcm).as_expr()
         if not eq.free_symbols.intersection(syms):
             ok = True
