@@ -1470,55 +1470,55 @@ def _solve(f, *symbols, **flags):
             eqs.add(m)
         if len(eqs) > 0:
             add_comment("To solve this equation we find roots of the following equations")
-            for m in f.args:
+            for m in eqs:
                 add_eq(m, 0)
 
-            flags['check'] = False
-            unckecked_result = set()
-            for m in f.args:
-                soln = _solve(m, symbol, **flags)
-                unckecked_result |= set(soln)
-            # Check result
-            trig_dens = set()
-            for d in dens:
-                if contains_trig(d, symbols):
-                    trig_dens.add(d)
-            if len(tans) > 0 or len(cots) > 0 or len(trig_dens) > 0:
-                add_comment('Find inadmissible values')
-                unadmissible_values = set()
-                for t in tans:
-                    add_comment('Find the values when the following expression is undefined')
-                    add_exp(t)
-                    vs = _solve(t.args[0] - pi / 2 - pi * _k, symbol, **flags)
-                    add_comment('The following values are inadmissible')
-                    add_exp(vs)
-                    unadmissible_values |= set(vs)
-                for c in cots:
-                    add_comment('Find the values when the following expression is undefined')
-                    add_exp(c)
-                    vs = _solve(c.args[0] - pi * _k, symbol, **flags)
-                    add_comment('The following values are inadmissible')
-                    add_exp(vs)
-                    unadmissible_values |= set(vs)
-                for d in trig_dens:
-                    add_comment('Find the values when the following expression is undefined')
-                    add_exp(1 / d)
-                    vs = _solve(d, symbol, **flags)
-                    add_comment('The following values are inadmissible')
-                    add_exp(vs)
-                    unadmissible_values |= set(vs)
-                for uv in unadmissible_values:
-                    unckecked_result = sub_trig_solution(unckecked_result, uv)
+        flags['check'] = False
+        unckecked_result = set()
+        for m in eqs:
+            soln = _solve(m, symbol, **flags)
+            unckecked_result |= set(soln)
+        # Check result
+        trig_dens = set()
+        for d in dens:
+            if contains_trig(d, symbols):
+                trig_dens.add(d)
+        if len(tans) > 0 or len(cots) > 0 or len(trig_dens) > 0:
+            add_comment('Find inadmissible values')
+            unadmissible_values = set()
+            for t in tans:
+                add_comment('Find the values when the following expression is undefined')
+                add_exp(t)
+                vs = _solve(t.args[0] - pi / 2 - pi * _k, symbol, **flags)
+                add_comment('The following values are inadmissible')
+                add_exp(vs)
+                unadmissible_values |= set(vs)
+            for c in cots:
+                add_comment('Find the values when the following expression is undefined')
+                add_exp(c)
+                vs = _solve(c.args[0] - pi * _k, symbol, **flags)
+                add_comment('The following values are inadmissible')
+                add_exp(vs)
+                unadmissible_values |= set(vs)
+            for d in trig_dens:
+                add_comment('Find the values when the following expression is undefined')
+                add_exp(1 / d)
+                vs = _solve(d, symbol, **flags)
+                add_comment('The following values are inadmissible')
+                add_exp(vs)
+                unadmissible_values |= set(vs)
+            for uv in unadmissible_values:
+                unckecked_result = sub_trig_solution(unckecked_result, uv)
 
-            for s in unckecked_result:
-                for d in dens:
-                    if checksol(d, {symbol: s}, **flags) == False: # checksol can return None
-                        add_comment('The value ' + str(s) + ' is not a root because it is a root of the denominator')
-                        add_exp(d)
-                        break
-                else:
-                    result.add(s)
-            result = merge_trig_solutions(result)
+        for s in unckecked_result:
+            for d in dens:
+                if checksol(d, {symbol: s}, **flags) == True: # checksol can return None
+                    add_comment('The value ' + str(s) + ' is not a root because it is a root of the denominator')
+                    add_exp(d)
+                    break
+            else:
+                result.add(s)
+        result = merge_trig_solutions(result)
         return result
     elif f.is_Piecewise:
         result = set()
@@ -1878,7 +1878,7 @@ def _solve(f, *symbols, **flags):
                                 except NotImplementedError:
                                     pass
 
-                        if gen != symbol and gen.func in [sin, cos, tan, cot, log, Pow, asin, acos, atan, acot]:
+                        if gen != symbol and gen.func in [sin, cos, tan, cot, log, Pow, asin, acos, atan, acot, exp]:
                             inv_f = []
                             f = gen.func
                             f_arg = gen.args[0]
@@ -1939,6 +1939,13 @@ def _solve(f, *symbols, **flags):
                                         inv_f.append([s, gen.args[1], log(s, f_arg, evaluate=False)])
                                     else:
                                         inv_f.append([s, gen.args[1], None])
+                            elif f == exp:
+                                # if we are here, then equation has the form exp(f(x)) = s1, s2, ..., sk.
+                                for s in soln:
+                                    if not s.is_number or s.is_real and s > 0:
+                                        inv_f.append([s, f_arg, log(s, evaluate=False)])
+                                    else:
+                                        inv_f.append([s, f_arg, None])
                             elif f == log:
                                 # if we are here, then equation has the form log(f(x), c) = m
                                 if len(gen.args) == 2:
