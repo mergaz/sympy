@@ -8,7 +8,7 @@ from sympy.core.symbol import Dummy, Symbol, symbols
 from sympy.core import S, I, Pow, Add, Mul
 from sympy.core.mul import expand_2arg
 from sympy.core.sympify import sympify
-from sympy.core.numbers import Rational, igcd, Integer
+from sympy.core.numbers import Rational, igcd
 
 from sympy.ntheory import divisors, isprime, nextprime
 from sympy.functions import exp, sqrt, re, im
@@ -32,7 +32,6 @@ def roots_linear(f):
     add_comment('This equation is linear')
 
     r = -f.nth(0)/f.nth(1)
-    add_eq(f.slice(1, 2).as_expr(), -f.nth(0))
     dom = f.get_domain()
 
     if not dom.is_Numerical:
@@ -69,9 +68,6 @@ def roots_quadratic(f):
         add_eq(f.gen**2, -c/a)
 
         r = -c/a
-        left = "x**2"
-        right = r
-        add_eq(left, right)
 
         if not dom.is_Numerical:
             R = sqrt(_simplify(r))
@@ -90,18 +86,9 @@ def roots_quadratic(f):
         add_eq(f.gen, Mul(Add(-b, Pow(d, S(1)/2, evaluate=False), evaluate=False), Pow(Mul(S(2), a, evaluate=False), -1, evaluate=False), evaluate=False))
         add_eq(f.gen, Mul(Add(-b, Mul(-1, Pow(d, S(1)/2, evaluate=False), evaluate=False), evaluate=False), Pow(Mul(S(2), a, evaluate=False), -1, evaluate=False), evaluate=False))
         if dom.is_Numerical:
-            a, b, c, D = symbols('a b c D')
-            add_comment("Formulas of roots")
-            r0 = Poly((-b + sqrt(D)) / (2*a)).as_expr()
-            r1 = Poly((-b - sqrt(D)) / (2*a)).as_expr()
-            add_eq("r0", r0)
-            add_eq("r1", r1)
-            a, b, c = f.all_coeffs()
-            r0.clear_repr()
-            r1.clear_repr()
             D = sqrt(d)
-            r0 = (-b + D) / (2*a)
-            r1 = (-b - D) / (2*a)
+            r0 = (-b + D) / (S(2)*a)
+            r1 = (-b - D) / (S(2)*a)
         else:
             D = sqrt(_simplify(d))
             A = 2*a
@@ -123,19 +110,6 @@ def roots_cubic(f):
 
     add_comment('This equation is cubic')
     _, a, b, c = f.monic().all_coeffs()
-    # coeffs_list = f.monic().all_coeffs()
-    add_comment("Set it equal to zero and find roots")
-    add_eq(f.as_expr(), 0)
-    add_comment("Coefficients of the poly:")
-    add_eq("a", _)
-    add_eq("b", a)
-    add_eq("c", b)
-    add_eq("d", c)
-    _.clear_repr()
-    a.clear_repr()
-    b.clear_repr()
-    c.clear_repr()
-
 
     if f.nth(3) != 1:
         add_comment("Rewrite the equation as")
@@ -172,7 +146,7 @@ def roots_cubic(f):
             add_comment("Therefore we have ")
             add_eq(f.gen, -aon3)
             root = [-aon3]*3
-            # add_step(root)
+            add_step(root)
             return [-aon3]*3
         else:
             if q.is_real:
@@ -527,6 +501,7 @@ def roots_binomial(f):
 
 
     alpha = (-cancel(b/a))**Rational(1, n)
+
     if alpha.is_number:
         alpha = alpha.expand(complex=True)
 
@@ -537,7 +512,6 @@ def roots_binomial(f):
         zeta = exp(2*k*S.Pi*I/n).expand(complex=True)
         add_eq(f.gen, Mul(alpha, zeta, evaluate=False))
         roots.append((alpha*zeta).expand(power_base=False))
-        add_eq("root_"+str(k), alpha*zeta)
 
     roots = sorted(roots, key=default_sort_key)
 
@@ -902,8 +876,8 @@ def preprocess_roots(poly):
         if gens:
             poly = poly.eject(*gens)
     if poly.is_univariate and poly.get_domain().is_ZZ:
-
         basis = _integer_basis(poly)
+
         if basis is not None:
             n = poly.degree()
 
@@ -1021,9 +995,6 @@ def roots(f, *gens, **flags):
         if f.is_multivariate:
             raise PolynomialError('multivariate polynomials are not supported')
 
-    add_comment("Begin to solve polynomial:")
-    add_exp(f.as_expr())
-
     def _update_dict(result, root, k):
         if root in result:
             result[root] += k
@@ -1101,45 +1072,12 @@ def roots(f, *gens, **flags):
                 return roots_binomial(f)
 
         result = []
-        if f.degree() == 3:
-            a, b, c, d, x = symbols("a b c d x")
-            common_form = Poly(a*x**3 + b*x**2 + c*x + d)
-            add_comment("Common form of the cubic polinomial is:")
-            add_eq(common_form.as_expr(), 0)
-            add_comment("Coefficients of current polynomial are:")
-            a, b, c, d = f.all_coeffs()
-            add_step(a)
-            add_step(b)
-            add_step(c)
-            add_step(d)
-            a.clear_repr()
-            b.clear_repr()
-            c.clear_repr()
-            d.clear_repr()
-            add_comment("Try to find the root of turning over divisors of free factor \"d\" of Poly")
-            # Solve poly by using Bezout theorem and divisors of free factor "d" of Poly
-            if isinstance(f.nth(0), Integer) and f.nth(0) != S.Zero:
-                d = f.nth(0)
-                if d < 0:
-                    begin = d
-                    end = -d + 1
-                else:
-                    begin = -d
-                    end = d + 1
-                divisors = [i for i in xrange(begin, end) if isinstance(d/i, Integer)]
 
-            for i in divisors:
-                add_comment("x = " + str(i))
-                if not f.eval(i):
-                    add_comment(str(i) + " is a first root, By using Bezout theorem, "
-                                         "let's divide the original poly by")
-                    add_exp(Poly(f.gen - i, f.gen).as_expr())
-                    f = f.quo(Poly(f.gen - i, f.gen))
-                    add_comment("Result of division:")
-                    add_exp(f.as_expr())
-                    result.append(Integer(i))
-                    break
-                add_comment("Not a root")
+        for i in [-1, 1]:
+            if not f.eval(i):
+                f = f.quo(Poly(f.gen - i, f.gen))
+                result.append(i)
+                break
 
         n = f.degree()
         if n == 1:
@@ -1165,9 +1103,6 @@ def roots(f, *gens, **flags):
     if not k:
         zeros = {}
     else:
-        add_comment("Found common divisor and first root.")
-        add_eq(original_func.gen, 0)
-        add_eq("root", 0)
         zeros = {S(0): k}
         if not f.is_ground:
             add_comment("Solve the equation")
@@ -1195,7 +1130,6 @@ def roots(f, *gens, **flags):
     if auto and f.get_domain().has_Ring:
         f = f.to_field()
 
-
     rescale_x = None
     translate_x = None
 
@@ -1213,9 +1147,9 @@ def roots(f, *gens, **flags):
         elif f.degree() == 2:
             for r in roots_quadratic(f):
                 _update_dict(result, r, 1)
-        # elif f.length() == 2:
-        #     for r in roots_binomial(f):
-        #         _update_dict(result, r, 1)
+        elif f.length() == 2:
+            for r in roots_binomial(f):
+                _update_dict(result, r, 1)
         else:
             rr = find_rational_roots(f)
             if len(rr) > 0:
@@ -1330,6 +1264,7 @@ def roots(f, *gens, **flags):
 
         for zero, k in result.items():
             zeros.extend([zero]*k)
+
         return sorted(zeros, key=default_sort_key)
 
 
