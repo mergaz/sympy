@@ -62,6 +62,7 @@ from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, sta
 # An integer parameter for solutions of trig eqs.
 _k = Dummy('k', integer=True)
 
+
 def _ispow(e):
     """Return True if e is a Pow or is exp."""
     return isinstance(e, Expr) and (e.is_Pow or e.func is exp)
@@ -892,28 +893,6 @@ def solve(f, *symbols, **flags):
         exclude = reduce(set.union, [e.free_symbols for e in sympify(exclude)])
     symbols = [s for s in symbols if s not in exclude]
 
-# use "school" methods for solving equations containing abs-symbol
-#    # real/imag handling
-#    for i, fi in enumerate(f):
-#        _abs = [a for a in fi.atoms(Abs) if a.has(*symbols)]
-#        fi = f[i] = fi.xreplace(dict(list(zip(_abs,
-#            [sqrt(a.args[0]**2) for a in _abs]))))
-#        if fi.has(*_abs):
-#            if any(s.assumptions0 for a in
-#                    _abs for s in a.free_symbols):
-#                raise NotImplementedError(filldedent('''
-#                All absolute
-#                values were not removed from %s. In order to solve
-#                this equation, try replacing your symbols with
-#                Dummy symbols (or other symbols without assumptions).
-#                ''' % fi))
-#            else:
-#                raise NotImplementedError(filldedent('''
-#                Removal of absolute values from %s failed.''' % fi))
-#        _arg = [a for a in fi.atoms(arg) if a.has(*symbols)]
-#        f[i] = fi.xreplace(dict(list(zip(_arg,
-#            [atan(im(a.args[0])/re(a.args[0])) for a in _arg]))))
-
     # see if re(s) or im(s) appear
     irf = []
     for s in symbols:
@@ -1055,7 +1034,6 @@ def solve(f, *symbols, **flags):
     ###########################################################################
     # Restore masked-off objects
     if non_inverts:
-
         def _do_dict(solution):
             return dict([(k, v.subs(non_inverts)) for k, v in
                          solution.items()])
@@ -1468,11 +1446,10 @@ def _solve(f, *symbols, **flags):
             if m.is_Number:
                 continue
             eqs.add(m)
-        if len(eqs) > 0:
+        if len(eqs) > 1:
             add_comment("To solve this equation we find roots of the following equations")
             for m in eqs:
                 add_eq(m, 0)
-
         flags['check'] = False
         unckecked_result = set()
         for m in eqs:
@@ -2018,23 +1995,30 @@ def _solve(f, *symbols, **flags):
                             return result
                         else: # if we are there, then we don't know how to comment the solution
                             if gen != symbol:
+                                add_comment("I don't know how to solve this equation")
+                                start_subroutine("Dont Know")
                                 u = Dummy()
                                 inversion = _solve(gen - u, symbol, **flags)
                                 inversion = list(map(simplify, inversion))
                                 soln = list(ordered(set([i.subs(u, s) for i in
                                             inversion for s in soln])))
+                                cancel_subroutine()
                             result = soln
 
     # fallback if above fails
     if result is False:
+        add_comment("I don't know how to solve this equation")
+        start_subroutine("Dont Know")
         # allow tsolve to be used on next pass if needed
         flags.pop('tsolve', None)
         try:
             result = _tsolve(f_num, symbol, **flags)
+            add_exp(result)
         except PolynomialError:
             result = None
         if result is None:
             result = False
+        cancel_subroutine()
 
     if result is False:
         raise NotImplementedError(msg +

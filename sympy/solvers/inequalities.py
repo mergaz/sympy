@@ -3,16 +3,19 @@
 from __future__ import print_function, division
 
 from sympy.core import Symbol, Interval
-from sympy.core.relational import Relational, Eq, Ge, Lt
+from sympy.core.relational import Relational, Eq, Ge, Lt, GreaterThan
 from sympy.core.singleton import S
 
 from sympy.assumptions import ask, AppliedPredicate, Q
 from sympy.functions import re, im, Abs
 from sympy.logic import And
 from sympy.polys import Poly, PolynomialError, parallel_poly_from_expr
+from sympy.polys.polyroots import roots
+from sympy.printing.latex import latex
+from sympy.utilities.solution import add_comment, add_eq, add_exp
 
 
-def solve_poly_inequality(poly, rel):
+def solve_poly_inequality(numer, denom, rel):
     """Solve a polynomial inequality with rational coefficients.
 
     Examples
@@ -35,61 +38,81 @@ def solve_poly_inequality(poly, rel):
     ========
     solve_poly_inequalities
     """
-    reals, intervals = poly.real_roots(multiple=False), []
-
     if rel == '==':
-        for root, _ in reals:
-            interval = Interval(root, root)
-            intervals.append(interval)
-    elif rel == '!=':
-        left = S.NegativeInfinity
+        add_comment("Find the roots of the the equation")
+        from solvers import solve
+        reals = solve(numer/denom, real=True)
+        intervals = []
+        for r in reals:
+            intervals.append(Interval(r, r, False, False))
+        return intervals
 
-        for right, _ in reals + [(S.Infinity, 1)]:
-            interval = Interval(left, right, True, True)
-            intervals.append(interval)
-            left = right
+    add_comment("Use the critical points method")
+    add_comment("Find the roots of the the equation")
+    add_eq(numer.as_expr(), 0)
+    reals = roots(numer, filter='R')
+    points = {}
+    for r in reals:
+        if rel == '>=' or rel == '<=':
+            points[r] = False
+        else:
+            points[r] = True
+
+    if denom != 1:
+        add_comment("Find the roots of the denominator")
+        add_eq(denom.as_expr(), 0)
+        reals = roots(denom, filter='R')
+        for r in reals:
+            points[r] = True
+
+    points[S.Infinity] = True
+    points[S.NegativeInfinity] = True
+
+    intervals = []
+    points_ = points.keys()
+    points_.sort()
+    for i in range(0, len(points_) - 1):
+        left = points_[i]
+        right = points_[i + 1]
+        interval = Interval(left, right, points[left], points[right])
+        intervals.append(interval)
+    del points_
+
+    if rel == '!=':
+        return intervals
     else:
-        if poly.LC() > 0:
-            sign = +1
+        add_comment("Therefore we have the following intervals to test")
+        for interval in intervals:
+            add_exp(interval)
+
+    result = []
+    for interval in intervals:
+        add_comment("Test the point")
+        if interval.left == S.NegativeInfinity and interval.right == S.Infinity:
+            p = 0
+        elif interval.left == S.NegativeInfinity:
+            p = interval.right - 1
+        elif interval.right == S.Infinity:
+            p = interval.left + 1
         else:
-            sign = -1
-
-        eq_sign, equal = None, False
-
-        if rel == '>':
-            eq_sign = +1
-        elif rel == '<':
-            eq_sign = -1
-        elif rel == '>=':
-            eq_sign, equal = +1, True
-        elif rel == '<=':
-            eq_sign, equal = -1, True
+            p = (interval.right + interval.left) / 2
+        add_eq(numer.gen, p)
+        add_comment("We have")
+        v = numer(p) / denom(p)
+        if v > 0:
+            add_exp(latex(v) + " > 0")
+        elif v < 0:
+            add_exp(latex(v) + " < 0")
+        if (v > 0 and (rel == '>' or rel == '>=')) or (v < 0 and (rel == '<' or rel == '<=')):
+            add_comment("Thus the interval")
+            add_exp(interval)
+            add_comment("is a part of the solution set")
+            result.append(interval)
         else:
-            raise ValueError("'%s' is not a valid relation" % rel)
-
-        right, right_open = S.Infinity, True
-
-        reals.sort(key=lambda w: w[0], reverse=True)
-        for left, multiplicity in reals:
-            if multiplicity % 2:
-                if sign == eq_sign:
-                    intervals.insert(
-                        0, Interval(left, right, not equal, right_open))
-
-                sign, right, right_open = -sign, left, not equal
-            else:
-                if sign == eq_sign and not equal:
-                    intervals.insert(
-                        0, Interval(left, right, True, right_open))
-                    right, right_open = left, True
-                elif sign != eq_sign and equal:
-                    intervals.insert(0, Interval(left, left))
-
-        if sign == eq_sign:
-            intervals.insert(
-                0, Interval(S.NegativeInfinity, right, True, right_open))
-
-    return intervals
+            add_comment("Thus the interval")
+            add_exp(interval)
+            add_comment("is not a part of the solution set")
+    return result
 
 
 def solve_rational_inequalities(eqs):
@@ -116,46 +139,26 @@ def solve_rational_inequalities(eqs):
     ========
     solve_poly_inequality
     """
-    result = S.EmptySet
-
+    rslt = S.EmptySet
     for _eqs in eqs:
-        global_intervals = None
-
+        result = Interval(S.NegativeInfinity, S.Infinity)
         for (numer, denom), rel in _eqs:
-            numer_intervals = solve_poly_inequality(numer*denom, rel)
-            denom_intervals = solve_poly_inequality(denom, '==')
-
-            if global_intervals is None:
-                global_intervals = numer_intervals
-            else:
-                intervals = []
-
-                for numer_interval in numer_intervals:
-                    for global_interval in global_intervals:
-                        interval = numer_interval.intersect(global_interval)
-
-                        if interval is not S.EmptySet:
-                            intervals.append(interval)
-
-                global_intervals = intervals
-
-            intervals = []
-
-            for global_interval in global_intervals:
-                for denom_interval in denom_intervals:
-                    global_interval -= denom_interval
-
-                if global_interval is not S.EmptySet:
-                    intervals.append(global_interval)
-
-            global_intervals = intervals
-
-            if not global_intervals:
-                break
-
-        for interval in global_intervals:
-            result = result.union(interval)
-
+            add_comment("Solve the inequality")
+            add_exp(Relational(numer.as_expr() / denom.as_expr(), 0, rel))
+            intervals = solve_poly_inequality(numer, denom, rel)
+            r = S.EmptySet
+            for interval in intervals:
+                r = r.union(interval)
+            add_comment("The have the following solution set")
+            add_exp(r)
+            result = result.intersect(r)
+        if len(_eqs) > 1:
+            add_comment("Finally we have the following solution set")
+            add_exp(result)
+        rslt = rslt.union(result)
+    if len(eqs) > 1:
+        add_comment("Thus we have the following solution set")
+        add_exp(result)
     return result
 
 
@@ -246,8 +249,8 @@ def reduce_abs_inequality(expr, rel, gen, assume=True):
     ========
     reduce_abs_inequalities
     """
-    if not ask(Q.real(gen), assumptions=assume):
-        raise NotImplementedError("can't solve inequalities with absolute values of a complex variable")
+#    if not ask(Q.real(gen), assumptions=assume):
+#        raise NotImplementedError("can't solve inequalities with absolute values of a complex variable")
 
     def _bottom_up_scan(expr):
         exprs = []
@@ -302,7 +305,9 @@ def reduce_abs_inequality(expr, rel, gen, assume=True):
             expr = Relational(-expr, 0, mapping[rel])
 
         inequalities.append([expr] + conds)
-
+    add_comment("Rewrite the inequalities as")
+    for inequality in inequalities:
+        add_exp(inequality)
     return reduce_rational_inequalities(inequalities, gen, assume)
 
 
