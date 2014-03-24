@@ -694,7 +694,7 @@ def eval_expr(code, local_dict, global_dict):
 
 
 def parse_expr(s, local_dict=None, transformations=standard_transformations,
-               global_dict=None, evaluate=True):
+               global_dict=None, evaluate=True, change_assign_to_eq=False, change_eq_to_call_eq=False):
     """Converts the string ``s`` to a SymPy expression, in ``local_dict``
 
     Parameters
@@ -741,6 +741,8 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
     implicit_multiplication_application
 
     """
+    if change_assign_to_eq:
+        transformations += (change_assign_to_eq_transformation,)
 
     if local_dict is None:
         local_dict = {}
@@ -750,11 +752,43 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
         exec_('from sympy import *', global_dict)
 
     code = stringify_expr(s, local_dict, global_dict, transformations)
-
+    code = ast.parse(code)
     if evaluate is False:
-        code = compile(evaluateFalse(code), '<string>', 'eval')
-
+        code = EvaluateFalseTransformer().visit(code)
+    if change_eq_to_call_eq:
+        code = ChangeEqToCallEqTransformer().visit(code)
+    # code is a Module, we want an Expression
+    code = ast.Expression(code.body[0].value)
+    code = ast.fix_missing_locations(code)
+    code = compile(code, '<string>', 'eval')
     return eval_expr(code, local_dict, global_dict)
+
+
+def change_assign_to_eq_transformation(tokens, local_dict, global_dict):
+    """Change = to =="""
+    result = []
+    for toknum, tokval in tokens:
+        if toknum == OP and tokval == '=':
+            result.append((OP, '=='))
+        else:
+            result.append((toknum, tokval))
+    return result
+
+
+class ChangeEqToCallEqTransformer(ast.NodeTransformer):
+    def visit_Compare(self, node):
+        """
+        Change == to Eq()
+        """
+        if len(node.ops) == 1 and isinstance(node.ops[0], ast.Eq):
+            return ast.Call(
+                func=ast.Name(id='Eq', ctx=ast.Load()),
+                args=[node.left, node.comparators[0]],
+                keywords=[],
+                starargs=None,
+                kwargs=None
+            )
+        return node
 
 
 def evaluateFalse(s):
