@@ -336,15 +336,32 @@ class AddWithLimits(ExprWithLimits):
         if function is S.NaN:
             return S.NaN
 
+        # delete dx, dy, dx, etc.
+        free = function.free_symbols
+        for f in free:
+            if len(f.name) > 1 and f.name[0] == "d":
+                function = function.subs(f, 1)
+
         if symbols:
             limits, orientation = _process_limits(*symbols)
         else:
             # symbol not provided -- we can still try to compute a general form
-            free = function.free_symbols
-            if len(free) != 1:
-                raise ValueError(
-                    "specify dummy variables for %s" % function)
-            limits, orientation = [Tuple(s) for s in free], 1
+            new_free = set()
+            limits = []
+            # if f is dx, then the variable is x
+            for f in free:
+                if len(f.name) > 1 and f.name[0] == "d":
+                    limits.append((Symbol(f.name[1:]),))
+                else:
+                    new_free.add(f)
+            free = new_free
+            del new_free
+            if len(limits) == 0:
+                if len(free) != 1:
+                    raise ValueError(
+                        "specify dummy variables for %s" % function)
+                limits = [Tuple(s) for s in free]
+            orientation = 1
 
         # denest any nested calls
         while cls == type(function):
