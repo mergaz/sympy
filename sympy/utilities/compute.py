@@ -23,7 +23,6 @@ def compute(user_input):
 
     expr = parse_expr(user_input, mymath_hack=True, evaluate=False)
     # if there is no free variables or input contains integrate, then just call simplify
-    print expr
     if len(expr.free_symbols) == 0:
         return add_exp(expr)
     elif isinstance(expr, Integral):

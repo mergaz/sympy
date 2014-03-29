@@ -20,6 +20,7 @@ from collections import namedtuple
 from string import strip
 
 import sympy
+from sympy.core import sympify
 
 from sympy.core.compatibility import reduce
 from sympy.core.symbol import Symbol
@@ -28,6 +29,7 @@ from sympy.functions.elementary.miscellaneous import sqrt
 from sympy.functions.elementary.trigonometric import TrigonometricFunction
 from sympy.polys.polytools import cancel
 from sympy.simplify import fraction
+from sympy.simplify.simplify import simplify
 from sympy.strategies.core import (switch, do_one, null_safe,
                                    condition)
 from sympy.utilities.solution import add_comment, add_exp, add_eq
@@ -114,7 +116,7 @@ def find_substitutions(integrand, symbol, u_var):
     results = []
 
     def test_subterm(u, u_diff):
-        substituted = integrand / u_diff
+        substituted = simplify(integrand / u_diff)
         if symbol not in substituted.free_symbols:
             # replaced everything already
             return False
@@ -173,7 +175,7 @@ def rewriter(condition, rewrite):
         integrand, symbol = integral
         if condition(*integral):
             rewritten = rewrite(*integral)
-            if rewritten != integrand:
+            if simplify(rewritten) != simplify(integrand):
                 substep = integral_steps(rewritten, symbol)
                 if not isinstance(substep, DontKnowRule):
                     return RewriteRule(
