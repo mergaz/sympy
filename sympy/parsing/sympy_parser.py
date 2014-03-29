@@ -260,16 +260,15 @@ def _implicit_application(tokens, local_dict, global_dict):
               # capture **, ^, etc.)
     exponentSkip = False  # skipping tokens before inserting parentheses to
                           # work with function exponentiation
-    for tok, nextTok in zip(tokens, tokens[1:]):
+    for tok, nextTok, nnt, nnnt in zip(tokens, tokens[1:], tokens[2:] + [None], tokens[3:] + [None, None], ):
         result.append(tok)
-        if (tok[0] == NAME and
-              nextTok[0] != OP and
-              nextTok[0] != ENDMARKER):
+        if tok[0] == NAME and nextTok[0] != OP and nextTok[0] != ENDMARKER:
             if _token_callable(tok, local_dict, global_dict, nextTok):
                 result.append((OP, '('))
                 appendParen += 1
+
         # name followed by exponent - function exponentiation
-        elif (tok[0] == NAME and nextTok[0] == OP and nextTok[1] == '**'):
+        elif tok[0] == NAME and nextTok[0] == OP and nextTok[1] == '**':
             if _token_callable(tok, local_dict, global_dict):
                 exponentSkip = True
         elif exponentSkip:
@@ -288,7 +287,7 @@ def _implicit_application(tokens, local_dict, global_dict):
                         appendParen += 1
                     exponentSkip = False
         elif appendParen:
-            if nextTok[0] == OP and nextTok[1] in ('^', '**', '*'):
+            if nextTok[0] == OP and nextTok[1] in ('^', '**', '*') and not (nnt[0] == NAME and _token_callable(nnt, local_dict, global_dict, nnnt)):
                 skip = 1
                 continue
             if skip:
@@ -460,7 +459,6 @@ def implicit_application(result, local_dict, global_dict):
                  _apply_functions,
                  _implicit_application,):
         result = step(result, local_dict, global_dict)
-
     result = _flatten(result)
     return result
 
@@ -521,6 +519,9 @@ def auto_symbol(tokens, local_dict, global_dict):
                 if isinstance(obj, (Basic, type)) or callable(obj):
                     result.append((NAME, name))
                     continue
+            elif name == 'e':
+                result.append((NAME, 'E'))
+                continue
 
             result.extend([
                 (NAME, 'Symbol'),
@@ -677,7 +678,6 @@ def stringify_expr(s, local_dict, global_dict, transformations):
 
     for transform in transformations:
         tokens = transform(tokens, local_dict, global_dict)
-
     return untokenize(tokens)
 
 
@@ -694,7 +694,7 @@ def eval_expr(code, local_dict, global_dict):
 
 
 def parse_expr(s, local_dict=None, transformations=standard_transformations,
-               global_dict=None, evaluate=True, change_assign_to_eq=False, change_eq_to_call_eq=False):
+               global_dict=None, evaluate=True, mymath_hack=False):
     """Converts the string ``s`` to a SymPy expression, in ``local_dict``
 
     Parameters
@@ -741,8 +741,10 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
     implicit_multiplication_application
 
     """
-    if change_assign_to_eq:
-        transformations += (change_assign_to_eq_transformation,)
+    if mymath_hack:
+        transformations = (change_assign_to_eq, change_integrate_to_integral,
+                           split_funcs, change_russian_to_eng_name) + \
+                          transformations + (implicit_multiplication_application, change_e_to_exp1,)
 
     if local_dict is None:
         local_dict = {}
@@ -755,7 +757,7 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
     code = ast.parse(code)
     if evaluate is False:
         code = EvaluateFalseTransformer().visit(code)
-    if change_eq_to_call_eq:
+    if mymath_hack:
         code = ChangeEqToCallEqTransformer().visit(code)
     # code is a Module, we want an Expression
     code = ast.Expression(code.body[0].value)
@@ -764,7 +766,7 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
     return eval_expr(code, local_dict, global_dict)
 
 
-def change_assign_to_eq_transformation(tokens, local_dict, global_dict):
+def change_assign_to_eq(tokens, local_dict, global_dict):
     """Change = to =="""
     result = []
     for toknum, tokval in tokens:
@@ -772,6 +774,114 @@ def change_assign_to_eq_transformation(tokens, local_dict, global_dict):
             result.append((OP, '=='))
         else:
             result.append((toknum, tokval))
+    return result
+
+
+def change_e_to_exp1(tokens, local_dict, global_dict):
+    """Change e to E"""
+    result = []
+    for toknum, tokval in tokens:
+        if toknum == NAME and tokval == 'e':
+            result.append((NAME, 'E'))
+        else:
+            result.append((toknum, tokval))
+    return result
+
+
+smthfnsmth_pattern = re.compile("(integrate|sqrt|sin|cos|tg|ctg|sec|csc|tan|cot|log|ln|exp|asin|acos|atan|acot|"
+                                "arcsin|arccos|arctg|arcctg|sh|ch|sinh|cosh|th|tanh|coth|cth)")
+
+
+def split_funcs(tokens, local_dict, global_dict):
+    """ smthcossmth --> smth cos smth """
+    result = []
+    for toknum, tokval in tokens:
+        if toknum == NAME:
+            parts = smthfnsmth_pattern.split(tokval)
+            for p in parts:
+                if len(p) > 0:
+                    result.append((NAME, p))
+        else:
+            result.append((toknum, tokval))
+    return result
+
+
+def change_russian_to_eng_name(tokens, local_dict, global_dict):
+    """ tg --> tan"""
+    result = []
+    for toknum, tokval in tokens:
+        if toknum == NAME:
+            if tokval == "tg":
+                result.append((NAME, "tan"))
+            elif tokval == "ctg":
+                result.append((NAME, "cot"))
+            elif tokval == "arcsin":
+                result.append((NAME, "asin"))
+            elif tokval == "arcos":
+                result.append((NAME, "acos"))
+            elif tokval == "arctg":
+                result.append((NAME, "atan"))
+            elif tokval == "arcctg":
+                result.append((NAME, "acot"))
+            elif tokval == "sh":
+                result.append((NAME, "sinh"))
+            elif tokval == "ch":
+                result.append((NAME, "cosh"))
+            elif tokval == "th":
+                result.append((NAME, "tanh"))
+            elif tokval == "cth":
+                result.append((NAME, "coth"))
+            else:
+                result.append((toknum, tokval))
+        else:
+            result.append((toknum, tokval))
+    return result
+
+
+smthdx_pattern = re.compile("(?P<smth>.+)d(?P<var>.)")
+dx_pattern = re.compile("d(?P<var>.)")
+
+
+def change_integrate_to_integral(tokens, local_dict, global_dict):
+    """ integrate ... dx ... --> Integral(..., x)
+        dx --> 1
+    """
+    result = []
+    num_integrate = 0
+    for toknum, tokval in tokens:
+        if toknum == NAME and tokval == "integrate":
+            num_integrate += 1
+    if num_integrate == 0:
+        return tokens
+    if num_integrate > 1:
+        # TODO
+        return tokens
+    for toknum, tokval in tokens:
+        if toknum == NAME:
+            if tokval == "integrate":
+                continue
+            m = smthdx_pattern.match(tokval)
+            if not m is None:
+                result.append((NAME, m.group('smth')))
+                result.append((NAME, "d" + m.group('var')))
+            else:
+                result.append((toknum, tokval))
+        else:
+            result.append((toknum, tokval))
+    tokens = result
+    result = []
+    var = None
+    for toknum, tokval in tokens:
+        if toknum == NAME:
+            m = dx_pattern.match(tokval)
+            if not m is None:
+                var = m.group('var')
+                result.append((NUMBER, '1'))
+            else:
+                result.append((toknum, tokval))
+        else:
+            result.append((toknum, tokval))
+    result = [(NAME, "Integral"), (OP, "(")] + result + [(OP, ","), (NAME, var), (OP, ")")]
     return result
 
 
