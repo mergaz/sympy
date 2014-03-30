@@ -1,9 +1,11 @@
 
 import re
 from sympy.core.relational import Equality
+from sympy.integrals.integrals import integrate, Integral
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication, implicit_application, function_exponentiation, implicit_multiplication_application
 from sympy.simplify.simplify import simplify
 from sympy.solvers.solvers import solve
+from sympy.utilities.solution import add_exp
 
 integrate_pattern_ = re.compile("integrate")
 
@@ -18,10 +20,12 @@ def has_eq(expr):
 
 
 def compute(user_input):
-    transformations = standard_transformations + (implicit_multiplication, implicit_application, function_exponentiation, implicit_multiplication_application)
-    expr = parse_expr(user_input, transformations=transformations, change_assign_to_eq=True, change_eq_to_call_eq=True, evaluate=False)
+
+    expr = parse_expr(user_input, mymath_hack=True, evaluate=False)
     # if there is no free variables or input contains integrate, then just call simplify
-    if len(expr.free_symbols) == 0 or (integrate_pattern_.match(user_input) and not has_eq(expr)):
-        return simplify(expr)
+    if len(expr.free_symbols) == 0:
+        return add_exp(expr)
+    elif isinstance(expr, Integral):
+        return integrate(expr.function, expr.limits)
     else:
         return solve(expr)
