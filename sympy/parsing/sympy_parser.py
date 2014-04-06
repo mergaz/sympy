@@ -1,6 +1,8 @@
 """Transform a string with Python-like source code into SymPy expression. """
 
 from __future__ import print_function, division
+import _ast
+from token import ERRORTOKEN
 
 from .sympy_tokenize import \
     generate_tokens, untokenize, TokenError, \
@@ -48,7 +50,7 @@ def _token_callable(token, local_dict, global_dict, nextToken=None):
     func = local_dict.get(token[1])
     if not func:
         func = global_dict.get(token[1])
-    return callable(func) and not isinstance(func, sympy.Symbol)
+    return callable(func) and not isinstance(func, sympy.Symbol) or token[1] == "index"
 
 
 def _add_factorial_tokens(name, result):
@@ -258,15 +260,19 @@ def _implicit_application(tokens, local_dict, global_dict):
     appendParen = 0  # number of closing parentheses to add
     skip = 0  # number of tokens to delay before adding a ')' (to
               # capture **, ^, etc.)
+    skippedParentheses = 0
     exponentSkip = False  # skipping tokens before inserting parentheses to
                           # work with function exponentiation
     for tok, nextTok, nnt, nnnt in zip(tokens, tokens[1:], tokens[2:] + [None], tokens[3:] + [None, None], ):
         result.append(tok)
+        if tok[1] == "(":
+            skippedParentheses += 1
+        elif tok[1] == ")":
+            skippedParentheses -= 1
         if tok[0] == NAME and nextTok[0] != OP and nextTok[0] != ENDMARKER:
             if _token_callable(tok, local_dict, global_dict, nextTok):
                 result.append((OP, '('))
                 appendParen += 1
-
         # name followed by exponent - function exponentiation
         elif tok[0] == NAME and nextTok[0] == OP and nextTok[1] == '**':
             if _token_callable(tok, local_dict, global_dict):
@@ -286,7 +292,7 @@ def _implicit_application(tokens, local_dict, global_dict):
                         result.append((OP, '('))
                         appendParen += 1
                     exponentSkip = False
-        elif appendParen:
+        elif appendParen and skippedParentheses == 0:
             if nextTok[0] == OP and ((nextTok[1] == '*' and not (nnt[0] == NAME and _token_callable(nnt, local_dict, global_dict, nnnt))) or nextTok[1] in ('^', '**')):
                 skip = 1
                 continue
@@ -309,7 +315,7 @@ def function_exponentiation(tokens, local_dict, global_dict):
 
     Example:
 
-    >>> from sympy.parsing.sympy_parser import (parse_expr,
+    >>> from sympy.parsing.sympy_parser import (expr,
     ... standard_transformations, function_exponentiation)
     >>> transformations = standard_transformations + (function_exponentiation,)
     >>> parse_expr('sin**4(x)', transformations=transformations)
@@ -519,6 +525,9 @@ def auto_symbol(tokens, local_dict, global_dict):
                 if isinstance(obj, (Basic, type)) or callable(obj):
                     result.append((NAME, name))
                     continue
+            elif name == "index":
+                result.append((NAME, "index"))
+                continue
             elif name == 'e':
                 result.append((NAME, 'E'))
                 continue
@@ -559,6 +568,23 @@ def factorial_notation(tokens, local_dict, global_dict):
             result.append((toknum, tokval))
 
         prevtoken = tokval
+
+    return result
+
+
+
+def derivative_notation(tokens, local_dict, global_dict):
+    """ ' for derivative"""
+    tokens = [x for x in tokens if x != (52, " ")]
+    result = []
+    for toknum, tokval in tokens:
+        if toknum == ERRORTOKEN: # ' is ERRORTOKEN
+            if tokval == "'":
+                result = _add_factorial_tokens("Derivative", result)
+            else:
+                result.append((OP, tokval))
+        else:
+            result.append((toknum, tokval))
 
     return result
 
@@ -742,8 +768,8 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
     """
     if mymath_hack:
         transformations = (change_assign_to_eq, change_integrate_to_integral,
-                           split_funcs, change_russian_to_eng_name) + \
-                          transformations + (implicit_multiplication_application, change_e_to_exp1,)
+                           split_funcs, change_russian_to_eng_name, derivative_notation) + \
+                          transformations + (implicit_multiplication_application,)
 
     if local_dict is None:
         local_dict = {}
@@ -754,10 +780,14 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
 
     code = stringify_expr(s, local_dict, global_dict, transformations)
     code = ast.parse(code)
-    if evaluate is False:
-        code = EvaluateFalseTransformer().visit(code)
     if mymath_hack:
+        code = EvaluateFalseTransformer().visit(code)
         code = ChangeEqToCallEqTransformer().visit(code)
+        code = ChangeIndexToLogIndex().visit(code)
+    else:
+        if evaluate is False:
+            code = EvaluateFalseTransformer().visit(code)
+
     # code is a Module, we want an Expression
     code = ast.Expression(code.body[0].value)
     code = ast.fix_missing_locations(code)
@@ -771,17 +801,6 @@ def change_assign_to_eq(tokens, local_dict, global_dict):
     for toknum, tokval in tokens:
         if toknum == OP and tokval == '=':
             result.append((OP, '=='))
-        else:
-            result.append((toknum, tokval))
-    return result
-
-
-def change_e_to_exp1(tokens, local_dict, global_dict):
-    """Change e to E"""
-    result = []
-    for toknum, tokval in tokens:
-        if toknum == NAME and tokval == 'e':
-            result.append((NAME, 'E'))
         else:
             result.append((toknum, tokval))
     return result
@@ -898,6 +917,27 @@ class ChangeEqToCallEqTransformer(ast.NodeTransformer):
                 kwargs=None
             )
         return node
+
+
+
+class ChangeIndexToLogIndex(ast.NodeTransformer):
+    def visit_Call(self, node):
+        if node.func.id == 'log' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
+            for i in range(len(node.args[0].args)):
+                if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'index':
+                    log_base_node = node.args[0].args[i].args[0]
+                    log_arg_node = node.args[0]
+                    log_arg_node.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
+                    return ast.Call(
+                        func=ast.Name(id='log', ctx=ast.Load()),
+                        args=[log_arg_node, log_base_node],
+                        keywords=[],
+                        starargs=None,
+                        kwargs=None
+                    )
+            return node
+        else:
+            return node
 
 
 def evaluateFalse(s):

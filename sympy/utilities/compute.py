@@ -1,8 +1,11 @@
 
 import re
-from sympy.core.function import nfloat
+from sympy.core.function import nfloat, Derivative
 from sympy.core.relational import Equality
 from sympy.core.symbol import Dummy
+from sympy.core.sympify import sympify
+from sympy.derivative.manualderivative import derivative
+from sympy.integrals import manualintegrate
 from sympy.integrals.integrals import integrate, Integral
 from sympy.mpmath.calculus import approximation
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication, implicit_application, function_exponentiation, implicit_multiplication_application
@@ -34,6 +37,8 @@ def compute(user_input):
         add_exp(nfloat(expr))
         return expr
     elif isinstance(expr, Integral):
-        return integrate(simplify(expr.function), expr.limits)
+        return integrate(sympify(expr.function), expr.limits)
+    elif isinstance(expr, Derivative):
+        return derivative(sympify(expr.expr), list(expr.free_symbols)[0])
     else:
         return solve(expr)
