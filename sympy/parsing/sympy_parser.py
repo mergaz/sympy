@@ -287,7 +287,7 @@ def _implicit_application(tokens, local_dict, global_dict):
                         appendParen += 1
                     exponentSkip = False
         elif appendParen:
-            if nextTok[0] == OP and nextTok[1] in ('^', '**', '*') and not (nnt[0] == NAME and _token_callable(nnt, local_dict, global_dict, nnnt)):
+            if nextTok[0] == OP and ((nextTok[1] == '*' and not (nnt[0] == NAME and _token_callable(nnt, local_dict, global_dict, nnnt))) or nextTok[1] in ('^', '**')):
                 skip = 1
                 continue
             if skip:
@@ -675,7 +675,6 @@ def stringify_expr(s, local_dict, global_dict, transformations):
     input_code = StringIO(s.strip())
     for toknum, tokval, _, _, _ in generate_tokens(input_code.readline):
         tokens.append((toknum, tokval))
-
     for transform in transformations:
         tokens = transform(tokens, local_dict, global_dict)
     return untokenize(tokens)
@@ -881,7 +880,7 @@ def change_integrate_to_integral(tokens, local_dict, global_dict):
                 result.append((toknum, tokval))
         else:
             result.append((toknum, tokval))
-    result = [(NAME, "Integral"), (OP, "(")] + result + [(OP, ","), (NAME, var), (OP, ")")]
+    result = [(NAME, "Integral"), (OP, "(")] + result[:-1] + [(OP, ","), (NAME, var), (OP, ")"), (0, '')]
     return result
 
 
