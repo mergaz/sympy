@@ -158,8 +158,8 @@ def solve_rational_inequalities(eqs):
         rslt = rslt.union(result)
     if len(eqs) > 1:
         add_comment("Thus we have the following solution set")
-        add_exp(result)
-    return result
+        add_exp(rslt)
+    return rslt
 
 
 def reduce_rational_inequalities(exprs, gen, assume=True, relational=True):

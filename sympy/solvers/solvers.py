@@ -36,7 +36,7 @@ from sympy.functions import (log, exp, LambertW, cos, sin, tan, cot, cosh,
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine)
 from sympy.simplify.sqrtdenest import sqrt_depth, _mexpand
-from sympy.simplify.fu import TR1, TR5, TR6
+from sympy.simplify.fu import TR1, TR5, TR6, TR11
 from sympy.matrices import Matrix, zeros
 from sympy.polys import (roots, cancel, factor, Poly, together, RootOf,
     degree, PolynomialError)
@@ -1539,6 +1539,15 @@ def _solve(f, *symbols, **flags):
             add_eq(symbol, sol)
             return [sol]
 
+        if f_num != f:
+            add_comment("Rewrite the equation as")
+            add_eq(f_num / sol, 0)
+            if sol != 1:
+                add_comment("Solve the equation")
+                add_eq(f_num, 0)
+
+
+
         result = False  # no solution was obtained
         msg = ''  # there is no failure message
         dens = denoms(f, symbols)  # store these for checking later
@@ -1619,26 +1628,29 @@ def _solve(f, *symbols, **flags):
                 add_eq(f_num_m, 0)
                 add_comment('assuming that')
                 add_exp(abss[0].args[0] < 0)
-                add_comment('Solve the equations')
                 result_p = _solve(f_num_p, symbol, **flags)
                 result = []
                 for r in result_p:
                     v = abss[0].args[0].subs(symbol, r)
-                    if flags.get('real', False) == False or v.is_real and v >= 0:
+                    if v.is_real and v >= 0:
                         add_comment('The value ' + str(r) + ' is a root')
                         result.append(r)
                     else:
                         add_comment('The value ' + str(r) + ' is an extraneous root')
-                add_comment('Solve the equations')
                 result_m = _solve(f_num_m, symbol, **flags)
                 for r in result_m:
                     v = abss[0].args[0].subs(symbol, r)
-                    if flags.get('real', False) == False or v.is_real and v <= 0:
+                    if v.is_real and v <= 0:
                         add_comment('The value ' + str(r) + ' is a root')
                         result.append(r)
                     else:
                         add_comment('The value ' + str(r) + ' is an extraneous root')
-
+                if len(result) > 0:
+                    add_comment("Finally we have")
+                    for r in result:
+                        add_eq(symbol, r)
+                else:
+                    add_comment("Therefore there is no root")
                 return result
 
             # Transform equations of the forms f(cos(x), sin**2(x)) = 0 and f(sin(x), cos**2(x)) = 0
@@ -1697,7 +1709,6 @@ def _solve(f, *symbols, **flags):
                     bases = list(ordered(bases))
                     newf = to_log_fixed_base(poly.as_expr(), bases[0])
                     return _solve(newf, symbol, **flags)
-
 
             if len(gens) > 1:
                 # If there is more than one generator, it could be that the
@@ -1792,7 +1803,6 @@ def _solve(f, *symbols, **flags):
                             return list(ordered(sols))
 
             elif len(gens) == 1:
-
                 # There is only one generator that we are interested in, but there
                 # may have been more than one generator identified by polys (e.g.
                 # for symbols other than the one we are interested in) so recast
@@ -1827,8 +1837,8 @@ def _solve(f, *symbols, **flags):
                         poly = Poly(poly.as_expr(), poly.gen, composite=True)
                         if poly.is_linear:
                             if (f / poly.as_expr()).cancel().has(symbol):
-                                add_eq(f, poly.as_expr())
-                                add_comment('Rewrite the equation as')
+                                # add_eq(f, poly.as_expr())
+                                add_comment('We have')
                                 add_eq(poly.gen, -poly.nth(0) / poly.nth(1))
                             soln = [-poly.nth(0) / poly.nth(1)]
                         else:
