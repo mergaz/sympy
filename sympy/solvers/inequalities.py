@@ -1,17 +1,20 @@
 """Tools for solving inequalities and systems of inequalities. """
 
 from __future__ import print_function, division
-
 from sympy.core import Symbol, Interval
-from sympy.core.relational import Relational, Eq, Ge, Lt, GreaterThan
+from sympy.core.numbers import pi
+from sympy.core.relational import Relational, Eq, Ge, Lt, GreaterThan, StrictGreaterThan, StrictLessThan, LessThan
 from sympy.core.singleton import S
-
 from sympy.assumptions import ask, AppliedPredicate, Q
+from sympy.core.symbol import Wild, Dummy
 from sympy.functions import re, im, Abs
+from sympy.functions.elementary.trigonometric import sin, cos, tan, cot, atan, acot, acos, asin
 from sympy.logic import And
+from sympy.mpmath import inf
 from sympy.polys import Poly, PolynomialError, parallel_poly_from_expr
 from sympy.polys.polyroots import roots
 from sympy.printing.latex import latex
+from sympy.simplify.simplify import simplify
 from sympy.utilities.solution import add_comment, add_eq, add_exp
 
 
@@ -357,6 +360,89 @@ def _solve_inequality(ie, s):
         raise NotImplementedError
 
 
+def is_trig_ineq(ineq, symbol):
+    ineq = simplify(ineq)
+    if ineq.func in [StrictGreaterThan, StrictLessThan, GreaterThan, LessThan]:
+        a, b, f = Wild("a"), Wild("b"), Wild("f")
+        for trig in [sin, cos, tan, cot]:
+            rel = ineq.func
+            m = ineq.match(rel(a*trig(f), b))
+            if not m is None and m[a] != 0 and not m[a].has(symbol) and not m[b].has(symbol) and m[f].has(symbol):
+                return m[a], m[b], m[f], rel, trig, symbol
+    return None
+
+
+def solve_trig_help(left, right, rel, f, symbol):
+    from sympy.solvers.solvers import solve
+    add_comment("We have")
+    if rel in [StrictGreaterThan, StrictLessThan]:
+        add_exp(And(StrictLessThan(left, f), StrictLessThan(f, right)))
+    else:
+        add_exp(And(LessThan(left, f), LessThan(f, right)))
+    if symbol - f != 0:
+        left = solve(Eq(f, left), symbol)
+        if len(left) != 1:
+            raise NotImplementedError()
+        left = left[0]
+        right = solve(Eq(f, right), symbol)
+        if len(right) != 1:
+            raise NotImplementedError()
+        right = right[0]
+        add_comment("Therefore")
+        if rel in [StrictGreaterThan, StrictLessThan]:
+            add_exp(And(StrictLessThan(left, symbol), StrictLessThan(symbol, right)))
+        else:
+            add_exp(And(LessThan(left, symbol), LessThan(symbol, right)))
+    if rel in [StrictGreaterThan, StrictLessThan]:
+        interval = Interval(left, right)
+    else:
+        interval = Interval(left, right, False, False)
+    return interval
+
+
+def solve_trig_ineq(trig_ineq_params):
+    a, b, f, rel, trig, symbol = trig_ineq_params
+    c = b / a
+    k = Dummy("k")
+    add_comment("Solve the inequality")
+    add_exp(rel(a * trig(f), b))
+    add_comment("This inequality is triginometric")
+    if trig in [sin, cos] and (
+            (rel is StrictLessThan and c <= -1) or
+            (rel is LessThan and c < -1) or
+            (rel is StrictGreaterThan and c >= 1) or
+            (rel is GreaterThan and c > 1)):
+        add_comment("There is no solution")
+        return S.EmptySet
+    elif trig in [sin, cos] and (
+            (rel is StrictLessThan and c > 1) or
+            (rel is LessThan and c >= 1) or
+            (rel is StrictGreaterThan and c < -1) or
+            (rel is GreaterThan and c <= -1)):
+        add_comment("Any number is a solution of this equation")
+        return Interval(-inf, inf)
+    elif trig is sin:
+        if rel in [LessThan, StrictLessThan]:
+            return solve_trig_help(2*pi*k - pi - asin(c), 2*pi*k + asin(c), rel, f, symbol)
+        if rel in [GreaterThan, StrictGreaterThan]:
+            return solve_trig_help(2*pi*k + asin(c), 2*pi*k + pi - asin(c), rel, f, symbol)
+    elif trig is cos:
+        if rel in [LessThan, StrictLessThan]:
+            return solve_trig_help(2*pi*k + acos(c), 2*pi*k + 2*pi - acos(c), rel, f, symbol)
+        if rel in [GreaterThan, StrictGreaterThan]:
+            return solve_trig_help(2*pi*k - acos(c), 2*pi*k + acos(c), rel, f, symbol)
+    elif trig is tan:
+        if rel in [LessThan, StrictLessThan]:
+            return solve_trig_help(-pi/2 + pi*k, pi*k + atan(c), rel, f, symbol)
+        if rel in [GreaterThan, StrictGreaterThan]:
+            return solve_trig_help(pi*k + atan(c), pi/2 + pi*k, rel, f, symbol)
+    elif trig is cot:
+        if rel in [LessThan, StrictLessThan]:
+            return solve_trig_help(pi*k + acot(c), pi + pi*k, rel, f, symbol)
+        if rel in [GreaterThan, StrictGreaterThan]:
+            return solve_trig_help(pi*k, pi*k + acot(c), rel, f, symbol)
+
+
 def reduce_inequalities(inequalities, assume=True, symbols=[]):
     """Reduce a system of inequalities with rational coefficients.
 
@@ -384,6 +470,13 @@ def reduce_inequalities(inequalities, assume=True, symbols=[]):
             pass
 
     poly_part, abs_part, extra_assume = {}, {}, []
+
+    if len(inequalities) == 1 and len(symbols) == 1:
+        ineq = inequalities[0]
+        symbol = symbols[0]
+        trig_ineq_params = is_trig_ineq(ineq, symbol)
+        if trig_ineq_params is not None:
+            return solve_trig_ineq(trig_ineq_params)
 
     for inequality in inequalities:
         if isinstance(inequality, bool):

@@ -937,6 +937,13 @@ class ChangeIndexToLogIndex(ast.NodeTransformer):
                     )
             return node
         else:
+            return ast.Call(
+                func=node.func,
+                args=[self.visit(arg) for arg in node.args],
+                keywords=node.keywords,
+                starargs=node.starargs,
+                kwargs=node.kwargs
+            )
             return node
 
 
