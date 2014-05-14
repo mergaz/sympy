@@ -50,7 +50,7 @@ def _token_callable(token, local_dict, global_dict, nextToken=None):
     func = local_dict.get(token[1])
     if not func:
         func = global_dict.get(token[1])
-    return callable(func) and not isinstance(func, sympy.Symbol) or token[1] == "index"
+    return callable(func) and not isinstance(func, sympy.Symbol) or token[1] == "index" or token[1] == "limits"
 
 
 def _add_factorial_tokens(name, result):
@@ -528,6 +528,9 @@ def auto_symbol(tokens, local_dict, global_dict):
             elif name == "index":
                 result.append((NAME, "index"))
                 continue
+            elif name == "limits":
+                result.append((NAME, "limits"))
+                continue
             elif name == 'e':
                 result.append((NAME, 'E'))
                 continue
@@ -784,6 +787,7 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
         code = EvaluateFalseTransformer().visit(code)
         code = ChangeEqToCallEqTransformer().visit(code)
         code = ChangeIndexToLogIndex().visit(code)
+        code = ChangeLimitsToDefInt().visit(code)
     else:
         if evaluate is False:
             code = EvaluateFalseTransformer().visit(code)
@@ -928,6 +932,7 @@ class ChangeIndexToLogIndex(ast.NodeTransformer):
                     log_base_node = node.args[0].args[i].args[0]
                     log_arg_node = node.args[0]
                     log_arg_node.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
+                    log_arg_node.args = [self.visit(arg) for arg in log_arg_node.args]
                     return ast.Call(
                         func=ast.Name(id='log', ctx=ast.Load()),
                         args=[log_arg_node, log_base_node],
@@ -944,7 +949,35 @@ class ChangeIndexToLogIndex(ast.NodeTransformer):
                 starargs=node.starargs,
                 kwargs=node.kwargs
             )
+
+
+class ChangeLimitsToDefInt(ast.NodeTransformer):
+    def visit_Call(self, node):
+        if node.func.id == 'Integral' and len(node.args) == 2 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
+            for i in range(len(node.args[0].args)):
+                if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'limits':
+                    bottom_limit_node = node.args[0].args[i].args[0]
+                    top_limit_node = node.args[0].args[i].args[1]
+                    integrant_node = node.args[0]
+                    integrant_node.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
+                    integrant_node.args = [self.visit(arg) for arg in integrant_node.args]
+                    var_node = node.args[1]
+                    return ast.Call(
+                        func=ast.Name(id='Integral', ctx=ast.Load()),
+                        args=[integrant_node, ast.Tuple(elts=[var_node, bottom_limit_node, top_limit_node], ctx=ast.Load())],
+                        keywords=[],
+                        starargs=None,
+                        kwargs=None
+                    )
             return node
+        else:
+            return ast.Call(
+                func=node.func,
+                args=[self.visit(arg) for arg in node.args],
+                keywords=node.keywords,
+                starargs=node.starargs,
+                kwargs=node.kwargs
+            )
 
 
 def evaluateFalse(s):
