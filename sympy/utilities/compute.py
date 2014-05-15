@@ -26,19 +26,19 @@ def has_eq(expr):
 
 
 def compute(user_input):
-    print(user_input)
+    #print(user_input)
     expr = parse_expr(user_input, mymath_hack=True, evaluate=False)
     # if there is no free variables or input contains integrate, then just call simplify
-    if len(expr.free_symbols) == 0:
+    if isinstance(expr, Integral):
+        return integrate(sympify(expr.function), expr.limits)
+    elif isinstance(expr, Derivative):
+        return derivative(sympify(expr.expr), list(expr.free_symbols)[0])
+    elif len(expr.free_symbols) == 0:
         add_exp(expr)
         add_comment("Simplify")
         add_exp(simplify(expr))
         add_comment("Approximate")
         add_exp(nfloat(expr))
         return expr
-    elif isinstance(expr, Integral):
-        return integrate(sympify(expr.function), expr.limits)
-    elif isinstance(expr, Derivative):
-        return derivative(sympify(expr.expr), list(expr.free_symbols)[0])
     else:
         return solve(expr)

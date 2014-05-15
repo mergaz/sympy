@@ -1539,7 +1539,7 @@ def _solve(f, *symbols, **flags):
             add_eq(symbol, sol)
             return [sol]
 
-        if f_num != f:
+        if f_num - f != 0:
             add_comment("Rewrite the equation as")
             add_eq(f_num / sol, 0)
             if sol != 1:

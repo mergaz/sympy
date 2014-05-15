@@ -428,7 +428,7 @@ class Integral(AddWithLimits):
 
         return self.func(newfunc, *newlimits)
 
-    def doit(self, **hints):
+    def doit(self, integrals=True, deep=True, meijerg=None, conds='piecewise', risch=None, manual=None, **hints):
         """
         Perform the integration using any hints given.
 
@@ -448,14 +448,14 @@ class Integral(AddWithLimits):
         sympy.integrals.rationaltools.ratint
         as_sum : Approximate the integral using a sum
         """
-        if not hints.get('integrals', True):
+        if not integrals:
             return self
 
-        deep = hints.get('deep', True)
-        meijerg = hints.get('meijerg', None)
-        conds = hints.get('conds', 'piecewise')
-        risch = hints.get('risch', None)
-        manual = hints.get('manual', None)
+        deep = deep
+        meijerg = meijerg
+        conds = conds
+        risch = risch
+        manual = manual
 
         if conds not in ['separate', 'piecewise', 'none']:
             raise ValueError('conds must be one of "separate", "piecewise", '
@@ -492,6 +492,10 @@ class Integral(AddWithLimits):
                 uli = xab[1].free_symbols
             elif len(xab) == 3:
                 uli = xab[1].free_symbols.union(xab[2].free_symbols)
+                add_comment("Evaluate the integral")
+                add_exp(self)
+                add_comment("This integral is definite")
+
             # this integral can be done as long as there is no blocking
             # limit that has been undone. An undone limit is blocking if
             # it contains an integration variable that is in this limit's
@@ -596,8 +600,8 @@ class Integral(AddWithLimits):
                             # This can happen if _eval_interval depends in a
                             # complicated way on limits that cannot be computed
                             undone_limits.append(xab)
-                    add_comment("Therefore")
-                    add_eq(self, function)
+                    add_comment("Therefore the value of the definite integral is")
+                    add_exp(function)
         if undone_limits:
             return self.func(*([function] + undone_limits))
         return function
