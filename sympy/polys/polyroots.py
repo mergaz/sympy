@@ -894,10 +894,9 @@ def find_rational_roots(f):
         return []
     a = f.nth(0)
     b = f.nth(f.degree())
-    c = a/b
     result = []
-    for p in divisors(c.p):
-        for q in divisors(c.q):
+    for p in divisors(a):
+        for q in divisors(b):
             if igcd(p, q) == 1:
                 if f(Rational(p, q)) == 0:
                     result += [Rational(p, q)]
@@ -906,7 +905,7 @@ def find_rational_roots(f):
     if len(result) > 0:
         add_comment("Use the rational root test")
         add_comment("Test all rational numbers in the form p/q")
-        add_comment("where p is a divisor of " + str(c.p) + " and q is a divisor of " + str(c.q))
+        add_comment("where p is a divisor of " + str(a) + " and q is a divisor of " + str(b))
         add_comment("We have the following roots")
         for r in result:
             add_eq(f.gen, r)
@@ -1198,7 +1197,7 @@ def roots(f, *gens, **flags):
 
                     for factor, k in factors:
                         add_comment("Solve the equation")
-                        add_eq(factor, 0)
+                        add_eq(factor.as_expr(), 0)
                         for r in _try_heuristics(Poly(factor, f.gen, field=True)):
                             _update_dict(result, r, k)
 

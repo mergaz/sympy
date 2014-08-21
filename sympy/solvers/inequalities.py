@@ -1,6 +1,7 @@
 """Tools for solving inequalities and systems of inequalities. """
 
 from __future__ import print_function, division
+from sympy import sqrt
 from sympy.core import Symbol, Interval
 from sympy.core.numbers import pi
 from sympy.core.relational import Relational, Eq, Ge, Lt, GreaterThan, StrictGreaterThan, StrictLessThan, LessThan
@@ -360,6 +361,19 @@ def _solve_inequality(ie, s):
         raise NotImplementedError
 
 
+# tests that ineq is in the form a*sqrt(f(x)) REL b
+def is_sqrt_ineq(ineq, symbol):
+    ineq = simplify(ineq)
+    if ineq.func in [StrictGreaterThan, StrictLessThan, GreaterThan, LessThan]:
+        a, b, f = Wild("a"), Wild("b"), Wild("f")
+        rel = ineq.func
+        m = ineq.match(rel(a*sqrt(f), b))
+        if not m is None and m[a] != 0 and not m[a].has(symbol) and not m[b].has(symbol) and m[f].has(symbol):
+            return m[a], m[b], m[f], rel, symbol
+    return None
+
+
+# tests that ineq is in the form a*trig(f(x)) REL b
 def is_trig_ineq(ineq, symbol):
     ineq = simplify(ineq)
     if ineq.func in [StrictGreaterThan, StrictLessThan, GreaterThan, LessThan]:
@@ -400,6 +414,39 @@ def solve_trig_help(left, right, rel, f, symbol):
     return interval
 
 
+# solves a*sqrt(f(x)) REL b
+def solve_sqrt_ineq(trig_ineq_params):
+    a, b, f, rel, symbol = trig_ineq_params
+    c = b / a
+    add_comment("Solve the inequality")
+    add_exp(rel(a * sqrt(f), b))
+    if a != 1:
+        if a < 0:
+            if rel is StrictLessThan:
+                rel = StrictGreaterThan
+            if rel is LessThan:
+                rel = GreaterThan
+            if rel is StrictGreaterThan:
+                rel = StrictLessThan
+            if rel is GreaterThan:
+                rel = LessThan
+        add_comment("Rewrite this equations as")
+        add_exp(rel(sqrt(f), c))
+
+    # sqrt(f(x)) < c <= 0 or # sqrt(f(x)) <= c < 0.
+    if (rel is StrictLessThan and c <= 0) or (rel is LessThan and c < 0):
+        add_comment("There is no solution because the values of sqrt are non-negative")
+        return S.EmptySet
+
+    add_comment("Square the both sides of the inequality to eliminate the radical sign")
+    ineq = rel(f, pow(c, 2))
+    add_exp(ineq)
+    dom = GreaterThan(f, 0)
+    add_comment("This step is correct if")
+    add_exp(dom)
+    return reduce_inequalities([ineq, dom], True, [symbol])
+
+
 def solve_trig_ineq(trig_ineq_params):
     a, b, f, rel, trig, symbol = trig_ineq_params
     c = b / a
@@ -407,6 +454,15 @@ def solve_trig_ineq(trig_ineq_params):
     add_comment("Solve the inequality")
     add_exp(rel(a * trig(f), b))
     add_comment("This inequality is triginometric")
+    if a < 0:
+        if rel is StrictLessThan:
+            rel = StrictGreaterThan
+        if rel is LessThan:
+            rel = GreaterThan
+        if rel is StrictGreaterThan:
+            rel = StrictLessThan
+        if rel is GreaterThan:
+            rel = LessThan
     if trig in [sin, cos] and (
             (rel is StrictLessThan and c <= -1) or
             (rel is LessThan and c < -1) or
@@ -477,6 +533,10 @@ def reduce_inequalities(inequalities, assume=True, symbols=[]):
         trig_ineq_params = is_trig_ineq(ineq, symbol)
         if trig_ineq_params is not None:
             return solve_trig_ineq(trig_ineq_params)
+        sqrt_ineq_params = is_sqrt_ineq(ineq, symbol)
+        if sqrt_ineq_params is not None:
+            return solve_sqrt_ineq(sqrt_ineq_params)
+
 
     for inequality in inequalities:
         if isinstance(inequality, bool):
