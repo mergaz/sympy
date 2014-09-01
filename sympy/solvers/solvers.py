@@ -1499,6 +1499,8 @@ def _solve(f, *symbols, **flags):
             else:
                 result.add(s)
         result = merge_trig_solutions(result)
+        if result == []:
+            add_comment("Therefore there is no solution")
         return result
     elif f.is_Piecewise:
         result = set()
@@ -1710,6 +1712,9 @@ def _solve(f, *symbols, **flags):
                             b = args[1]
                         else:
                             b = S.Exp1
+                        if (b != base):
+                            add_comment("We know that ")
+                            add_eq(log(args[0], b), log(args[0], base) / log(b, base))
                         e = log(args[0], base) / log(b, base)
                     else:
                         e = e.func(*args)
@@ -1755,9 +1760,11 @@ def _solve(f, *symbols, **flags):
                 bases = set(bases)
                 if len(bases) > 1:
                     funcs = set(b for b in bases if b.is_Function)
-
-                    trig = set([_ for _ in funcs if
-                        isinstance(_, C.TrigonometricFunction)])
+                    trig = set()
+                    try:
+                        trig = set([_ for _ in funcs if isinstance(_, C.TrigonometricFunction)])
+                    except:
+                        pass
                     other = funcs - trig
                     if not other and len(funcs.intersection(trig)) > 1:
                         newf = TR1(f_num).rewrite(tan)
@@ -2048,8 +2055,9 @@ def _solve(f, *symbols, **flags):
         cancel_subroutine()
 
     if result is False:
-        raise NotImplementedError(msg +
-        "\nNo algorithms are implemented to solve equation %s" % f)
+        add_comment("I don't know how to solve this equation")
+        return None
+        #raise NotImplementedError(msg + "\nNo algorithms are implemented to solve equation %s" % f)
 
     if flags.get('simplify', True):
         result = list(map(simplify, result))
@@ -3026,7 +3034,9 @@ def _tsolve(eq, sym, **flags):
             try:
                 poly = lhs.as_poly()
                 g = _filtered_gens(poly, sym)
-                return _solve_lambert(lhs - rhs, sym, g)
+                # message "I don't know how to solve this equation"--the best way for us
+                return None
+                # return _solve_lambert(lhs - rhs, sym, g)
             except NotImplementedError:
                 # maybe it's a convoluted function
                 if len(g) == 2:
