@@ -1446,6 +1446,9 @@ def _solve(f, *symbols, **flags):
             if m.is_Number:
                 continue
             eqs.add(m)
+        if len(dens) > 0:
+            add_comment("Every root of this equation is a root of the following equation")
+            add_eq(Mul(*eqs), 0)
         if len(eqs) > 1:
             add_comment("To solve this equation we find roots of the following equations")
             for m in eqs:
@@ -1496,6 +1499,8 @@ def _solve(f, *symbols, **flags):
             else:
                 result.add(s)
         result = merge_trig_solutions(result)
+        if result == []:
+            add_comment("Therefore there is no solution")
         return result
     elif f.is_Piecewise:
         result = set()
@@ -1546,8 +1551,6 @@ def _solve(f, *symbols, **flags):
                 add_comment("Solve the equation")
                 add_eq(f_num, 0)
 
-
-
         result = False  # no solution was obtained
         msg = ''  # there is no failure message
         dens = denoms(f, symbols)  # store these for checking later
@@ -1557,8 +1560,24 @@ def _solve(f, *symbols, **flags):
         # contains, so we will inspect the generators identified by
         # polys to figure out what to do.
 
+        A, B, C = Wild("A"), Wild("B"), Wild("C")
+        m = f_num.match(Pow(A, B) + C)
+        m[A] = simplify(m[A])
+        m[B] = simplify(m[B])
+        m[C] = simplify(m[C])
+        if m is not None and not simplify(m[C]).has(symbol) and simplify(m[B]).is_Rational and simplify(m[B]).q != 1:
+            if m[C] != 0:
+                add_comment("Rewrite the equation as")
+                add_eq(Pow(m[A], m[B]), -m[C])
+            add_comment("Raise the both sides of the equation to the power")
+            k = simplify(1 / m[B])
+            add_exp(k)
+            add_eq(m[A], Pow(-m[C], k))
+            result = _solve(m[A] - Pow(-m[C], k), symbol, **flags)
+
+
         # but first remove radicals as this will help Polys
-        if flags.pop('unrad', True):
+        if result is False and flags.pop('unrad', True):
             try:
                 # try remove all...
                 u = unrad(f_num)
@@ -1693,6 +1712,9 @@ def _solve(f, *symbols, **flags):
                             b = args[1]
                         else:
                             b = S.Exp1
+                        if (b != base):
+                            add_comment("We know that ")
+                            add_eq(log(args[0], b), log(args[0], base) / log(b, base))
                         e = log(args[0], base) / log(b, base)
                     else:
                         e = e.func(*args)
@@ -1738,9 +1760,11 @@ def _solve(f, *symbols, **flags):
                 bases = set(bases)
                 if len(bases) > 1:
                     funcs = set(b for b in bases if b.is_Function)
-
-                    trig = set([_ for _ in funcs if
-                        isinstance(_, C.TrigonometricFunction)])
+                    trig = set()
+                    try:
+                        trig = set([_ for _ in funcs if isinstance(_, C.TrigonometricFunction)])
+                    except:
+                        pass
                     other = funcs - trig
                     if not other and len(funcs.intersection(trig)) > 1:
                         newf = TR1(f_num).rewrite(tan)
@@ -2031,8 +2055,9 @@ def _solve(f, *symbols, **flags):
         cancel_subroutine()
 
     if result is False:
-        raise NotImplementedError(msg +
-        "\nNo algorithms are implemented to solve equation %s" % f)
+        add_comment("I don't know how to solve this equation")
+        return None
+        #raise NotImplementedError(msg + "\nNo algorithms are implemented to solve equation %s" % f)
 
     if flags.get('simplify', True):
         result = list(map(simplify, result))
@@ -2055,6 +2080,9 @@ def _solve(f, *symbols, **flags):
                 add_exp(r)
         result = checked_result
     result = merge_trig_solutions(result)
+    if len(result) == 0:
+        add_comment("Therefore there is no solution")
+
     return result
 
 
@@ -3006,7 +3034,9 @@ def _tsolve(eq, sym, **flags):
             try:
                 poly = lhs.as_poly()
                 g = _filtered_gens(poly, sym)
-                return _solve_lambert(lhs - rhs, sym, g)
+                # message "I don't know how to solve this equation"--the best way for us
+                return None
+                # return _solve_lambert(lhs - rhs, sym, g)
             except NotImplementedError:
                 # maybe it's a convoluted function
                 if len(g) == 2:
