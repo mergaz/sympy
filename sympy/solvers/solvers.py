@@ -832,6 +832,8 @@ def solve(f, *symbols, **flags):
         elif isinstance(fi, Poly):
             f[i] = fi.as_expr()
         elif isinstance(fi, bool) or fi.is_Relational:
+            if not symbols:
+                symbols = list(reduce(set.union, [fi.free_symbols for fi in f], set()))
             return reduce_inequalities(f, assume=flags.get('assume'),
                                        symbols=symbols)
 
