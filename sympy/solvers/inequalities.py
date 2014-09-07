@@ -3,12 +3,15 @@
 from __future__ import print_function, division
 from sympy import sqrt
 from sympy.core import Symbol, Interval
+from sympy.core.mul import Mul
 from sympy.core.numbers import pi
+from sympy.core.power import Pow
 from sympy.core.relational import Relational, Eq, Ge, Lt, GreaterThan, StrictGreaterThan, StrictLessThan, LessThan
 from sympy.core.singleton import S
 from sympy.assumptions import ask, AppliedPredicate, Q
 from sympy.core.symbol import Wild, Dummy
 from sympy.functions import re, im, Abs
+from sympy.functions.elementary.exponential import log
 from sympy.functions.elementary.trigonometric import sin, cos, tan, cot, atan, acot, acos, asin
 from sympy.logic import And
 from sympy.mpmath import inf
@@ -17,6 +20,28 @@ from sympy.polys.polyroots import roots
 from sympy.printing.latex import latex
 from sympy.simplify.simplify import simplify
 from sympy.utilities.solution import add_comment, add_eq, add_exp
+
+
+def signToRel(sign):
+    if sign is '>':
+        return StrictGreaterThan
+    if sign is '>=':
+        return GreaterThan
+    if sign is '<':
+        return StrictLessThan
+    if sign is '<=':
+        return LessThan
+
+
+def corel(rel):
+    if rel is StrictLessThan:
+        return StrictGreaterThan
+    if rel is LessThan:
+        return GreaterThan
+    if rel is StrictGreaterThan:
+        return StrictLessThan
+    if rel is GreaterThan:
+        return LessThan
 
 
 def solve_poly_inequality(numer, denom, rel):
@@ -50,6 +75,25 @@ def solve_poly_inequality(numer, denom, rel):
         for r in reals:
             intervals.append(Interval(r, r, False, False))
         return intervals
+
+    if rel != '!=' and numer.degree() == 1 and denom.degree() == 0:
+        add_comment("The solution of this ineqality is")
+        a = numer.nth(1)
+        b = numer.nth(0)
+        c = -b / a
+        rel = signToRel(rel)
+        if a < 0:
+            rel = corel(rel)
+        if rel == StrictGreaterThan: # x > c
+            i = Interval(c, S.Infinity, False, False)
+        elif rel == GreaterThan: # x >= c
+            i = Interval(c, S.Infinity, True, False)
+        elif rel == StrictLessThan: # x < c
+            i = Interval(S.NegativeInfinity, c, False, False)
+        elif rel == LessThan: # x < c
+            i = Interval(S.NegativeInfinity, c, False, True)
+        add_exp(i)
+        return [i]
 
     add_comment("Use the critical points method")
     add_comment("Find the roots of the the equation")
@@ -153,8 +197,9 @@ def solve_rational_inequalities(eqs):
             r = S.EmptySet
             for interval in intervals:
                 r = r.union(interval)
-            add_comment("The have the following solution set")
-            add_exp(r)
+            if len(intervals) > 1:
+                add_comment("The have the following solution set")
+                add_exp(r)
             result = result.intersect(r)
         if len(_eqs) > 1:
             add_comment("Finally we have the following solution set")
@@ -208,7 +253,7 @@ def reduce_rational_inequalities(exprs, gen, assume=True, relational=True):
 
             domain = opt.domain.get_exact()
 
-            if not (domain.is_ZZ or domain.is_QQ):
+            if not (domain.is_ZZ or domain.is_QQ or domain.is_EX):
                 raise NotImplementedError("inequality solving is not supported over %s" % opt.domain)
 
             _eqs.append(((numer, denom), rel))
@@ -373,6 +418,122 @@ def is_sqrt_ineq(ineq, symbol):
     return None
 
 
+# tests that ineq is in the form c*log(a, f(x)) REL b
+def is_log_ineq(ineq, symbol):
+    ineq = simplify(ineq)
+    if ineq.func in [StrictGreaterThan, StrictLessThan, GreaterThan, LessThan]:
+        rel = ineq.func
+        b = ineq.args[1]
+        if ineq.args[0].func is log:
+            f = ineq.args[0].args[0]
+            if len(ineq.args[0].args) == 2:
+                a = ineq.args[0].args[1]
+            else:
+                a = S.Exp1
+            if f.has(symbol) and not a.has(symbol) and not b.has(symbol):
+                return a, b, 1, f, rel, symbol
+        elif ineq.args[0].func is Mul and ineq.args[0].args[1].func is log:
+            c = ineq.args[0].args[0]
+            f = ineq.args[0].args[1].args[0]
+            if len(ineq.args[0].args[1].args) == 2:
+                a = ineq.args[0].args[1].args[1]
+            else:
+                a = S.Exp1
+            if f.has(symbol) and not a.has(symbol) and not b.has(symbol) and not c.has(symbol):
+                return a, b, c, f, rel, symbol
+    return None
+
+
+# tests that ineq is in the form log(a, f(x)) REL log(b, g(x))
+def is_log_log_ineq(ineq, symbol):
+    ineq = simplify(ineq)
+    if ineq.func in [StrictGreaterThan, StrictLessThan, GreaterThan, LessThan]:
+        rel = ineq.func
+        if ineq.args[0].func is log and ineq.args[1].func is log:
+            f = ineq.args[0].args[0]
+            g = ineq.args[1].args[0]
+            if len(ineq.args[0].args) == 2:
+                a = ineq.args[0].args[1]
+            else:
+                a = S.Exp1
+            if len(ineq.args[1].args) == 2:
+                b = ineq.args[1].args[1]
+            else:
+                b = S.Exp1
+            if f.has(symbol) and g.has(symbol) and not a.has(symbol) and not b.has(symbol):
+                return a, b, f, g, rel, symbol
+    return None
+
+
+# solve ineq is in the form log(a, f(x)) REL b
+def solve_log_ineq(log_ineq_params):
+    a, b, c, f, rel, symbol = log_ineq_params
+    ineq = rel(c*log(f, a), b)
+    add_comment("Solve the inequality")
+    add_exp(ineq)
+    if c > 0 and c != 1:
+        add_comment("Rewrite it as")
+        b, c = b / c, 1
+        ineq = rel(log(f, a), b)
+        add_exp(ineq)
+    if c < 0:
+        add_comment("Rewrite it as")
+        b, c, rel = b / c, 1, corel(rel)
+        ineq = rel(log(f, a), b)
+        add_exp(ineq)
+    elif c != 1:
+        raise NotImplementedError("can't reduce %s" % ineq)
+
+    if a > 1:
+        add_comment("The base of log is greater than 1 therefore we have")
+        ineq = rel(f, Pow(a, b, evaluate=False))
+        add_exp(ineq)
+    elif 0 < a < 1:
+        add_comment("The base of log is less than 1 therefore we have")
+        ineq = corel(rel)(f, Pow(a, b, evaluate=False))
+        add_exp(ineq)
+    else:
+        raise NotImplementedError("can't reduce %s" % ineq)
+    add_comment("And we have a restriction")
+    dom = StrictGreaterThan(f, 0)
+    add_exp(dom)
+    return reduce_inequalities([ineq, dom], True, [symbol])
+
+
+# solve ineq is in the form log(a, f(x)) REL log(b, g(x))
+def solve_log_log_ineq(log_log_ineq_params):
+    a, b, f, g, rel, symbol = log_log_ineq_params
+    ineq = rel(log(f, a), log(g, b))
+    add_comment("Solve the inequality")
+    add_exp(ineq)
+    dom1 = StrictGreaterThan(f, 0)
+    dom2 = StrictGreaterThan(g, 0)
+    if a != b:
+        add_comment("Rewrite it as")
+        if simplify(log(b, a)).is_Integer:
+            f = Pow(f, log(b, a), evaluate=False)
+            a = b
+        else:
+            g = Pow(g, log(a, b), evaluate=False)
+            b = a
+        ineq = rel(log(f, a), log(g, b))
+        add_exp(ineq)
+    if a > 1:
+        add_comment("The base of log is greater than 1 therefore we have")
+        ineq = rel(f, g)
+        add_exp(ineq)
+    elif 0 < a < 1:
+        add_comment("The base of log is less than 1 therefore we have")
+        ineq = corel(rel)(f, g)
+        add_exp(ineq)
+    else:
+        raise NotImplementedError("can't reduce %s" % ineq)
+    add_comment("And we have restrictions")
+    add_exp(dom1)
+    add_exp(dom2)
+    return reduce_inequalities([ineq, dom1, dom2], True, [symbol])
+
+
 # tests that ineq is in the form a*trig(f(x)) REL b
 def is_trig_ineq(ineq, symbol):
     ineq = simplify(ineq)
@@ -422,14 +583,7 @@ def solve_sqrt_ineq(trig_ineq_params):
     add_exp(rel(a * sqrt(f), b))
     if a != 1:
         if a < 0:
-            if rel is StrictLessThan:
-                rel = StrictGreaterThan
-            if rel is LessThan:
-                rel = GreaterThan
-            if rel is StrictGreaterThan:
-                rel = StrictLessThan
-            if rel is GreaterThan:
-                rel = LessThan
+            rel = corel(rel)
         add_comment("Rewrite this equations as")
         add_exp(rel(sqrt(f), c))
 
@@ -455,14 +609,7 @@ def solve_trig_ineq(trig_ineq_params):
     add_exp(rel(a * trig(f), b))
     add_comment("This inequality is triginometric")
     if a < 0:
-        if rel is StrictLessThan:
-            rel = StrictGreaterThan
-        if rel is LessThan:
-            rel = GreaterThan
-        if rel is StrictGreaterThan:
-            rel = StrictLessThan
-        if rel is GreaterThan:
-            rel = LessThan
+        rel = corel(rel)
     if trig in [sin, cos] and (
             (rel is StrictLessThan and c <= -1) or
             (rel is LessThan and c < -1) or
@@ -536,7 +683,12 @@ def reduce_inequalities(inequalities, assume=True, symbols=[]):
         sqrt_ineq_params = is_sqrt_ineq(ineq, symbol)
         if sqrt_ineq_params is not None:
             return solve_sqrt_ineq(sqrt_ineq_params)
-
+        log_ineq_params = is_log_ineq(ineq, symbol)
+        if log_ineq_params is not None:
+            return solve_log_ineq(log_ineq_params)
+        log_log_ineq_params = is_log_log_ineq(ineq, symbol)
+        if log_log_ineq_params is not None:
+            return solve_log_log_ineq(log_log_ineq_params)
 
     for inequality in inequalities:
         if isinstance(inequality, bool):
