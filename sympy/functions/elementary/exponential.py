@@ -672,6 +672,9 @@ class log(Function):
 
         """
         if len(self.args) != 1:
+            if self.args[1] > 0:
+                r = log(self.args[0]).as_real_imag(deep, **hints)
+                return (r[0]/log(self.args[1]), r[1])
             raise NotImplementedError("This method for log(x, b) is not supported")
         if deep:
             abs = C.Abs(self.args[0].expand(deep, **hints))
