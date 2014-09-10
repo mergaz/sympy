@@ -2142,7 +2142,7 @@ def _solve(f, *symbols, **flags):
                             return result
                         else: # if we are there, then we don't know how to comment the solution
                             if gen != symbol:
-                                add_comment("This equation can be solved")
+                                add_comment("This equation cannot be solved")
                                 start_subroutine("Dont Know")
                                 u = Dummy()
                                 inversion = _solve(gen - u, symbol, **flags)
@@ -2167,15 +2167,15 @@ def _solve(f, *symbols, **flags):
         #cancel_subroutine()
 
     if result is False:
-        add_comment("This equation can be solved")
+        add_comment("This equation cannot be solved")
         return None
         #raise NotImplementedError(msg + "\nNo algorithms are implemented to solve equation %s" % f)
 
-    if flags.get('simplify', True):
-        result = list(map(simplify, result))
+    #if flags.get('simplify', True):
+    #    result = list(map(simplify, result))
         # we just simplified the solution so we now set the flag to
         # False so the simplification doesn't happen again in checksol()
-        flags['simplify'] = False
+    #    flags['simplify'] = False
 
     if check:
         # reject any result that makes any denom. affirmatively 0;
