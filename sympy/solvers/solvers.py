@@ -332,6 +332,7 @@ def checksol(f, symbol, sol=None, **flags):
         elif val.is_Rational:
             return val == 0
         if numerical and not val.free_symbols:
+            val = to_log_fixed_base(val, S.Exp1)
             return abs(val.n(18).n(12, chop=True)) < 1e-9
         was = val
 
@@ -1373,6 +1374,88 @@ def solveAsinFpBsinG(f, symbol):
         return result
     raise DontKnowHowToSolve()
 
+
+
+def to_exp_fixed_base(e, base, symbol, silent=True):
+    if e.args:
+        args = tuple([to_exp_fixed_base(a, base, symbol, silent) for a in e.args])
+        b = None
+        if e.func is exp and e.has(symbol):
+            b = S.Exp1
+        if e.func is Pow and e.args[0].is_Number and e.has(symbol):
+            b = args[0]
+        if not b is None and b != base:
+            if not silent:
+                add_comment("We know that ")
+                add_eq(Pow(b, args[1]), Pow(base, args[1] * log(b, base))) # c^log_c(a) = a
+            e = Pow(base, args[1] * log(b, base))
+        else:
+            e = e.func(*args)
+    return e
+
+
+def simplify_exp_eq(f, symbol, silent):
+    def get_exp_bases(f, symbol):
+        result = set()
+        if f.args:
+            for a in f.args:
+                result.update(get_exp_bases(a, symbol))
+        if f.func is exp and f.has(symbol):
+            result.add(S.Exp1)
+        if f.func is Pow and f.args[0].is_Number and f.args[1].has(symbol):
+            result.add(f.args[0])
+        return result
+
+    ls = get_exp_bases(f, symbol)
+    ls = list(ls)
+    ls.sort(key=default_sort_key)
+    if len(ls) <= 1:
+        return f
+    else:
+        return to_exp_fixed_base(f, ls[0], symbol, silent)
+
+
+def to_log_fixed_base(e, base, silent=True):
+    if e.args:
+        args = tuple([to_log_fixed_base(a, base, silent) for a in e.args])
+        if e.func is log:
+            if len(args) == 2:
+                b = args[1]
+            else:
+                b = S.Exp1
+            if b != base:
+                if not silent:
+                    add_comment("We know that ")
+                    add_eq(log(args[0], b), log(args[0], base) / log(b, base))
+            e = log(args[0], base) / log(b, base)
+        else:
+            e = e.func(*args)
+    return e
+
+
+def get_log_bases(f, symbol):
+    result = set()
+    if f.args:
+        for a in f.args:
+            result.update(get_log_bases(a, symbol))
+    if f.func == log and f.has(symbol):
+        if len(f.args) == 1:
+            result.add(S.Exp1)
+        else:
+            result.add(f.args[1])
+    return result
+
+
+def simplify_log_eq(f, symbol):
+    ls = get_log_bases(f, symbol)
+    ls = list(ls)
+    ls.sort(key=default_sort_key)
+    if len(ls) <= 1:
+        return f
+    else:
+        return to_log_fixed_base(f, ls[0], False)
+
+
 def _solve(f, *symbols, **flags):
     """Return a checked solution for f in terms of one or more of the
     symbols."""
@@ -1532,52 +1615,100 @@ def _solve(f, *symbols, **flags):
                         ))
         check = False
     else:
-        # first see if it really depends on symbol and whether there
-        # is a linear solution
-        f_num, sol = solve_linear(f, symbols=symbols)
-        if not symbol in f_num.free_symbols:
-            return []
-        elif f_num.is_Symbol:
-            # no need to check but simplify if desired
-            if flags.get('simplify', True):
-                sol = simplify(sol)
-            add_comment("This equation is linear")
-            add_comment("The solution of this equation is")
-            add_eq(symbol, sol)
-            return [sol]
-
-        if f_num - f != 0:
-            add_comment("Rewrite the equation as")
-            add_eq(f_num / sol, 0)
-            if sol != 1:
-                add_comment("Solve the equation")
-                add_eq(f_num, 0)
-
-        result = False  # no solution was obtained
+        result = False
         msg = ''  # there is no failure message
         dens = denoms(f, symbols)  # store these for checking later
 
-        # Poly is generally robust enough to convert anything to
-        # a polynomial and tell us the different generators that it
-        # contains, so we will inspect the generators identified by
-        # polys to figure out what to do.
 
-        A, B, C = Wild("A"), Wild("B"), Wild("C")
-        m = f_num.match(Pow(A, B) + C)
-        m[A] = simplify(m[A])
-        m[B] = simplify(m[B])
-        m[C] = simplify(m[C])
-        if m is not None and not simplify(m[C]).has(symbol) and simplify(m[B]).is_Rational and simplify(m[B]).q != 1:
-            if m[C] != 0:
+        f_num = simplify_log_eq(f, symbol)
+        if f_num != f:
+            result = _solve(f_num, symbol, **flags)
+
+        if result is False:
+            f_num = simplify_exp_eq(f, symbol, False)
+            if f_num != f:
+                result = _solve(f_num, symbol, **flags)
+        if result is False:
+            # first see if it really depends on symbol and whether there
+            # is a linear solution
+            A = Wild("A")
+            B = Wild("B")
+            r = f.match(sqrt(A) - B)
+            if (not r is None) and (r[A].has(symbol)):
+                f_num, sol = f, 1
+            else:
+                f_num, sol = solve_linear(f, symbols=symbols)
+
+            if not symbol in f_num.free_symbols:
+                return []
+            elif f_num.is_Symbol:
+                # no need to check but simplify if desired
+                if flags.get('simplify', True):
+                    sol = simplify(sol)
+                add_comment("This equation is linear")
+                add_comment("The solution of this equation is")
+                add_eq(symbol, sol)
+                return [sol]
+
+            if f_num - f != 0:
                 add_comment("Rewrite the equation as")
-                add_eq(Pow(m[A], m[B]), -m[C])
-            add_comment("Raise the both sides of the equation to the power")
-            k = simplify(1 / m[B])
-            add_exp(k)
-            add_eq(m[A], Pow(-m[C], k))
-            result = _solve(m[A] - Pow(-m[C], k), symbol, **flags)
+                add_eq(f_num / sol, 0)
+                if sol != 1:
+                    add_comment("Solve the equation")
+                    add_eq(f_num, 0)
 
+            # Poly is generally robust enough to convert anything to
+            # a polynomial and tell us the different generators that it
+            # contains, so we will inspect the generators identified by
+            # polys to figure out what to do.
 
+            A, B, C = Wild("A"), Wild("B"), Wild("C")
+            rf_num = simplify_exp_eq(powsimp(f_num), symbol, True)
+            m = rf_num.match(Pow(A, B) - Pow(A, C))
+            if not m is None:
+                m[A] = simplify(m[A])
+                m[B] = simplify(m[B])
+                m[C] = simplify(m[C])
+            if m is not None and not m[A].has(symbol) and m[B].has(symbol) and m[C].has(symbol):
+                add_comment("Rewrite the equation as")
+                add_eq(Pow(m[A], m[B]), Pow(m[A], m[C]))
+                add_comment("Therefore we get")
+                add_eq(m[B], m[C])
+                result = _solve(m[B] - m[C], symbol, **flags)
+
+            if result is False:
+                bs = get_log_bases(f_num, symbol)
+                if len(bs) == 1:
+                    b = list(bs)[0]
+                    m = f_num.match(log(B, b) - log(C, b))
+                    if m is None:
+                        m = f_num.match(log(B) - log(C))
+                        if not m is None:
+                            b = S.Exp1
+                    if not m is None:
+                        m[B] = simplify(m[B])
+                        m[C] = simplify(m[C])
+                    if m is not None and m[B].has(symbol) and m[C].has(symbol):
+                        add_comment("Rewrite the equation as")
+                        add_eq(log(m[B], b), log(m[C], b))
+                        add_comment("Therefore we get")
+                        add_eq(m[B], m[C])
+                        result = _solve(m[B] - m[C], symbol, **flags)
+            if result is False:
+                m = f_num.match(Pow(A, B) + C)
+                if not m is None:
+                    m[A] = simplify(m[A])
+                    m[B] = simplify(m[B])
+                    m[C] = simplify(m[C])
+                if m is not None and not simplify(m[C]).has(symbol) and simplify(m[B]).is_Rational and simplify(m[B]).q != 1:
+                    if m[C] != 0:
+                        add_comment("Rewrite the equation as")
+                        add_eq(Pow(m[A], m[B]), -m[C])
+                    add_comment("Raise the both sides of the equation to the power")
+                    k = simplify(1 / m[B])
+                    add_exp(k)
+                    add_eq(m[A], Pow(-m[C], k))
+                    result = _solve(m[A] - Pow(-m[C], k), symbol, **flags)
         # but first remove radicals as this will help Polys
         if result is False and flags.pop('unrad', True):
             try:
@@ -1628,6 +1759,12 @@ def _solve(f, *symbols, **flags):
             poly = Poly(f_num)
             if poly is None:
                 raise ValueError('could not convert %s to Poly' % f_num)
+
+            if f_num - poly.as_expr() != 0:
+                add_comment("Rewrite the equation as")
+                add_eq(poly.as_expr(), 0)
+
+
             gens = [g for g in poly.gens if g.has(symbol)]
 
             def is_sin_cos(gens):
@@ -1700,40 +1837,6 @@ def _solve(f, *symbols, **flags):
             except DontKnowHowToSolve:
                 pass
 
-            def is_log(gens):
-                for g in gens:
-                    if g.func != log:
-                        return False
-                return True
-
-            def to_log_fixed_base(e, base):
-                if e.args:
-                    args = tuple([to_log_fixed_base(a, base) for a in e.args])
-                    if e.func is log:
-                        if len(args) == 2:
-                            b = args[1]
-                        else:
-                            b = S.Exp1
-                        if (b != base):
-                            add_comment("We know that ")
-                            add_eq(log(args[0], b), log(args[0], base) / log(b, base))
-                        e = log(args[0], base) / log(b, base)
-                    else:
-                        e = e.func(*args)
-                return e
-
-            if len(gens) > 1 and is_log(gens):
-                bases = set()
-                for g in gens:
-                    if len(g.args) == 2:
-                        bases.add(g.args[1])
-                    else:
-                        bases.add(S.Exp1)
-                if len(bases) > 1:
-                    bases = list(ordered(bases))
-                    newf = to_log_fixed_base(poly.as_expr(), bases[0])
-                    return _solve(newf, symbol, **flags)
-
             if len(gens) > 1:
                 # If there is more than one generator, it could be that the
                 # generators have the same base but different powers, e.g.
@@ -1795,6 +1898,14 @@ def _solve(f, *symbols, **flags):
                             for sol in cv_sols:
                                 sols.append(cv_inv.subs(t, sol))
                             return list(ordered(sols))
+
+                    if len(get_log_bases(f_num, symbol)) > 0:
+                        flc = logcombine(f_num, True)
+                        if flc != f_num:
+                            add_comment("Rewrite the equation")
+                            add_eq(flc, 0)
+                            return _solve(flc, symbol, **flags)
+
 
                     msg = 'multiple generators %s' % gens
 
@@ -2031,7 +2142,7 @@ def _solve(f, *symbols, **flags):
                             return result
                         else: # if we are there, then we don't know how to comment the solution
                             if gen != symbol:
-                                add_comment("I don't know how to solve this equation")
+                                add_comment("This equation cannot be solved")
                                 start_subroutine("Dont Know")
                                 u = Dummy()
                                 inversion = _solve(gen - u, symbol, **flags)
@@ -2042,30 +2153,29 @@ def _solve(f, *symbols, **flags):
                             result = soln
 
     # fallback if above fails
-    if result is False:
-        add_comment("I don't know how to solve this equation")
-        start_subroutine("Dont Know")
+    # if result is False:
+        #start_subroutine("Dont Know")
         # allow tsolve to be used on next pass if needed
-        flags.pop('tsolve', None)
-        try:
-            result = _tsolve(f_num, symbol, **flags)
-            add_exp(result)
-        except PolynomialError:
-            result = None
-        if result is None:
-            result = False
-        cancel_subroutine()
+        #flags.pop('tsolve', None)
+        #try:
+        #    result = _tsolve(f_num, symbol, **flags)
+        #    add_exp(result)
+        #except PolynomialError:
+        #    result = None
+        #if result is None:
+        #    result = False
+        #cancel_subroutine()
 
     if result is False:
-        add_comment("I don't know how to solve this equation")
+        add_comment("This equation cannot be solved")
         return None
         #raise NotImplementedError(msg + "\nNo algorithms are implemented to solve equation %s" % f)
 
-    if flags.get('simplify', True):
-        result = list(map(simplify, result))
+    #if flags.get('simplify', True):
+    #    result = list(map(simplify, result))
         # we just simplified the solution so we now set the flag to
         # False so the simplification doesn't happen again in checksol()
-        flags['simplify'] = False
+    #    flags['simplify'] = False
 
     if check:
         # reject any result that makes any denom. affirmatively 0;
@@ -2078,7 +2188,7 @@ def _solve(f, *symbols, **flags):
                   checksol(f_num, {symbol: r}, **flags) is not False]
         for r in result:
             if not r in checked_result:
-                add_comment("The following value is not a root")
+                add_comment("After substituting the value in the equation we get that it is not a root")
                 add_exp(r)
         result = checked_result
     result = merge_trig_solutions(result)
@@ -2836,7 +2946,6 @@ def manual_solve_linear_system(system, *symbols, **flags):
     return solutions
 
 
-
 def solve_undetermined_coeffs(equ, coeffs, sym, **flags):
     """Solve equation of a type p(x; a_1, ..., a_k) == q(x) where both
        p, q are univariate polynomials and f depends on k parameters.
@@ -2910,6 +3019,7 @@ def solve_linear_system_LU(matrix, syms):
     for i in range(soln.rows):
         solutions[syms[i]] = soln[i, 0]
     return solutions
+
 
 def tsolve(eq, sym):
     SymPyDeprecationWarning(
@@ -3038,7 +3148,7 @@ def _tsolve(eq, sym, **flags):
                 g = _filtered_gens(poly, sym)
                 # message "I don't know how to solve this equation"--the best way for us
                 return None
-                # return _solve_lambert(lhs - rhs, sym, g)
+                #return _solve_lambert(lhs - rhs, sym, g)
             except NotImplementedError:
                 # maybe it's a convoluted function
                 if len(g) == 2:
