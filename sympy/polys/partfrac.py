@@ -11,6 +11,8 @@ from sympy.core import S, Add, sympify, Function, Lambda, Dummy, Expr
 from sympy.core.basic import preorder_traversal
 from sympy.utilities import numbered_symbols, take, xthreaded, public
 from sympy.core.compatibility import xrange
+from sympy.utilities.solution import start_subroutine, cancel_subroutine
+
 
 @xthreaded
 @public
@@ -157,7 +159,9 @@ def apart_undetermined_coeffs(P, Q):
         system.append(coeff - P.nth(k))
 
     from sympy.solvers import solve
+    start_subroutine("Partial Fractions")
     solution = solve(system, symbols)
+    cancel_subroutine()
 
     for h, f, k in partial:
         h = h.as_expr().subs(solution)
