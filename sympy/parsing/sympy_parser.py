@@ -3,6 +3,7 @@
 from __future__ import print_function, division
 import _ast
 from token import ERRORTOKEN
+from sympy.utilities.solution import add_comment
 
 from .sympy_tokenize import \
     generate_tokens, untokenize, TokenError, \
@@ -50,7 +51,7 @@ def _token_callable(token, local_dict, global_dict, nextToken=None):
     func = local_dict.get(token[1])
     if not func:
         func = global_dict.get(token[1])
-    return callable(func) and not isinstance(func, sympy.Symbol) or token[1] == "index" or token[1] == "limits"
+    return callable(func) and not isinstance(func, sympy.Symbol) or token[1] == "index" or token[1] == "limits" or token[1] == "lg"
 
 
 def _add_factorial_tokens(name, result):
@@ -528,6 +529,9 @@ def auto_symbol(tokens, local_dict, global_dict):
             elif name == "index":
                 result.append((NAME, "index"))
                 continue
+            elif name == "lg":
+                result.append((NAME, "lg"))
+                continue
             elif name == "limits":
                 result.append((NAME, "limits"))
                 continue
@@ -786,6 +790,8 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
     if mymath_hack:
         code = EvaluateFalseTransformer().visit(code)
         code = ChangeEqToCallEqTransformer().visit(code)
+        code = ChangeLgToLog10().visit(code)
+        code = ChangeZeroPowToDegrees().visit(code)
         code = ChangeIndexToLogIndex().visit(code)
         code = ChangeLimitsToDefInt().visit(code)
     else:
@@ -810,7 +816,7 @@ def change_assign_to_eq(tokens, local_dict, global_dict):
     return result
 
 
-smthfnsmth_pattern = re.compile("(integrate|sqrt|sin|cos|tg|ctg|sec|csc|tan|cot|log|ln|exp|asin|acos|atan|acot|"
+smthfnsmth_pattern = re.compile("(integrate|sqrt|sin|cos|tg|ctg|sec|csc|tan|cot|log|ln|lg|exp|asin|acos|atan|acot|"
                                 "arcsin|arccos|arctg|arcctg|sh|ch|sinh|cosh|th|tanh|coth|cth)")
 
 
@@ -913,19 +919,46 @@ class ChangeEqToCallEqTransformer(ast.NodeTransformer):
         Change == to Eq()
         """
         if len(node.ops) == 1 and isinstance(node.ops[0], ast.Eq):
-            return ast.Call(
-                func=ast.Name(id='Eq', ctx=ast.Load()),
-                args=[node.left, node.comparators[0]],
-                keywords=[],
-                starargs=None,
-                kwargs=None
-            )
+            return ast.Call(func=ast.Name(id='Eq', ctx=ast.Load()), args=[node.left, node.comparators[0]], keywords=[], starargs=None, kwargs=None)
         return node
 
+
+class ChangeZeroPowToDegrees(ast.NodeTransformer):
+    def __init__(self):
+        self.insideTrig = False
+
+    def visit_Call(self, node):
+        """
+        a^0 --> a * pi / 180
+        """
+        if node.func.id in ['sin', 'cos', 'tan', 'cot', 'sec', 'csc']:
+            oldInsideTrig = self.insideTrig
+            self.insideTrig= True
+            result = ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
+            self.insideTrig = oldInsideTrig
+            return result
+        if node.func.id == 'Pow' and isinstance(node.args[1], ast.Call) and node.args[1].func.id == 'Integer' and isinstance(node.args[1].args[0], ast.Num) and node.args[1].args[0].n == 0:
+            return ast.Call(func=ast.Name(id='Mul', ctx=ast.Load()), args=[node.args[0], ast.Name(id="pi", ctx=ast.Load()), ast.Call(func=ast.Name(id="Pow", ctx=ast.Load()), args=[ast.Num(n=180, ctx=ast.Load()), ast.Num(n=-1, ctx=ast.Load())], keywords=[], starargs=None, kwargs=None)], keywords=[], starargs=None, kwargs=None)
+        return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
+
+
+
+class ChangeLgToLog10(ast.NodeTransformer):
+    def visit_Call(self, node):
+        """
+        lg (f(x)) --> log(f(x), 10)
+        """
+        if node.func.id == 'lg':
+            return ast.Call(func=ast.Name(id='log', ctx=ast.Load()), args=[self.visit(node.args[0]), ast.Num(n=10, ctx=ast.Load())], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
+        else:
+            return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
 
 
 class ChangeIndexToLogIndex(ast.NodeTransformer):
     def visit_Call(self, node):
+        """
+        log(f(x) index(b)) --> log(f(x), b)
+        """
         if node.func.id == 'log' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
             for i in range(len(node.args[0].args)):
                 if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'index':
@@ -933,26 +966,15 @@ class ChangeIndexToLogIndex(ast.NodeTransformer):
                     log_arg_node = node.args[0]
                     log_arg_node.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
                     log_arg_node.args = [self.visit(arg) for arg in log_arg_node.args]
-                    return ast.Call(
-                        func=ast.Name(id='log', ctx=ast.Load()),
-                        args=[log_arg_node, log_base_node],
-                        keywords=[],
-                        starargs=None,
-                        kwargs=None
-                    )
-            return node
-        else:
-            return ast.Call(
-                func=node.func,
-                args=[self.visit(arg) for arg in node.args],
-                keywords=node.keywords,
-                starargs=node.starargs,
-                kwargs=node.kwargs
-            )
+                    return ast.Call(func=ast.Name(id='log', ctx=ast.Load()), args=[log_arg_node, log_base_node], keywords=[], starargs=None, kwargs=None)
+        return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
 
 
 class ChangeLimitsToDefInt(ast.NodeTransformer):
     def visit_Call(self, node):
+        """
+        Integral(f(x) limits(a, b)) --> Integral(f, a, b)
+        """
         if node.func.id == 'Integral' and len(node.args) == 2 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
             for i in range(len(node.args[0].args)):
                 if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'limits':
@@ -962,22 +984,10 @@ class ChangeLimitsToDefInt(ast.NodeTransformer):
                     integrant_node.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
                     integrant_node.args = [self.visit(arg) for arg in integrant_node.args]
                     var_node = node.args[1]
-                    return ast.Call(
-                        func=ast.Name(id='Integral', ctx=ast.Load()),
-                        args=[integrant_node, ast.Tuple(elts=[var_node, bottom_limit_node, top_limit_node], ctx=ast.Load())],
-                        keywords=[],
-                        starargs=None,
-                        kwargs=None
-                    )
+                    return ast.Call(func=ast.Name(id='Integral', ctx=ast.Load()), args=[integrant_node, ast.Tuple(elts=[var_node, bottom_limit_node, top_limit_node], ctx=ast.Load())], keywords=[], starargs=None, kwargs=None)
             return node
         else:
-            return ast.Call(
-                func=node.func,
-                args=[self.visit(arg) for arg in node.args],
-                keywords=node.keywords,
-                starargs=node.starargs,
-                kwargs=node.kwargs
-            )
+            return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
 
 
 def evaluateFalse(s):
