@@ -538,6 +538,9 @@ def auto_symbol(tokens, local_dict, global_dict):
             elif name == 'e':
                 result.append((NAME, 'E'))
                 continue
+            elif name == 'circ':
+                result.append((NAME, 'circ'))
+                continue
 
             result.extend([
                 (NAME, 'Symbol'),
@@ -791,7 +794,7 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
         code = EvaluateFalseTransformer().visit(code)
         code = ChangeEqToCallEqTransformer().visit(code)
         code = ChangeLgToLog10().visit(code)
-        code = ChangeZeroPowToDegrees().visit(code)
+        code = ChangeZeroAndCircToDegrees().visit(code)
         code = ChangeIndexToLogIndex().visit(code)
         code = ChangeLimitsToDefInt().visit(code)
     else:
@@ -923,13 +926,14 @@ class ChangeEqToCallEqTransformer(ast.NodeTransformer):
         return node
 
 
-class ChangeZeroPowToDegrees(ast.NodeTransformer):
+class ChangeZeroAndCircToDegrees(ast.NodeTransformer):
     def __init__(self):
         self.insideTrig = False
 
     def visit_Call(self, node):
         """
         a^0 --> a * pi / 180
+        a^circ --> a * pi / 180
         """
         if node.func.id in ['sin', 'cos', 'tan', 'cot', 'sec', 'csc']:
             oldInsideTrig = self.insideTrig
@@ -937,7 +941,9 @@ class ChangeZeroPowToDegrees(ast.NodeTransformer):
             result = ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
             self.insideTrig = oldInsideTrig
             return result
-        if node.func.id == 'Pow' and isinstance(node.args[1], ast.Call) and node.args[1].func.id == 'Integer' and isinstance(node.args[1].args[0], ast.Num) and node.args[1].args[0].n == 0:
+        if node.func.id == 'Pow' and \
+                ((isinstance(node.args[1], ast.Call) and node.args[1].func.id == 'Integer' and isinstance(node.args[1].args[0], ast.Num) and node.args[1].args[0].n == 0 and self.insideTrig) or
+                     (isinstance(node.args[1], ast.Name) and node.args[1].id == 'circ')):
             return ast.Call(func=ast.Name(id='Mul', ctx=ast.Load()), args=[node.args[0], ast.Name(id="pi", ctx=ast.Load()), ast.Call(func=ast.Name(id="Pow", ctx=ast.Load()), args=[ast.Num(n=180, ctx=ast.Load()), ast.Num(n=-1, ctx=ast.Load())], keywords=[], starargs=None, kwargs=None)], keywords=[], starargs=None, kwargs=None)
         return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
 
