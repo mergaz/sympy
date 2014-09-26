@@ -21,15 +21,14 @@ from sympy.printing.latex import latex
 from sympy.simplify.simplify import simplify
 from sympy.utilities.solution import add_comment, add_eq, add_exp
 
-
 def signToRel(sign):
-    if sign is '>':
+    if sign == '>':
         return StrictGreaterThan
-    if sign is '>=':
+    if sign == '>=':
         return GreaterThan
-    if sign is '<':
+    if sign == '<':
         return StrictLessThan
-    if sign is '<=':
+    if sign == '<=':
         return LessThan
 
 
