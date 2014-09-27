@@ -21,15 +21,14 @@ from sympy.printing.latex import latex
 from sympy.simplify.simplify import simplify
 from sympy.utilities.solution import add_comment, add_eq, add_exp
 
-
 def signToRel(sign):
-    if sign is '>':
+    if sign == '>':
         return StrictGreaterThan
-    if sign is '>=':
+    if sign == '>=':
         return GreaterThan
-    if sign is '<':
+    if sign == '<':
         return StrictLessThan
-    if sign is '<=':
+    if sign == '<=':
         return LessThan
 
 
@@ -77,7 +76,7 @@ def solve_poly_inequality(numer, denom, rel):
         return intervals
 
     if rel != '!=' and numer.degree() == 1 and denom.degree() == 0:
-        add_comment("The solution of this ineqality is")
+        add_comment("The solution to this ineqality is")
         a = numer.nth(1)
         b = numer.nth(0)
         c = -b / a
@@ -85,13 +84,13 @@ def solve_poly_inequality(numer, denom, rel):
         if a < 0:
             rel = corel(rel)
         if rel == StrictGreaterThan: # x > c
-            i = Interval(c, S.Infinity, False, False)
+            i = Interval(c, S.Infinity, True, True)
         elif rel == GreaterThan: # x >= c
-            i = Interval(c, S.Infinity, True, False)
+            i = Interval(c, S.Infinity, False, True)
         elif rel == StrictLessThan: # x < c
-            i = Interval(S.NegativeInfinity, c, False, False)
-        elif rel == LessThan: # x < c
-            i = Interval(S.NegativeInfinity, c, False, True)
+            i = Interval(S.NegativeInfinity, c, True, True)
+        elif rel == LessThan: # x <= c
+            i = Interval(S.NegativeInfinity, c, True, False)
         add_exp(i)
         return [i]
 
@@ -413,7 +412,7 @@ def is_sqrt_ineq(ineq, symbol):
         a, b, f = Wild("a"), Wild("b"), Wild("f")
         rel = ineq.func
         m = ineq.match(rel(a*sqrt(f), b))
-        if not m is None and m[a] != 0 and not m[a].has(symbol) and not m[b].has(symbol) and m[f].has(symbol):
+        if not m is None and m[a] != 0 and not m[a].has(symbol) and  m[b].is_polynomial(symbol) and m[f].has(symbol):
             return m[a], m[b], m[f], rel, symbol
     return None
 
@@ -588,17 +587,20 @@ def solve_sqrt_ineq(trig_ineq_params):
         add_exp(rel(sqrt(f), c))
 
     # sqrt(f(x)) < c <= 0 or # sqrt(f(x)) <= c < 0.
-    if (rel is StrictLessThan and c <= 0) or (rel is LessThan and c < 0):
-        add_comment("There is no solution because the values of sqrt are non-negative")
-        return S.EmptySet
+    if not c.has(symbol):
+        if (rel is StrictLessThan and c <= 0) or (rel is LessThan and c < 0):
+            add_comment("There is no solution because the values of sqrt are non-negative")
+            return S.EmptySet
 
     add_comment("Square the both sides of the inequality to eliminate the radical sign")
     ineq = rel(f, pow(c, 2))
     add_exp(ineq)
-    dom = GreaterThan(f, 0)
+    dom1 = GreaterThan(f, 0)
+    dom2 = GreaterThan(c, 0)
     add_comment("This step is correct if")
-    add_exp(dom)
-    return reduce_inequalities([ineq, dom], True, [symbol])
+    add_exp(dom1)
+    add_exp(dom2)
+    return reduce_inequalities([ineq, dom1, dom2], True, [symbol])
 
 
 def solve_trig_ineq(trig_ineq_params):
@@ -622,7 +624,7 @@ def solve_trig_ineq(trig_ineq_params):
             (rel is LessThan and c >= 1) or
             (rel is StrictGreaterThan and c < -1) or
             (rel is GreaterThan and c <= -1)):
-        add_comment("Any number is a solution of this equation")
+        add_comment("Any number is a solution to this equation")
         return Interval(-inf, inf)
     elif trig is sin:
         if rel in [LessThan, StrictLessThan]:

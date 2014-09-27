@@ -600,7 +600,7 @@ class Integral(AddWithLimits):
                             # This can happen if _eval_interval depends in a
                             # complicated way on limits that cannot be computed
                             undone_limits.append(xab)
-                    add_comment("Therefore the value of the definite integral is")
+                    add_comment("Using the fundamental theorem of calculus, we get that the value of the definite integral is")
                     add_exp(function)
         if undone_limits:
             return self.func(*([function] + undone_limits))

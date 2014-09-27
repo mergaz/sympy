@@ -1242,7 +1242,7 @@ def solveAcosFpBsinGpC(f, symbol):
     if m[A] == m[B] and m[C] == 0:
         add_comment("Rewrite the equation as")
         add_eq(cos(m[F]), cos(pi/2 + m[G], evaluate=False))
-        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], pi/2 + m[G] + 2*pi*_k)
         add_eq(m[F], -pi/2 - m[G] + 2*pi*_k)
         add_comment("where " + str(_k) + " can be any integer")
@@ -1260,7 +1260,7 @@ def solveAcosFpBsinGpC(f, symbol):
     if m[A] == -m[B] and m[C] == 0:
         add_comment("Rewrite the equation as")
         add_eq(cos(m[F]), cos(pi/2 - m[G], evaluate=False))
-        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], pi/2 - m[G] + 2*pi*_k)
         add_eq(m[F], -pi/2 + m[G] + 2*pi*_k)
         add_comment("where " + str(_k) + " can be any integer")
@@ -1292,7 +1292,7 @@ def solveAcosFpBcosG(f, symbol):
     if m[A] == -m[B]:
         add_comment("Since")
         add_eq(cos(m[F]), cos(m[G]))
-        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], m[G] + 2*pi*_k)
         add_eq(m[F], -m[G] + 2*pi*_k)
         add_comment("where " + str(_k) + " can be any integer")
@@ -1310,7 +1310,7 @@ def solveAcosFpBcosG(f, symbol):
     elif m[A] == m[B]:
         add_comment("Using formula for the sum of two cosines we get")
         add_eq(2*cos((m[F] + m[G])/2)*cos((m[F] - m[G])/2), 0)
-        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(cos((m[F] + m[G])/2), 0)
         add_eq(cos((m[F] - m[G])/2), 0)
         r1 = solve(cos((m[F] + m[G])/2), symbol)
@@ -1341,7 +1341,7 @@ def solveAsinFpBsinG(f, symbol):
     if m[A] == -m[B]:
         add_comment("Since")
         add_eq(sin(m[F]), sin(m[G]))
-        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], m[G] + 2*pi*_k)
         add_eq(m[F], pi - m[G] + 2*pi*_k)
         add_comment("where " + str(_k) + " can be any integer")
@@ -1358,7 +1358,7 @@ def solveAsinFpBsinG(f, symbol):
     elif m[A] == m[B]:
         add_comment("Using formula for the sum of two sines we get")
         add_eq(2*sin((m[F] + m[G])/2)*cos((m[F] - m[G])/2), 0)
-        add_comment("The solution of this equation is the union of the solutions of the following equations")
+        add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(sin((m[F] + m[G])/2), 0)
         add_eq(cos((m[F] - m[G])/2), 0)
         r1 = solve(sin((m[F] + m[G])/2), symbol)
@@ -1646,7 +1646,7 @@ def _solve(f, *symbols, **flags):
                 if flags.get('simplify', True):
                     sol = simplify(sol)
                 add_comment("This equation is linear")
-                add_comment("The solution of this equation is")
+                add_comment("The solution to this equation is")
                 add_eq(symbol, sol)
                 return [sol]
 
