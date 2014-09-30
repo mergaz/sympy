@@ -1,7 +1,9 @@
 from __future__ import print_function, division
+import sympy
 
 from sympy.core import S, Symbol, Add, sympify, Expr, PoleError, C
 from sympy.core.compatibility import string_types
+from sympy.core.numbers import NaN
 from sympy.functions import factorial, gamma
 from .gruntz import gruntz
 from sympy.utilities.solution import start_subroutine, commit_subroutine, cancel_subroutine
@@ -15,17 +17,8 @@ from sympy.utilities.solution import add_comment, add_exp, add_eq
 from sympy.core import oo
 
 
-def lim(f, x, x0, dir="+"):
-    start_subroutine("Evaluate the limit")
-    add_comment("Evaluate the limit")
-    l = _manuallimit(f, x, x0)
-    test = limit(f, x, x0, dir)
-    if l == test:
-        commit_subroutine()
-        return l
-    else:
-        cancel_subroutine()
-        return test
+def lim(f, x, x0):
+    return limit(f, x, x0)
 
 
 def limit(e, z, z0, dir="+"):
@@ -191,79 +184,220 @@ def _min_degree(f, x):
     return md
 
 
-def _is_series(f, x):
-    for t in f.as_terms()[0]:
-        if not t[0].is_polynomial(x) and not t[0].is_Order:
-            return False
-    return True
-
 def _to_series(f, x, x0):
     term = f.series(n=None)
     r = next(term)
-    d = Poly(r, x).degree()
-    return f.series(n=d + 1)
+    return r
 
-
-def _rewrite_factors_using_series(factors, x, x0):
-    u = Dummy("u")
-    rewriten_factors = []
-    for factor in factors:
-        base, power = factor.as_base_exp()
-        if base != x and base.subs(x, x0) == 0:
-            add_comment("We know that")
-            s = _to_series(base, x, x0)
-            add_eq(base, s)
-            rewriten_factors.append(_to_series(base, x, x0) ** power)
-            continue
-        rewriten_factors.append(factor)
-    return rewriten_factors
+def split_xs_(num, x):
+    numxs = 0
+    numr = []
+    cs = 1
+    if num == x:
+        numxs = 1
+    elif num.is_Pow and num.args[0] == x and num.args[1].is_Number:
+        numxs = num.args[1]
+    elif num.is_Pow and num.args[1].is_Number:
+        p = num.args[1]
+        axs, ar, acs = split_xs_(num.args[0], x)
+        numxs += axs*p
+        numr += [(t[0], t[1]*p) for t in ar]
+        cs *= acs**p
+    elif num.subs(x, 0) != 0:
+        cs *= num
+    elif num.is_Mul:
+        for nf in num.args:
+            axs, ar, acs = split_xs_(nf, x)
+            numxs += axs
+            numr += ar
+            cs *= acs
+    else:
+        numr = [(num, 1)]
+    return numxs, numr, cs
 
 
 def _manuallimit(f, x, x0):
+    add_comment("Evaluate the limit")
     add_exp(Limit(f, x, x0))
-    v = f.subs(x, x0)
-    if not v is S.NaN:
-        add_comment("This limit is equal to")
-        add_exp(v)
-        return v
+    if f.func is Mul:
+        consts = []
+        factors = []
+        rest = []
+        for factor in f.args:
+            if not factor.has(x):
+                consts.append(factor)
+            else:
+                try:
+                    lf = limit(factor, x, x0)
+                except:
+                    lf = NaN
+                if lf.is_finite and lf != 0:
+                    factors.append(factor)
+                else:
+                    rest.append(factor)
+        if len(consts) > 0 or len(factors) > 1:
+            add_comment("Using multiplication rule, we obtain")
+            if len(consts):
+                const = Mul(*consts)
+            else:
+                const = 1
+            limits = []
+            for factor in factors:
+                limits.append(Limit(factor, x, x0))
+            if len(rest) > 0:
+                limits.append(Limit(Mul(*rest), x, x0))
+            add_eq(Limit(f, x, x0), const * Mul(*limits))
+            if len(limits) > 1:
+                add_comment("Evaluate these limits")
+            results = []
+            if const != 1:
+                results.append(const)
+            for l in limits:
+                lr = _manuallimit(l.args[0], x, x0)
+                results.append(lr)
+            add_comment("Finally, we get")
+            result = Mul(*results)
+            add_eq(Limit(f, x, x0), Mul(*results))
+            return result
+
+        num, den = f.as_numer_denom()
+        if num.is_polynomial(x) and den.is_polynomial(x) and den != 1:
+            if x0 == oo or x0 == -oo:
+                add_comment("The function is a quotient of two polynomials")
+                num = Poly(num, x)
+                den = Poly(den, x)
+                d = min(den.degree(x), num.degree())
+                num = expand(num / x**d)
+                den = expand(den / x**d)
+                add_comment("Dividing the numerator and denominator by ")
+                add_exp(x**d)
+                add_comment("The limit is")
+                f = num / den
+                add_exp(Limit(f, x, x0))
+                add_comment("Evaluate the limits of the numerator and the denominator")
+                lnum = _manuallimit(num, x, x0)
+                lden = _manuallimit(den, x, x0)
+                if lnum == oo or lnum == -oo:
+                    lf = limit(f, x, x0)
+                elif lden == 0:
+                    lf = limit(f, x, x0)
+                else:
+                    lf = lnum / lden
+                add_comment("Finally, we obtain")
+                add_eq(Limit(f, x, x0), lf)
+                return lf
+
+    if f.func is Add:
+        consts = []
+        summands = []
+        rest = []
+        for summand in f.args:
+            if not summand.has(x):
+                consts.append(summand)
+            else:
+                try:
+                    lf = limit(summand, x, x0)
+                except:
+                    lf = NaN
+                if lf.is_finite:
+                    summands.append(summand)
+                else:
+                    rest.append(summand)
+        if len(consts) > 0 or len(summands) > 1:
+            add_comment("Using addition rule, we obtain")
+            if len(consts):
+                const = Add(*consts)
+            else:
+                const = 0
+            limits = []
+            for summand in summands:
+                limits.append(Limit(summand, x, x0))
+            if len(rest) > 0:
+                limits.append(Limit(Add(*rest), x, x0))
+            add_eq(Limit(f, x, x0), const + Add(*limits))
+            if len(limits) > 1:
+                add_comment("Evaluate these limits")
+            results = []
+            if const != 0:
+                results.append(const)
+            for l in limits:
+                lr = _manuallimit(l.args[0], x, x0)
+                results.append(lr)
+            add_comment("Finally, we get")
+            result = Add(*results)
+            add_eq(Limit(f, x, x0), result)
+            return result
+
     if x0 != oo and x0 != -oo and x0 != 0:
         add_comment("Rewrite this limit as")
         y = Dummy("y")
+        add_eq(Limit(f, x, x0), Limit(f.subs(x, y + x0), y, 0))
         return _manuallimit(f.subs(x, y + x0), y, 0)
     if f.is_Pow:
-        add_comment("Rewrite this limit as")
-        add_exp(exp(Limit(f.args[1] * log(f.args[0]), x, x0)))
-        add_comment("Evaluate the limit")
-        return exp(_manuallimit(f.args[1] * log(f.args[0]), x, x0))
-
-    if x0 == oo or x0 == -oo:
-        if f.func is Mul:
-            num, den = f.as_numer_denom()
-            if num.is_polynomial(x) and den.is_polynomial(x):
-                num = Poly(num, x)
-                den = Poly(den, x)
-                d = min(num.degree(x), den.degree(x))
-                num = expand(num / x**d)
-                den = expand(den / x**d)
-                f = num / den
-                add_comment("Rewrite this limit as")
-                return _manuallimit(f, x, x0)
+        if f.args[0].has(x) and f.args[1].has(x):
+            add_comment("Rewrite this limit as")
+            add_exp(exp(Limit(f.args[1] * log(f.args[0]), x, x0)))
+            _manuallimit(f.args[1] * log(f.args[0]), x, x0)
+            add_comment("Finally, ")
+            r = limit(f, x, x0)
+            add_eq(Limit(f, x, x0), r)
+            return r
     if x0 == 0:
         if f.func is Mul:
-            num, den = f.as_numer_denom()
-            num = expand(num)
-            den = expand(den)
-            if _is_series(num, x) and _is_series(den, x):
-                d1 = _min_degree(num, x)
-                d2 = _min_degree(den, x)
-                d = max(d1, d2)
-                num = expand(num / x**d)
-                den = expand(den / x**d)
-                f = num / den
+            num_, den_ = f.as_numer_denom()
+            num = expand(num_)
+            den = expand(den_)
+            f_ = (num / den).cancel()
+            if num != num_ or den != den_ or f_ != (num / den).cancel():
                 add_comment("Rewrite this limit as")
-                return _manuallimit(f, x, x0)
+                add_eq(Limit(f, x, x0), Limit(f_, x, x0))
+                return _manuallimit(f_, x, x0)
+            else:
+                numxs, numr, nc = split_xs_(num, x)
+                denxs, denr, dc = split_xs_(den, x)
+                ncc = 1
+                dcc = 1
+                nr = []
+                dr = []
+                for n in numr:
+                    s = _to_series(n[0], x, x0)
+                    l = limit(n[0] / s, x, x0)
+                    if l.is_finite and l != 0:
+                        add_comment("We know that")
+                        r = Limit(n[0] / s, x, x0)
+                        nr.append(r**n[1])
+                        add_eq(r, l)
+                        p = Poly(s, x)
+                        denxs -= p.degree()
+                        ncc *= p.nth(p.degree())
+                    else:
+                        nc *= n[0]**n[1]
+                for d in denr:
+                    s = _to_series(d[0], x, x0)
+                    l = limit(d[0] / s, x, x0)
+                    if l.is_finite and l != 0:
+                        add_comment("We know that")
+                        r = Limit(d[0] / s, x, x0)
+                        dr.append(r**d[1])
+                        add_eq(r, l)
+                        p = Poly(s, x)
+                        numxs -= p.degree()
+                        dcc *= p.nth(p.degree())
+                    else:
+                        dc *= d[0]**d[1]
+                result = limit(f, x, x0)
+                rest = (x**numxs / x**denxs * nc / dc).cancel()
+                if rest != 1:
+                    rest = Limit(rest, x, x0)
+                rr = ncc / dcc * Mul(*nr) / Mul(*dr) * rest
+                if rr != Limit(f, x, x0):
+                    add_comment("Therefore, we obtain")
+                    add_eq(Limit(f, x, x0), rr)
+                    add_comment("Finally, we have")
+                    add_eq(Limit(f, x, x0), result)
+                return result
+    add_comment("This limit is equal to")
+    v = limit(f, x, x0)
+    add_exp(v)
+    return v
 
-            rf = prod(_rewrite_factors_using_series(f.args, x, x0))
-            if rf != f:
-                add_comment("Rewrite this limit as")
-                return _manuallimit(rf, x, x0)
