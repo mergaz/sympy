@@ -541,6 +541,9 @@ def auto_symbol(tokens, local_dict, global_dict):
             elif name == 'circ':
                 result.append((NAME, 'circ'))
                 continue
+            elif name == 'infty':
+                result.append((NAME, 'oo'))
+                continue
 
             result.extend([
                 (NAME, 'Symbol'),
@@ -796,6 +799,7 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
         code = ChangeLgToLog10().visit(code)
         code = ChangeZeroAndCircToDegrees().visit(code)
         code = ChangeIndexToLogIndex().visit(code)
+        code = ChangeIndexToLimIndex().visit(code)
         code = ChangeLimitsToDefInt().visit(code)
     else:
         if evaluate is False:
@@ -973,6 +977,22 @@ class ChangeIndexToLogIndex(ast.NodeTransformer):
                     log_arg_node.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
                     log_arg_node.args = [self.visit(arg) for arg in log_arg_node.args]
                     return ast.Call(func=ast.Name(id='log', ctx=ast.Load()), args=[log_arg_node, log_base_node], keywords=[], starargs=None, kwargs=None)
+        return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
+
+
+class ChangeIndexToLimIndex(ast.NodeTransformer):
+    def visit_Call(self, node):
+        """
+        lim(f(x) index(b)) --> log(f(x), b)
+        """
+        if node.func.id == 'Limit' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
+            for i in range(len(node.args[0].args)):
+                if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'index':
+                    f = node.args[0]
+                    x = node.args[0].args[i].args[0]
+                    a = node.args[0].args[i].args[1]
+                    f.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
+                    return ast.Call(func=ast.Name(id='Limit', ctx=ast.Load()), args=[f, x, a], keywords=[], starargs=None, kwargs=None)
         return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
 
 
