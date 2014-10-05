@@ -939,13 +939,13 @@ class ChangeZeroAndCircToDegrees(ast.NodeTransformer):
         a^0 --> a * pi / 180
         a^circ --> a * pi / 180
         """
-        if node.func.id in ['sin', 'cos', 'tan', 'cot', 'sec', 'csc']:
+        if hasattr(node.func, 'id') and node.func.id in ['sin', 'cos', 'tan', 'cot', 'sec', 'csc']:
             oldInsideTrig = self.insideTrig
             self.insideTrig= True
             result = ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
             self.insideTrig = oldInsideTrig
             return result
-        if node.func.id == 'Pow' and \
+        if hasattr(node.func, 'id') and node.func.id == 'Pow' and \
                 ((isinstance(node.args[1], ast.Call) and node.args[1].func.id == 'Integer' and isinstance(node.args[1].args[0], ast.Num) and node.args[1].args[0].n == 0 and self.insideTrig) or
                      (isinstance(node.args[1], ast.Name) and node.args[1].id == 'circ')):
             return ast.Call(func=ast.Name(id='Mul', ctx=ast.Load()), args=[node.args[0], ast.Name(id="pi", ctx=ast.Load()), ast.Call(func=ast.Name(id="Pow", ctx=ast.Load()), args=[ast.Num(n=180, ctx=ast.Load()), ast.Num(n=-1, ctx=ast.Load())], keywords=[], starargs=None, kwargs=None)], keywords=[], starargs=None, kwargs=None)
@@ -958,7 +958,7 @@ class ChangeLgToLog10(ast.NodeTransformer):
         """
         lg (f(x)) --> log(f(x), 10)
         """
-        if node.func.id == 'lg':
+        if hasattr(node.func, 'id') and node.func.id == 'lg':
             return ast.Call(func=ast.Name(id='log', ctx=ast.Load()), args=[self.visit(node.args[0]), ast.Num(n=10, ctx=ast.Load())], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
         else:
             return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
@@ -969,7 +969,7 @@ class ChangeIndexToLogIndex(ast.NodeTransformer):
         """
         log(f(x) index(b)) --> log(f(x), b)
         """
-        if node.func.id == 'log' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
+        if hasattr(node.func, 'id') and node.func.id == 'log' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
             for i in range(len(node.args[0].args)):
                 if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'index':
                     log_base_node = node.args[0].args[i].args[0]
@@ -985,7 +985,7 @@ class ChangeIndexToLimIndex(ast.NodeTransformer):
         """
         lim(f(x) index(b)) --> log(f(x), b)
         """
-        if node.func.id == 'Limit' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
+        if hasattr(node.func, 'id') and node.func.id == 'Limit' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
             for i in range(len(node.args[0].args)):
                 if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'index':
                     f = node.args[0]
@@ -1001,7 +1001,7 @@ class ChangeLimitsToDefInt(ast.NodeTransformer):
         """
         Integral(f(x) limits(a, b)) --> Integral(f, a, b)
         """
-        if node.func.id == 'Integral' and len(node.args) == 2 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
+        if hasattr(node.func, 'id') and node.func.id == 'Integral' and len(node.args) == 2 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
             for i in range(len(node.args[0].args)):
                 if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'limits':
                     bottom_limit_node = node.args[0].args[i].args[0]
@@ -1043,7 +1043,7 @@ class EvaluateFalseTransformer(ast.NodeTransformer):
     def flatten(self, args, func):
         result = []
         for arg in args:
-            if isinstance(arg, ast.Call) and arg.func.id == func:
+            if isinstance(arg, ast.Call) and hasattr(arg.func, 'id') and arg.func.id == func:
                 result.extend(self.flatten(arg.args, func))
             else:
                 result.append(arg)
