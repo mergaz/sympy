@@ -799,6 +799,7 @@ def parse_expr(s, local_dict=None, transformations=standard_transformations,
         code = ChangeLgToLog10().visit(code)
         code = ChangeZeroAndCircToDegrees().visit(code)
         code = ChangeIndexToLogIndex().visit(code)
+        code = ChangeIndexToNRoot().visit(code)
         code = ChangeIndexToLimIndex().visit(code)
         code = ChangeLimitsToDefInt().visit(code)
     else:
@@ -983,7 +984,7 @@ class ChangeIndexToLogIndex(ast.NodeTransformer):
 class ChangeIndexToLimIndex(ast.NodeTransformer):
     def visit_Call(self, node):
         """
-        lim(f(x) index(b)) --> log(f(x), b)
+        lim(f(x) index(b)) --> lim(f(x), x, b)
         """
         if node.func.id == 'Limit' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
             for i in range(len(node.args[0].args)):
@@ -993,6 +994,23 @@ class ChangeIndexToLimIndex(ast.NodeTransformer):
                     a = node.args[0].args[i].args[1]
                     f.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
                     return ast.Call(func=ast.Name(id='Limit', ctx=ast.Load()), args=[f, x, a], keywords=[], starargs=None, kwargs=None)
+        return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
+
+
+class ChangeIndexToNRoot(ast.NodeTransformer):
+    def visit_Call(self, node):
+        """
+        sqrt(index(a) f(x)) --> Pow(f(x), 1/a)
+        """
+        if node.func.id == 'sqrt' and len(node.args) == 1 and isinstance(node.args[0], ast.Call) and node.args[0].func.id == 'Mul':
+            for i in range(len(node.args[0].args)):
+                if isinstance(node.args[0].args[i], ast.Call) and node.args[0].args[i].func.id == 'index':
+                    pow_node = node.args[0].args[i].args[0]
+                    pow_node = ast.Call(func=ast.Name(id="Pow", ctx=ast.Load()), args=[pow_node, ast.Num(n=-1, ctx=ast.Load())], keywords=[], starargs=None, kwargs=None)
+                    base_node = node.args[0]
+                    base_node.args = node.args[0].args[0:i] + node.args[0].args[i + 1:]
+                    base_node.args = [self.visit(arg) for arg in base_node.args]
+                    return ast.Call(func=ast.Name(id='Pow', ctx=ast.Load()), args=[base_node, pow_node], keywords=[], starargs=None, kwargs=None)
         return ast.Call(func=node.func, args=[self.visit(arg) for arg in node.args], keywords=node.keywords, starargs=node.starargs, kwargs=node.kwargs)
 
 
