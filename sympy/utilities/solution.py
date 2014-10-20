@@ -3,8 +3,11 @@
 import gc, sys
 from sympy.printing import latex
 from sympy.core import sympify
+from sympy.utilities.solution_en import solution_comment_table_en
+from sympy.utilities.solution_ru import solution_comment_table_ru
 
 solution_list = []
+comment_table = solution_comment_table_en()
 
 def find_names(obj):
     frame = sys._getframe()
@@ -29,8 +32,17 @@ def find_name(obj):
                     return k
     return None
 
-def add_comment(cm):
-    solution_list.append('_' + cm)
+def set_comment_table(ct):
+    comment_table = ct
+
+def add_comment(cm, *args):
+    if cm in comment_table.keys():
+        cm = comment_table[cm]
+        cm = cm.format(*args)
+        solution_list.append('_' + cm)
+    else:
+        print "Not localized:", cm
+        solution_list.append('_' + cm)
     
 def add_step(variable):
     """Add a variable and its value into solution"""
