@@ -33,16 +33,18 @@ def find_name(obj):
     return None
 
 def set_comment_table(ct):
+    global comment_table
     comment_table = ct
 
 def add_comment(cm, *args):
+    c = None
     if cm in comment_table.keys():
-        cm = comment_table[cm]
-        cm = cm.format(*args)
-        solution_list.append('_' + cm)
+        c = comment_table[cm]
+        c = c.format(*args)
     else:
-        print "Not localized:", cm
-        solution_list.append('_' + cm)
+        c = cm
+        print "Not localized:", c
+    solution_list.append('_' + c)
     
 def add_step(variable):
     """Add a variable and its value into solution"""
