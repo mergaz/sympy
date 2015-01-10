@@ -245,6 +245,10 @@ comment_ru = {
     'assuming that': u'предполагая, что',
     'is a subset of the solution': u'является подмножеством множества решений',
     'is not emtpy': u'не пусто',
+
+    # other localizable strings
+    'welcome string': 'Напишите любую формулу...',
+    'purchase button': 'gfx/ru_show-solutions.png',
 }
 
 def solution_comment_table_ru():

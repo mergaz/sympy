@@ -243,6 +243,10 @@ comment_en = {
     'assuming that': 'assuming that',
     'is a subset of the solution': 'is a subset of the solution',
     'is not emtpy': 'is not emtpy',
+
+    # other localizable strings
+    'welcome string': 'Write any formula...',
+    'purchase button': 'gfx/en_show-solutions.png',
 }
 
 def solution_comment_table_en():
