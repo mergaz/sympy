@@ -905,7 +905,7 @@ def find_rational_roots(f):
     if len(result) > 0:
         add_comment("Use the rational root test")
         add_comment("Test all rational numbers in the form p/q")
-        add_comment("where p is a divisor of " + str(a) + " and q is a divisor of " + str(b))
+        add_comment("where p is a divisor of {} and q is a divisor of {}", str(a), str(b))
         add_comment("We have the following roots")
         for r in result:
             add_eq(f.gen, r)

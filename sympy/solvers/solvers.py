@@ -1226,7 +1226,7 @@ def solveAcosFpBsinGpC(f, symbol):
     if m[F] == m[G]:
         d = sqrt(m[A]**2 + m[B]**2)
         if d != 1:
-            add_comment("Divide this equation by " + str(d))
+            add_comment("Divide this equation by {}", str(d))
             add_eq(f / d, 0)
         add_comment("Rewrite this equation as")
         s = asin(m[A] / d)
@@ -1245,7 +1245,7 @@ def solveAcosFpBsinGpC(f, symbol):
         add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], pi/2 + m[G] + 2*pi*_k)
         add_eq(m[F], -pi/2 - m[G] + 2*pi*_k)
-        add_comment("where " + str(_k) + " can be any integer")
+        add_comment("where {} can be any integer", str(_k))
         r1 = solve(m[F] - m[G] - pi/2 - 2*pi*_k, symbol)
         r2 = solve(m[F] + m[G] + pi/2 - 2*pi*_k, symbol)
         result = r1 + r2
@@ -1255,7 +1255,7 @@ def solveAcosFpBsinGpC(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     if m[A] == -m[B] and m[C] == 0:
         add_comment("Rewrite the equation as")
@@ -1263,7 +1263,7 @@ def solveAcosFpBsinGpC(f, symbol):
         add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], pi/2 - m[G] + 2*pi*_k)
         add_eq(m[F], -pi/2 + m[G] + 2*pi*_k)
-        add_comment("where " + str(_k) + " can be any integer")
+        add_comment("where {} can be any integer", str(_k))
         r1 = solve(m[F] + m[G] - pi/2 - 2*pi*_k, symbol)
         r2 = solve(m[F] - m[G] + pi/2 - 2*pi*_k, symbol)
         result = r1 + r2
@@ -1273,7 +1273,7 @@ def solveAcosFpBsinGpC(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     raise DontKnowHowToSolve()
 
@@ -1295,7 +1295,7 @@ def solveAcosFpBcosG(f, symbol):
         add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], m[G] + 2*pi*_k)
         add_eq(m[F], -m[G] + 2*pi*_k)
-        add_comment("where " + str(_k) + " can be any integer")
+        add_comment("where {} can be any integer", str(_k))
         r1 = solve(m[F] - m[G] - 2*pi*_k, symbol)
         r2 = solve(m[F] + m[G] - 2*pi*_k, symbol)
         result = r1 + r2
@@ -1305,7 +1305,7 @@ def solveAcosFpBcosG(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     elif m[A] == m[B]:
         add_comment("Using formula for the sum of two cosines we get")
@@ -1322,7 +1322,7 @@ def solveAcosFpBcosG(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     raise DontKnowHowToSolve()
 
@@ -1344,7 +1344,7 @@ def solveAsinFpBsinG(f, symbol):
         add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], m[G] + 2*pi*_k)
         add_eq(m[F], pi - m[G] + 2*pi*_k)
-        add_comment("where " + str(_k) + " can be any integer")
+        add_comment("where {} can be any integer", str(_k))
         r1 = solve(m[F] - m[G] - 2*pi*_k, symbol)
         r2 = solve(m[F] - pi + m[G] - 2*pi*_k, symbol)
         result = r1 + r2
@@ -1370,7 +1370,7 @@ def solveAsinFpBsinG(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     raise DontKnowHowToSolve()
 
@@ -1578,7 +1578,7 @@ def _solve(f, *symbols, **flags):
         for s in unckecked_result:
             for d in dens:
                 if checksol(d, {symbol: s}, **flags) == True: # checksol can return None
-                    add_comment('The value ' + str(s) + ' is not a root because it is a root of the denominator')
+                    add_comment('The value {} is not a root because it is a root of the denominator', str(s))
                     add_exp(d)
                     break
             else:
@@ -1791,18 +1791,18 @@ def _solve(f, *symbols, **flags):
                 for r in result_p:
                     v = abss[0].args[0].subs(symbol, r)
                     if v.is_real and v >= 0:
-                        add_comment('The value ' + str(r) + ' is a root')
+                        add_comment('The value {} is a root', str(r))
                         result.append(r)
                     else:
-                        add_comment('The value ' + str(r) + ' is an extraneous root')
+                        add_comment('The value {} is an extraneous root', str(r))
                 result_m = _solve(f_num_m, symbol, **flags)
                 for r in result_m:
                     v = abss[0].args[0].subs(symbol, r)
                     if v.is_real and v <= 0:
-                        add_comment('The value ' + str(r) + ' is a root')
+                        add_comment('The value {} is a root', str(r))
                         result.append(r)
                     else:
-                        add_comment('The value ' + str(r) + ' is an extraneous root')
+                        add_comment('The value {} is an extraneous root', str(r))
                 if len(result) > 0:
                     add_comment("Finally we have")
                     for r in result:
@@ -2113,7 +2113,7 @@ def _solve(f, *symbols, **flags):
                             add_comment('We get')
                             for r in inv_f:
                                 if r[2] is None:
-                                    add_comment("The value " + str(r[0]) + " is an extraneous root")
+                                    add_comment("The value {} is an extraneous root", str(r[0]))
                                 else:
                                     add_eq(r[1], r[2])
 
@@ -2136,7 +2136,7 @@ def _solve(f, *symbols, **flags):
                                 for r in result:
                                     add_eq(symbol, r)
                                 if is_trig:
-                                    add_comment("where " + str(_k) + " can be any integer")
+                                    add_comment("where {} can be any integer", str(_k))
                             else:
                                 add_comment('There are no real roots')
                             return result
@@ -2854,7 +2854,7 @@ def manual_solve_linear_system(system, *symbols, **flags):
         t = r
         while t < matrix.rows:
             if not any(matrix[t, :m]) and matrix[t, m]:
-                add_comment("Since the equation " + str(matrix[t, m]) + " = 0 is not be satisfied, the system is inconsistent.")
+                add_comment("Since the equation {} = 0 is not be satisfied, the system is inconsistent.", str(matrix[t, m]))
                 return None
             t += 1
 
@@ -2872,7 +2872,7 @@ def manual_solve_linear_system(system, *symbols, **flags):
                     c = s
                     if r != t:
                         matrix.row_swap(r, t)
-                        add_comment("Swap " + th(r + 1) + " row and " + th(t + 1) + " row")
+                        add_comment("Swap {} row and {} row", th(r + 1), th(t + 1))
                         add_exp(matrix)
                         prev = matrix.copy()
                     break
@@ -2883,7 +2883,7 @@ def manual_solve_linear_system(system, *symbols, **flags):
         if pivot_inv != 1:
             # divide all elements in the current row by the pivot
             matrix.row_op(r, lambda x, _: x * pivot_inv)
-            add_comment("Multiply " + th(r + 1) + " row by " + str(pivot_inv))
+            add_comment("Multiply {} row by {}", th(r + 1), str(pivot_inv))
             add_exp(matrix)
             prev = matrix.copy()
 
@@ -2891,13 +2891,13 @@ def manual_solve_linear_system(system, *symbols, **flags):
             if matrix[k, r]:
                 coeff = matrix[k, r]
                 if coeff == 1:
-                    add_comment("Subtract " + th(r + 1) + " row from " + th(k + 1) + " row")
+                    add_comment("Subtract {} row from {} row", th(r + 1), th(k + 1))
                 elif coeff == -1:
-                    add_comment("Add " + th(r + 1) + " row to " + th(k + 1) + " row")
+                    add_comment("Add {} row to {} row", th(r + 1), th(k + 1))
                 elif coeff > 1:
-                    add_comment("Subtract " + th(r + 1) + " row multiplied by " + str(coeff) + " from " + th(k + 1) + " row")
+                    add_comment("Subtract {} row multiplied by {} from {} row", th(r + 1), str(coeff), th(k + 1))
                 elif coeff < -1:
-                    add_comment("Add " + th(r + 1) + " row multiplied by " + str(-coeff) + " to " + th(k + 1) + " row ")
+                    add_comment("Add {} row multiplied by {} to {} row ", th(r + 1), str(-coeff), th(k + 1))
 
                 # subtract from the current row the row containing
                 # pivot and multiplied by extracted coefficient
@@ -3623,14 +3623,14 @@ def unrad(eq, *syms, **flags):
     if len(rterms) == 1:
         add_comment("Rewrite the equation as")
         add_eq(rterms[0], -args)
-        add_comment("Raise both sides of the equation to the " + th(lcm) + " power")
+        add_comment("Raise both sides of the equation to the {} power", th(lcm))
         add_eq(Pow(rterms[0], lcm, evaluate=False), Pow(-args, lcm, evaluate=False))
         eq = rterms[0]**lcm - (-args)**lcm
 
     elif len(rterms) == 2 and not args:
         add_comment("Rewrite the equation as")
         add_eq(rterms[0], rterms[1])
-        add_comment("Raise both sides of the equation to the " + th(lcm) + " power")
+        add_comment("Raise both sides of the equation to the {} power", th(lcm))
         add_eq(Pow(rterms[0], lcm, evaluate=False), Pow(rterms[1], lcm, evaluate=False))
         eq = rterms[0]**lcm - rterms[1]**lcm
 
@@ -3644,7 +3644,7 @@ def unrad(eq, *syms, **flags):
             r0, r1, r2, r3 = rterms
             add_comment("Rewrite the equation as")
             add_eq(r0 + r1, r2 + r3)
-            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_comment("Raise both sides of the equation to the {} power", th(2))
             add_eq(Pow(r0 + r1, 2, evaluate=False), Pow(r2 + r3, 2, evaluate=False))
             eq = _norm2(r0, r1) - _norm2(r2, r3)
         elif len(rterms) == 3:
@@ -3652,7 +3652,7 @@ def unrad(eq, *syms, **flags):
             r0, r1, r2 = rterms
             add_comment("Rewrite the equation as")
             add_eq(r0 + r1, r2 + args)
-            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_comment("Raise both sides of the equation to the {} power", th(2))
             add_eq(Pow(r0 + r1, 2, evaluate=False), Pow(r2 + args, 2, evaluate=False))
             eq = _norm2(r1, r2) - _norm2(r0, args)
         elif len(rterms) == 2:
@@ -3660,7 +3660,7 @@ def unrad(eq, *syms, **flags):
             r0, r1 = rterms
             add_comment("Rewrite the equation as")
             add_eq(r0, r1 + args)
-            add_comment("Raise both sides of the equation to the " + th(2) + " power")
+            add_comment("Raise both sides of the equation to the {} power", th(2))
             add_eq(Pow(r0, 2, evaluate=False), Pow(r1 + args, 2, evaluate=False))
             eq = r0**2 - _norm2(r1, args)
 
@@ -3678,7 +3678,7 @@ def unrad(eq, *syms, **flags):
         else:
             p = Dummy('p', positive=True)
             cov.append((p, b - p**lcm))
-            add_comment("Introduce a new variable " + str(p))
+            add_comment("Introduce a new variable {}", str(p))
             add_eq(b, p**lcm)
         add_comment("We have")
         add_eq(poly.subs(b, Pow(p, lcm, evaluate=False)).as_expr(), 0)

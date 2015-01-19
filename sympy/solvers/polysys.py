@@ -75,7 +75,7 @@ def solve_poly_system(seq, *gens, **args):
         a = polys[0].coeff_monomial(1)
         b = polys[1].coeff_monomial(1)
         if a != 0 and b != 0 and len(factor_list(polys[0] - a/b * polys[1].as_expr())[1]) > 1:
-            add_comment("Add the second equation multiplied by " + str(-a/b) + " to the first equation")
+            add_comment("Add the second equation multiplied by {} to the first equation", str(-a/b))
             sys = [polys[0] - a/b * polys[1].as_expr(), polys[1]]
             add_eq(sys[0].as_expr(), 0)
             add_eq(sys[1].as_expr(), 0)
