@@ -116,7 +116,7 @@ comment_ru = {
     'The solution has the form': u'Решение имеет вид',
     'The solution of this equation is': u'Решение этого уравнения равно',
     'The solution to this equation is the union of the solutions of the following equations': u'Решение этого уравнения является объединением решений следующий уравнений',
-    'The solution to this equation is': u'Решение этого уравнения является',
+    'The solution to this equation is': u'Решением \nэтого \nуравнения \nявляется',
     'The solution to this ineqality is': u'Решение неравества имеет вид',
     'The system has no solution': u'Система не имеет решенийfire',
     'The value {} is an extraneous root': u'Число {} является посторонним корнем',
