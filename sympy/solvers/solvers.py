@@ -34,7 +34,7 @@ from sympy.functions import (log, exp, LambertW, cos, sin, tan, cot, cosh,
                              asinh, atanh, acoth, Abs, sign, re, im, arg,
                              sqrt, atan2)
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
-                            nsimplify, denom, logcombine)
+                            nsimplify, denom, logcombine, trigsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth, _mexpand
 from sympy.simplify.fu import TR1, TR5, TR6, TR11
 from sympy.matrices import Matrix, zeros
@@ -1374,7 +1374,59 @@ def solveAsinFpBsinG(f, symbol):
         return result
     raise DontKnowHowToSolve()
 
+def isASinX_p_BSin2X_p_ASin3X(f, symbol):
+    """ Check if the equation in the form of
+        $ a \sin(x) + b \sin(2x) + a \sin(3x) $
+    """
+    A, B, X = Wild('A'), Wild('B'), Wild('X')
+    m = f.match(A*sin(X) + B*sin(2*X) + A*sin(3*X))
+    
+    return not m is None and \
+           m[A] != 0 and not m[A].has(symbol) and \
+           m[B] != 0 and not m[B].has(symbol)
+    
+def solveASinX_p_BSin2X_p_ASin3X(f, symbol):
+    """ Solve the equation in the form of
+        $ a \sin(x) + b \sin(2x) + a \sin(3x) $
+    """    
+    A, B, X = Wild('A'), Wild('B'), Wild('X')
+    m = f.match(A*sin(X) + B*sin(2*X) + A*sin(3*X))
+    
+    add_comment('Rewrite the equation as a sum of two terms')
+    eq1 = m[B] * sin(2*m[X])
+    add_exp(eq1)
+    eq2 = m[A] * sin(m[X]) + m[A] * sin(3*m[X])
+    add_exp(eq2)   
+ 
+    add_comment('Rewrite the second term as')
+    add_exp(eq2)
+    eq2 = m[A]*sin(m[X]) + expand(m[A]*sin(3*m[X]), trig=True)
+    add_exp(eq2)
+    eq2 = factor_terms(eq2)
+    add_exp(eq2)
+    eq2 = trigsimp(eq2)
+    add_exp(eq2)
+    eq2 = eq2.subs(2*sin(m[X])*cos(m[X]), sin(2*m[X]))
+    add_exp(eq2)
 
+    add_comment('Finally the given equation write as')
+    eq = eq1 + eq2
+    add_eq(eq1 + eq2, 0)
+    
+    eq = factor(eq1 + eq2)
+    add_eq(eq, 0)
+    
+    add_comment('The solution to this equation is the union of the solutions of the following equations')   
+    for expr in eq.args:
+        if (expr.has(symbol)):
+            add_eq(expr, 0)
+
+    result = []
+    for expr in eq.args:
+        if (expr.has(symbol)):
+            r = solve(expr, symbol)
+            result.append(r)
+    return result
 
 def to_exp_fixed_base(e, base, symbol, silent=True):
     if e.args:
@@ -1461,7 +1513,7 @@ def _solve(f, *symbols, **flags):
     symbols."""
     add_comment('Solve the equation')
     add_eq(f, 0)
-
+    
     if len(symbols) != 1:
         soln = None
         free = f.free_symbols
@@ -1834,6 +1886,8 @@ def _solve(f, *symbols, **flags):
                     return solveAcosFpBcosG(f_num, symbol)
                 if isAsinFpBsinG(f_num, symbol):
                     return solveAsinFpBsinG(f_num, symbol)
+                if isASinX_p_BSin2X_p_ASin3X(f_num, symbol):
+                    return solveASinX_p_BSin2X_p_ASin3X(f_num, symbol)
             except DontKnowHowToSolve:
                 pass
 
