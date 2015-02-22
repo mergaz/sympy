@@ -1245,7 +1245,7 @@ def solveAcosFpBsinGpC(f, symbol):
         add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], pi/2 + m[G] + 2*pi*_k)
         add_eq(m[F], -pi/2 - m[G] + 2*pi*_k)
-        add_comment("where " + str(_k) + " can be any integer")
+        add_comment("where {} can be any integer", str(_k))
         r1 = solve(m[F] - m[G] - pi/2 - 2*pi*_k, symbol)
         r2 = solve(m[F] + m[G] + pi/2 - 2*pi*_k, symbol)
         result = r1 + r2
@@ -1255,7 +1255,7 @@ def solveAcosFpBsinGpC(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     if m[A] == -m[B] and m[C] == 0:
         add_comment("Rewrite the equation as")
@@ -1263,7 +1263,7 @@ def solveAcosFpBsinGpC(f, symbol):
         add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], pi/2 - m[G] + 2*pi*_k)
         add_eq(m[F], -pi/2 + m[G] + 2*pi*_k)
-        add_comment("where " + str(_k) + " can be any integer")
+        add_comment("where {} can be any integer", str(_k))
         r1 = solve(m[F] + m[G] - pi/2 - 2*pi*_k, symbol)
         r2 = solve(m[F] - m[G] + pi/2 - 2*pi*_k, symbol)
         result = r1 + r2
@@ -1273,7 +1273,7 @@ def solveAcosFpBsinGpC(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     raise DontKnowHowToSolve()
 
@@ -1295,7 +1295,7 @@ def solveAcosFpBcosG(f, symbol):
         add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], m[G] + 2*pi*_k)
         add_eq(m[F], -m[G] + 2*pi*_k)
-        add_comment("where " + str(_k) + " can be any integer")
+        add_comment("where {} can be any integer", str(_k))
         r1 = solve(m[F] - m[G] - 2*pi*_k, symbol)
         r2 = solve(m[F] + m[G] - 2*pi*_k, symbol)
         result = r1 + r2
@@ -1305,7 +1305,7 @@ def solveAcosFpBcosG(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     elif m[A] == m[B]:
         add_comment("Using formula for the sum of two cosines we get")
@@ -1322,7 +1322,7 @@ def solveAcosFpBcosG(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     raise DontKnowHowToSolve()
 
@@ -1344,7 +1344,7 @@ def solveAsinFpBsinG(f, symbol):
         add_comment("The solution to this equation is the union of the solutions of the following equations")
         add_eq(m[F], m[G] + 2*pi*_k)
         add_eq(m[F], pi - m[G] + 2*pi*_k)
-        add_comment("where " + str(_k) + " can be any integer")
+        add_comment("where {} can be any integer", str(_k))
         r1 = solve(m[F] - m[G] - 2*pi*_k, symbol)
         r2 = solve(m[F] - pi + m[G] - 2*pi*_k, symbol)
         result = r1 + r2
@@ -1370,7 +1370,7 @@ def solveAsinFpBsinG(f, symbol):
             add_comment("We have the following solution")
             for r in result:
                 add_eq(symbol, r)
-            add_comment("where " + str(_k) + " can be any integer")
+            add_comment("where {} can be any integer", str(_k))
         return result
     raise DontKnowHowToSolve()
 
@@ -2136,7 +2136,7 @@ def _solve(f, *symbols, **flags):
                                 for r in result:
                                     add_eq(symbol, r)
                                 if is_trig:
-                                    add_comment("where " + str(_k) + " can be any integer")
+                                    add_comment("where {} can be any integer", str(_k))
                             else:
                                 add_comment('There are no real roots')
                             return result
