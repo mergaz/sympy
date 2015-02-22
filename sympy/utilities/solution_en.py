@@ -117,7 +117,6 @@ comment_en = {
     'The solution to this equation is': 'The solution to this equation is',
     'The solution to this ineqality is': 'The solution to this ineqality is',
     'The system has no solution': 'The system has no solution',
-    'The value {} is an extraneous root': 'The value {} is an extraneous root',
     'The way of evaluating of the integral is unknown': 'The way of evaluating of the integral is unknown',
     'There is no solution because the values of sqrt are non-negative': 'There is no solution because the values of sqrt are non-negative',
     'There is no solution': 'There is no solution',
