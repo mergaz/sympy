@@ -1,13 +1,15 @@
 """Make step-by-step solution. """
 
 import gc, sys
-from sympy.printing import latex
+from sympy.printing.latex import LatexPrinter
+from sympy.printing.mathml import MathMLPrinter
 from sympy.core import sympify
 from sympy.utilities.solution_en import solution_comment_table_en
 from sympy.utilities.solution_ru import solution_comment_table_ru
 
 solution_list = []
 comment_table = solution_comment_table_en()
+printer = LatexPrinter()
 
 def find_names(obj):
     frame = sys._getframe()
@@ -50,7 +52,7 @@ def add_step(variable):
     """Add a variable and its value into solution"""
     var = find_name(variable)
     try:
-        r = latex(variable)
+        r = printer._print(variable)
     except:
         r = repr(variable)
     solution_list.append(var + " = " + r)
@@ -58,11 +60,11 @@ def add_step(variable):
 def add_eq(l, r):
     """Add an equality into solution"""
     try:
-        l = latex(l)
+        l = printer._print(l)
     except:
         l = repr(l)
     try:
-        r = latex(r)
+        r = printer._print(r)
     except:
         r = repr(r)
     solution_list.append(l + " = " + r)
@@ -72,7 +74,7 @@ def add_exp(exp):
     """Add an expression into solution"""
     print "-> " + str(exp)
     try:
-        r = latex(exp)
+        r = printer._print(exp)
     except:
         r = repr(exp)
     solution_list.append(r)
@@ -96,3 +98,11 @@ def commit_subroutine():
 
 def last_solution():
     return solution_list
+
+def setMathMLOutput():
+    global printer
+    printer = MathMLPrinter()
+
+def setLatexOutput():
+    global printer
+    printer = LatexPrinter()
