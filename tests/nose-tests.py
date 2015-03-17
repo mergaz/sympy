@@ -1,32 +1,70 @@
-from nosedata import solve_input
+from functools import partial
+from nosedata import solve_generic, solve_9, dsolve_generic
 from sympy import solve
 from nose.plugins.attrib import attr
+from nosedata import dsolve_func
 
 
-@attr(version='master')
+@attr(version='master', dataset='solve')
 def test_solve_master_gen():
-    with open('nose-solve-master.log', 'w') as f:
-        f.write('equation,master\n')
-
-    for input, expected_answer in solve_input:
-        yield check_solution_master, input, expected_answer
+    for t in test_gen_master('solve', solve_generic, partial(check_master, solve)):
+        yield t
 
 
-@attr(version='moriarty')
-def test_solve_gen():
-    with open('nose-solve.log', 'w') as f:
-        f.write('equation,moriarty,length\n')
-
-    for input, expected_answer in solve_input:
-        yield check_solution, input, expected_answer
+@attr(version='moriarty', dataset='solve')
+def test_solve_moriarty_gen():
+    for t in test_gen_moriarty('solve', solve_generic, partial(check_moriarty, solve)):
+        yield t
 
 
-def check_solution_master(input, expected_answer):
+@attr(version='master', dataset='solve-9')
+def test_solve_9_master_gen():
+    for t in test_gen_master('solve-9', solve_9, partial(check_master, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve-9')
+def test_solve_9_moriarty_gen():
+    for t in test_gen_moriarty('solve-9', solve_9, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='master', dataset='dsolve')
+def test_dsolve_master_gen():
+    for t in test_gen_master('dsolve', dsolve_generic, partial(check_master, dsolve_func)):
+        yield t
+
+
+@attr(version='moriarty', dataset='dsolve')
+def test_dsolve_moriarty_gen():
+    for t in test_gen_moriarty('dsolve', dsolve_generic, partial(check_moriarty, dsolve_func)):
+        yield t
+
+
+def test_gen_master(name, test_data, check_func):
+    for t in test_gen('nose-{}-master.log'.format(name), 'equation,master', test_data, check_func):
+        yield t
+
+
+def test_gen_moriarty(name, test_data, check_func):
+    for t in test_gen('nose-{}-moriarty.log'.format(name), 'equation,moriarty,length', test_data, check_func):
+        yield t
+
+
+def test_gen(log_name, log_header, test_data, check_func):
+    with open(log_name, 'w') as f:
+        f.write(log_header + '\n')
+
+    for input, expected_answer in test_data:
+        yield check_func, input, expected_answer, log_name
+
+
+def check_master(func, input, expected_answer, log_name):
     answer = 'Exception'
     try:
-        answer = solve(input)
+        answer = func(input)
     finally:
-        with open('nose-solve-master.log', 'a') as f:
+        with open(log_name, 'a') as f:
             f.write('"{}","{}"\n'.format(input, answer))
     try:
         assert set(answer) == set(expected_answer)
@@ -34,17 +72,17 @@ def check_solution_master(input, expected_answer):
         assert answer == expected_answer
 
 
-def check_solution(input, expected_answer):
+def check_moriarty(func, input, expected_answer, log_name):
     from sympy.utilities.solution import last_solution, reset_solution
 
     reset_solution()
     answer = 'Exception'
     try:
-        answer = solve(input)
+        answer = func(input)
     finally:
         R = last_solution()
         number_of_steps = len([s for s in R if s.startswith('_')])
-        with open('nose-solve.log', 'a') as f:
+        with open(log_name, 'a') as f:
             f.write('"{}","{}",{}\n'.format(input, answer_to_str(answer), number_of_steps))
     try:
         assert set(answer) == set(expected_answer)
