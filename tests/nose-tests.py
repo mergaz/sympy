@@ -1,7 +1,11 @@
 from functools import partial
-from nosedata import solve_generic, solve_9, dsolve_generic
-from sympy import solve
+
 from nose.plugins.attrib import attr
+
+from nosedata import solve_generic, solve_9, dsolve_generic, solve_10, solve_10_trig, solve_10_hangs, limit_func, \
+    limit_data, \
+    diff_data, diff_func, integrate_data, integrate_func
+from sympy import solve, simplify
 from nosedata import dsolve_func
 
 
@@ -29,6 +33,18 @@ def test_solve_9_moriarty_gen():
         yield t
 
 
+@attr(version='master', dataset='solve-10')
+def test_solve_10_master_gen():
+    for t in test_gen_master('solve-10', solve_10 + solve_10_hangs, partial(check_master, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve-10')
+def test_solve_10_moriarty_gen():
+    for t in test_gen_moriarty('solve-10', solve_10 + solve_10_trig, partial(check_moriarty, solve)):
+        yield t
+
+
 @attr(version='master', dataset='dsolve')
 def test_dsolve_master_gen():
     for t in test_gen_master('dsolve', dsolve_generic, partial(check_master, dsolve_func)):
@@ -41,13 +57,51 @@ def test_dsolve_moriarty_gen():
         yield t
 
 
+@attr(version='master', dataset='limit')
+def test_limit_master_gen():
+    for t in test_gen_master('limit', limit_data, partial(check_master, limit_func)):
+        yield t
+
+
+@attr(version='moriarty', dataset='limit')
+def test_limit_moriarty_gen():
+    for t in test_gen_moriarty('limit', limit_data, partial(check_moriarty, limit_func)):
+        yield t
+
+
+@attr(version='master', dataset='diff')
+def test_diff_master_gen():
+    for t in test_gen_master('diff', diff_data, partial(check_master, diff_func)):
+        yield t
+
+
+@attr(version='moriarty', dataset='diff')
+def test_diff_moriarty_gen():
+    for t in test_gen_moriarty('diff', diff_data, partial(check_moriarty, diff_func)):
+        yield t
+
+
+@attr(version='master', dataset='integrate')
+def test_integrate_master_gen():
+    for t in test_gen_master('integrate', integrate_data, partial(check_master, integrate_func)):
+        yield t
+
+
+@attr(version='moriarty', dataset='integrate')
+def test_integrate_moriarty_gen():
+    for t in test_gen_moriarty('integrate', integrate_data, partial(check_moriarty, integrate_func)):
+        yield t
+
+
 def test_gen_master(name, test_data, check_func):
-    for t in test_gen('nose-{}-master.log'.format(name), 'equation,master', test_data, check_func):
+    header = 'equation,expected,master,status'
+    for t in test_gen('nose-{}-master.log'.format(name), header, test_data, check_func):
         yield t
 
 
 def test_gen_moriarty(name, test_data, check_func):
-    for t in test_gen('nose-{}-moriarty.log'.format(name), 'equation,moriarty,length', test_data, check_func):
+    header = 'equation,expected,moriarty,status,length'
+    for t in test_gen('nose-{}-moriarty.log'.format(name), header, test_data, check_func):
         yield t
 
 
@@ -60,34 +114,62 @@ def test_gen(log_name, log_header, test_data, check_func):
 
 
 def check_master(func, input, expected_answer, log_name):
-    answer = 'Exception'
+    answer = None
+    status = 'Failed'
     try:
         answer = func(input)
+        assert_matches(expected_answer, answer)
+        status = 'Passed'
+    except Exception as e:
+        if answer is None:
+            answer = e.__class__.__name__
+        raise
     finally:
         with open(log_name, 'a') as f:
-            f.write('"{}","{}"\n'.format(input, answer))
-    try:
-        assert set(answer) == set(expected_answer)
-    except TypeError:
-        assert answer == expected_answer
+            f.write('"{}","{}","{}",{}\n'.format(input, expected_answer, answer, status))
 
 
 def check_moriarty(func, input, expected_answer, log_name):
     from sympy.utilities.solution import last_solution, reset_solution
 
     reset_solution()
-    answer = 'Exception'
+    answer = None
+    status = 'Failed'
     try:
         answer = func(input)
+        assert_matches(expected_answer, answer)
+        status = 'Passed'
+    except Exception as e:
+        if answer is None:
+            answer = e.__class__.__name__
+        raise
     finally:
-        R = last_solution()
-        number_of_steps = len([s for s in R if s.startswith('_')])
+        number_of_steps = len([s for s in last_solution() if s.startswith('_')])
         with open(log_name, 'a') as f:
-            f.write('"{}","{}",{}\n'.format(input, answer_to_str(answer), number_of_steps))
+            f.write('"{}","{}","{}",{},{}\n'.format(input, answer_to_str(expected_answer), answer_to_str(answer),
+                                                    status, number_of_steps))
+
+
+def assert_matches(expected, actual):
+    if hasattr(expected, 'is_number') and expected.is_number:
+        assert simplify(expected - actual) == 0
+        return
+    if hasattr(expected, 'dummy_eq'):
+        assert expected.dummy_eq(actual)
+        return
     try:
-        assert set(answer) == set(expected_answer)
-    except TypeError:
-        assert answer == expected_answer
+        assert expected == actual
+    except AssertionError:
+        if isinstance(expected, list):
+            assert len(expected) == len(actual)
+            for e, a in zip(expected, actual):
+                assert_matches(e, a)
+        elif isinstance(expected, dict):
+            assert expected.keys() == actual.keys()
+            for k in expected.keys():
+                assert_matches(expected[k], actual[k])
+        else:
+            raise
 
 
 def answer_to_str(answer):
