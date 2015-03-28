@@ -3,8 +3,7 @@ from functools import partial
 from nose.plugins.attrib import attr
 
 from nosedata import solve_generic, solve_9, dsolve_generic, solve_10, solve_10_trig, solve_10_hangs, limit_func, \
-    limit_data, \
-    diff_data, diff_func, integrate_data, integrate_func
+    limit_data, diff_data, diff_func, integrate_data, integrate_func, solve_9_hangs
 from sympy import solve, simplify
 from nosedata import dsolve_func
 
@@ -30,6 +29,18 @@ def test_solve_9_master_gen():
 @attr(version='moriarty', dataset='solve-9')
 def test_solve_9_moriarty_gen():
     for t in test_gen_moriarty('solve-9', solve_9, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve-9-hangs')
+def test_solve_9_moriarty_genh():
+    for t in test_gen_moriarty('solve-9-hangs', solve_9_hangs, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve-10-hangs')
+def test_solve_10_moriarty_genh():
+    for t in test_gen_moriarty('solve-10-hangs', solve_10_hangs, partial(check_moriarty, solve)):
         yield t
 
 
