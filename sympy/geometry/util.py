@@ -4,45 +4,76 @@ Contains
 ========
 intersection
 convex_hull
+are_coplanar
 are_similar
 
 """
 from __future__ import print_function, division
 
 from sympy import Symbol, Function, solve
-from sympy.core.compatibility import string_types
+from sympy.core.compatibility import string_types, is_sequence, range
 
 
-def idiff(eq, y, x, dep=None):
-    """Return dy/dx assuming that y and any other variables given in dep
-    depend on x.
+def idiff(eq, y, x, n=1):
+    """Return ``dy/dx`` assuming that ``eq == 0``.
+
+    Parameters
+    ==========
+
+    y : the dependent variable or a list of dependent variables (with y first)
+    x : the variable that the derivative is being taken with respect to
+    n : the order of the derivative (default is 1)
+
+    Examples
+    ========
 
     >>> from sympy.abc import x, y, a
     >>> from sympy.geometry.util import idiff
 
-    >>> idiff(x**2 + y**2 - 4, y, x)
+    >>> circ = x**2 + y**2 - 4
+    >>> idiff(circ, y, x)
     -x/y
+    >>> idiff(circ, y, x, 2).simplify()
+    -(x**2 + y**2)/y**3
+
+    Here, ``a`` is assumed to be independent of ``x``:
+
     >>> idiff(x + a + y, y, x)
     -1
-    >>> idiff(x + a + y, y, x, [a])
+
+    Now the x-dependence of ``a`` is made explicit by listing ``a`` after
+    ``y`` in a list.
+
+    >>> idiff(x + a + y, [y, a], x)
     -Derivative(a, x) - 1
 
     See Also
     ========
 
-    sympy.core.function.Derivative
+    sympy.core.function.Derivative: represents unevaluated derivatives
+    sympy.core.function.diff: explicitly differentiates wrt symbols
 
     """
-    if not dep:
-        dep = []
-    dep = set(dep)
-    dep.add(y)
+    if is_sequence(y):
+        dep = set(y)
+        y = y[0]
+    elif isinstance(y, Symbol):
+        dep = set([y])
+    else:
+        raise ValueError("expecting x-dependent symbol(s) but got: %s" % y)
 
     f = dict([(s, Function(
-        s.name)(x)) for s in eq.atoms(Symbol) if s != x and s in dep])
+        s.name)(x)) for s in eq.free_symbols if s != x and s in dep])
     dydx = Function(y.name)(x).diff(x)
-    return solve(eq.subs(f).diff(x), dydx)[0].subs(
-        [(b, a) for a, b in f.items()])
+    eq = eq.subs(f)
+    derivs = {}
+    for i in range(n):
+        yp = solve(eq.diff(x), dydx)[0].subs(derivs)
+        if i == n - 1:
+            return yp.subs([(v, k) for k, v in f.items()])
+        derivs[dydx] = yp
+        eq = dydx - yp
+        dydx = dydx.diff(x)
 
 
 def _symbol(s, matching_symbol=None):
@@ -84,6 +115,20 @@ def _symbol(s, matching_symbol=None):
         return s
     else:
         raise ValueError('symbol must be string for symbol name or Symbol')
+
+
+def _uniquely_named_symbol(xname, *exprs):
+    """Return a symbol which, when printed, will have a name unique
+    from any other already in the expressions given. The name is made
+    unique by prepending underscores.
+    """
+    prefix = '%s'
+    x = prefix % xname
+    syms = set().union(*[e.free_symbols for e in exprs])
+    while any(x == str(s) for s in syms):
+        prefix = '_' + prefix
+        x = prefix % xname
+    return _symbol(x)
 
 
 def intersection(*entities):
@@ -191,7 +236,7 @@ def convex_hull(*args):
     [2] Andrew's Monotone Chain Algorithm
     (A.M. Andrew,
     "Another Efficient Algorithm for Convex Hulls in Two Dimensions", 1979)
-    http://softsurfer.com/Archive/algorithm_0109/algorithm_0109.htm
+    http://geomalgorithms.com/a10-_hull-1.html
 
     See Also
     ========
@@ -257,6 +302,77 @@ def convex_hull(*args):
     if len(convexHull) == 2:
         return Segment(convexHull[0], convexHull[1])
     return Polygon(*convexHull)
+
+
+def are_coplanar(*e):
+    """ Returns True if the given entities are coplanar otherwise False
+
+    Parameters
+    ==========
+
+    e: entities to be checked for being coplanar
+
+    Returns
+    =======
+
+    Boolean
+
+    Examples
+    ========
+
+    >>> from sympy import Point3D, Line3D
+    >>> from sympy.geometry.util import are_coplanar
+    >>> a = Line3D(Point3D(5, 0, 0), Point3D(1, -1, 1))
+    >>> b = Line3D(Point3D(0, -2, 0), Point3D(3, 1, 1))
+    >>> c = Line3D(Point3D(0, -1, 0), Point3D(5, -1, 9))
+    >>> are_coplanar(a, b, c)
+    False
+
+    """
+    from sympy.geometry.line3d import LinearEntity3D
+    from sympy.geometry.point3d import Point3D
+    from sympy.geometry.plane import Plane
+    # XXX update tests for coverage
+
+    e = set(e)
+    # first work with a Plane if present
+    for i in list(e):
+        if isinstance(i, Plane):
+            e.remove(i)
+            return all(p.is_coplanar(i) for p in e)
+
+    if all(isinstance(i, Point3D) for i in e):
+        if len(e) < 3:
+            return False
+
+        # remove pts that are collinear with 2 pts
+        a, b = e.pop(), e.pop()
+        for i in list(e):
+            if Point3D.are_collinear(a, b, i):
+                e.remove(i)
+
+        if not e:
+            return False
+        else:
+            # define a plane
+            p = Plane(a, b, e.pop())
+            for i in e:
+                if i not in p:
+                    return False
+            return True
+    else:
+        pt3d = []
+        for i in e:
+            if isinstance(i, Point3D):
+                pt3d.append(i)
+            elif isinstance(i, LinearEntity3D):
+                pt3d.extend(i.args)
+            elif isinstance(i, GeometryEntity):  # XXX we should have a GeometryEntity3D class so we can tell the difference between 2D and 3D -- here we just want to deal with 2D objects; if new 3D objects are encountered that we didn't hanlde above, an error should be raised
+                # all 2D objects have some Point that defines them; so convert those points to 3D pts by making z=0
+                for p in i.args:
+                    if isinstance(p, Point):
+                        pt3d.append(Point3D(*(p.args + (0,))))
+        return are_coplanar(*pt3d)
 
 
 def are_similar(e1, e2):
@@ -376,7 +492,7 @@ def centroid(*args):
             c = Point(0, 0)
             for g in args:
                 c += g
-            return c/len(args)
+            den = len(args)
         elif all(isinstance(g, Segment) for g in args):
             c = Point(0, 0)
             L = 0
@@ -384,7 +500,7 @@ def centroid(*args):
                 l = g.length
                 c += g.midpoint*l
                 L += l
-            return c/L
+            den = L
         elif all(isinstance(g, Polygon) for g in args):
             c = Point(0, 0)
             A = 0
@@ -392,4 +508,6 @@ def centroid(*args):
                 a = g.area
                 c += g.centroid*a
                 A += a
-            return c/A
+            den = A
+        c /= den
+        return c.func(*[i.simplify() for i in c.args])

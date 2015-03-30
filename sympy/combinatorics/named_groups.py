@@ -1,5 +1,6 @@
 from __future__ import print_function, division
 
+from sympy.core.compatibility import range
 from sympy.combinatorics.perm_groups import PermutationGroup
 from sympy.combinatorics.group_constructs import DirectProduct
 from sympy.combinatorics.permutations import Permutation
@@ -295,5 +296,6 @@ def RubikGroup(n):
     False
     """
     from sympy.combinatorics.generators import rubik
-    assert n > 1
+    if n <= 1:
+        raise ValueError("Invalid cube . n has to be greater than 1")
     return PermutationGroup(rubik(n))

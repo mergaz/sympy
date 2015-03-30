@@ -10,7 +10,7 @@ from sympy.core.symbol import Symbol
 from sympy.core.sympify import CantSympify, sympify
 from sympy.polys.rings import PolyElement
 from sympy.polys.orderings import lex
-from sympy.polys.polyerrors import ExactQuotientFailed, CoercionFailed
+from sympy.polys.polyerrors import CoercionFailed
 from sympy.polys.domains.domainelement import DomainElement
 from sympy.polys.domains.polynomialring import PolynomialRing
 from sympy.polys.domains.fractionfield import FractionField
@@ -209,7 +209,8 @@ class FracElement(DomainElement, DefaultPrinting, CantSympify):
         return f.raw_new(*numer.cancel(denom))
 
     def to_poly(f):
-        assert f.denom == 1
+        if f.denom != 1:
+            raise ValueError("f.denom should be 1")
         return f.numer
 
     def parent(self):

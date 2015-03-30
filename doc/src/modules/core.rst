@@ -9,6 +9,11 @@ sympify
 ^^^^^^^
 .. autofunction:: sympify
 
+assumptions
+-----------
+
+.. automodule:: sympy.core.assumptions
+
 cache
 -------
 .. module:: sympy.core.cache
@@ -30,6 +35,10 @@ Atom
 ^^^^
 .. autoclass:: Atom
    :members:
+
+core
+----
+.. module:: sympy.core.core
 
 C
 ^
@@ -132,31 +141,89 @@ seterr
 ^^^^^^
 .. autofunction:: seterr
 
-E
-^
-.. autoclass:: E
+Zero
+^^^^
+
+.. autoclass:: Zero
    :members:
 
-I
-^
-.. autoclass:: I
+One
+^^^
+
+.. autoclass:: One
    :members:
 
-nan
+NegativeOne
+^^^^^^^^^^^
+
+.. autoclass:: NegativeOne
+   :members:
+
+Half
+^^^^
+
+.. autoclass:: Half
+   :members:
+
+NaN
 ^^^
-.. autofunction:: nan
 
-oo
+.. autoclass:: NaN
+   :members:
+
+Infinity
+^^^^^^^^
+
+.. autoclass:: Infinity
+   :members:
+
+NegativeInfinity
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: NegativeInfinity
+   :members:
+
+ComplexInfinity
+^^^^^^^^^^^^^^^
+
+.. autoclass:: ComplexInfinity
+   :members:
+
+Exp1
+^^^^
+
+.. autoclass:: Exp1
+   :members:
+
+ImaginaryUnit
+^^^^^^^^^^^^^
+
+.. autoclass:: ImaginaryUnit
+   :members:
+
+Pi
 ^^
-.. autofunction:: oo
 
-pi
-^^
-.. autofunction:: pi
+.. autoclass:: Pi
+   :members:
 
-zoo
-^^^
-.. autofunction:: zoo
+EulerGamma
+^^^^^^^^^^
+
+.. autoclass:: EulerGamma
+   :members:
+
+Catalan
+^^^^^^^
+
+.. autoclass:: Catalan
+   :members:
+
+GoldenRatio
+^^^^^^^^^^^
+
+.. autoclass:: GoldenRatio
+   :members:
 
 power
 -----

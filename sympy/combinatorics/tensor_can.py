@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 
-from sympy.combinatorics.permutations import Permutation, _af_rmul, _af_rmuln,\
+from sympy.core.compatibility import range
+from sympy.combinatorics.permutations import Permutation, _af_rmul, \
     _af_invert, _af_new
 from sympy.combinatorics.perm_groups import PermutationGroup, _orbit, \
     _orbit_transversal
@@ -53,7 +54,8 @@ def dummy_sgs(dummies, sym, n):
      [0, 1, 2, 3, 4, 5, 7, 6, 8, 9], [0, 1, 4, 5, 2, 3, 6, 7, 8, 9],
      [0, 1, 2, 3, 6, 7, 4, 5, 8, 9]]
     """
-    assert len(dummies) <= n
+    if len(dummies) > n:
+        raise ValueError("List too large")
     res = []
     # exchange of contravariant and covariant indices
     if sym is not None:

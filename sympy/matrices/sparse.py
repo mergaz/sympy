@@ -4,10 +4,11 @@ import copy
 from collections import defaultdict
 
 from sympy.core.containers import Dict
-from sympy.core.compatibility import is_sequence, as_int
+from sympy.core.compatibility import is_sequence, as_int, range
+from sympy.core.logic import fuzzy_and
 from sympy.core.singleton import S
 from sympy.functions.elementary.miscellaneous import sqrt
-from sympy.utilities.exceptions import SymPyDeprecationWarning
+from sympy.utilities.iterables import uniq
 
 from .matrices import MatrixBase, ShapeError, a2idx
 from .dense import Matrix
@@ -54,7 +55,8 @@ class SparseMatrix(MatrixBase):
                 op = args[2]
                 for i in range(self.rows):
                     for j in range(self.cols):
-                        value = self._sympify(op(i, j))
+                        value = self._sympify(
+                            op(self._sympify(i), self._sympify(j)))
                         if value:
                             self._smat[(i, j)] = value
             elif isinstance(args[2], (dict, Dict)):
@@ -62,7 +64,7 @@ class SparseMatrix(MatrixBase):
                 for key in args[2].keys():
                     v = args[2][key]
                     if v:
-                        self._smat[key] = v
+                        self._smat[key] = self._sympify(v)
             elif is_sequence(args[2]):
                 if len(args[2]) != self.rows*self.cols:
                     raise ValueError(
@@ -87,14 +89,31 @@ class SparseMatrix(MatrixBase):
 
     def __getitem__(self, key):
 
-        if type(key) is tuple:
+        if isinstance(key, tuple):
             i, j = key
-            if isinstance(i, int) and isinstance(j, int):
+            try:
                 i, j = self.key2ij(key)
-                rv = self._smat.get((i, j), S.Zero)
-                return rv
-            elif isinstance(i, slice) or isinstance(j, slice):
-                return self.submatrix(key)
+                return self._smat.get((i, j), S.Zero)
+            except (TypeError, IndexError):
+                if isinstance(i, slice):
+                    # XXX remove list() when PY2 support is dropped
+                    i = list(range(self.rows))[i]
+                elif is_sequence(i):
+                    pass
+                else:
+                    if i >= self.rows:
+                        raise IndexError('Row index out of bounds')
+                    i = [i]
+                if isinstance(j, slice):
+                    # XXX remove list() when PY2 support is dropped
+                    j = list(range(self.cols))[j]
+                elif is_sequence(j):
+                    pass
+                else:
+                    if j >= self.cols:
+                        raise IndexError('Col index out of bounds')
+                    j = [j]
+                return self.extract(i, j)
 
         # check for single arg, like M[:] or M[3]
         if isinstance(key, slice):
@@ -120,7 +139,7 @@ class SparseMatrix(MatrixBase):
             return False
         if not all(self[i, i] == 1 for i in range(self.rows)):
             return False
-        return len(self) == self.rows
+        return len(self._smat) == self.rows
 
     def tolist(self):
         """Convert this sparse matrix into a list of nested Python lists.
@@ -205,7 +224,8 @@ class SparseMatrix(MatrixBase):
         row_op
         col_list
         """
-        return [tuple(k + (self[k],)) for k in sorted(list(self._smat.keys()), key=lambda k: list(k))]
+        return [tuple(k + (self[k],)) for k in
+            sorted(list(self._smat.keys()), key=lambda k: list(k))]
 
     RL = property(row_list, None, None, "Alternate faster representation")
 
@@ -491,25 +511,80 @@ class SparseMatrix(MatrixBase):
                 M._smat.pop(i, None)
         return M
 
-    def submatrix(self, keys):
-        rlo, rhi, clo, chi = self.key2bounds(keys)
-        r, c = rhi - rlo, chi - clo
-        if r*c < len(self._smat):
-            # the subregion is smaller than the number of elements in self
-            if r == 1:
-                getter = lambda i, j: self[rlo, j + clo]
-            elif c == 1:
-                getter = lambda i, j: self[i + rlo, clo]
-            else:
-                getter = lambda i, j: self[i + rlo, j + clo]
-            return self._new(r, c, getter)
+    def extract(self, rowsList, colsList):
+        urow = list(uniq(rowsList))
+        ucol = list(uniq(colsList))
+        smat = {}
+        if len(urow)*len(ucol) < len(self._smat):
+            # there are fewer elements requested than there are elements in the matrix
+            for i, r in enumerate(urow):
+                for j, c in enumerate(ucol):
+                    smat[i, j] = self._smat.get((r, c), 0)
         else:
-            # the number of non-zero elements is smaller than the subregion
-            smat = {}
+            # most of the request will be zeros so check all of self's entries,
+            # keeping only the ones that are desired
             for rk, ck in self._smat:
-                if rlo <= rk < rhi and clo <= ck < chi:
-                    smat[(rk-rlo, ck-clo)] = self._smat[(rk, ck)]
-            return self._new(r, c, smat)
+                if rk in urow and ck in ucol:
+                    smat[(urow.index(rk), ucol.index(ck))] = self._smat[(rk, ck)]
+
+        rv = self._new(len(urow), len(ucol), smat)
+        # rv is nominally correct but there might be rows/cols
+        # which require duplication
+        if len(rowsList) != len(urow):
+            for i, r in enumerate(rowsList):
+                i_previous = rowsList.index(r)
+                if i_previous != i:
+                    rv = rv.row_insert(i, rv.row(i_previous))
+        if len(colsList) != len(ucol):
+            for i, c in enumerate(colsList):
+                i_previous = colsList.index(c)
+                if i_previous != i:
+                    rv = rv.col_insert(i, rv.col(i_previous))
+        return rv
+    extract.__doc__ = MatrixBase.extract.__doc__
+
+    @property
+    def is_hermitian(self):
+        """Checks if the matrix is Hermitian.
+
+        In a Hermitian matrix element i,j is the complex conjugate of
+        element j,i.
+
+        Examples
+        ========
+
+        >>> from sympy.matrices import SparseMatrix
+        >>> from sympy import I
+        >>> from sympy.abc import x
+        >>> a = SparseMatrix([[1, I], [-I, 1]])
+        >>> a
+        Matrix([
+        [ 1, I],
+        [-I, 1]])
+        >>> a.is_hermitian
+        True
+        >>> a[0, 0] = 2*I
+        >>> a.is_hermitian
+        False
+        >>> a[0, 0] = x
+        >>> a.is_hermitian
+        >>> a[0, 1] = a[1, 0]*I
+        >>> a.is_hermitian
+        False
+        """
+        def cond():
+            d = self._smat
+            yield self.is_square
+            if len(d) <= self.rows:
+                yield fuzzy_and(
+                    d[i, i].is_real for i, j in d if i == j)
+            else:
+                yield fuzzy_and(
+                    d[i, i].is_real for i in range(self.rows) if (i, i) in d)
+            yield fuzzy_and(
+                    ((self[i, j] - self[j, i].conjugate()).is_zero
+                    if (j, i) in d else False) for (i, j) in d)
+        return fuzzy_and(i for i in cond())
 
     def is_symmetric(self, simplify=True):
         """Return True if self is symmetric.
@@ -626,8 +701,7 @@ class SparseMatrix(MatrixBase):
 
         Symbolic Sparse Cholesky Factorization using Elimination Trees,
         Jeroen Van Grondelle (1999)
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.39.7582,
-        downloaded from http://tinyurl.com/9o2jsxj
+        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.39.7582
         """
         # Algorithm 2.4, p 17 of reference
 
@@ -671,8 +745,7 @@ class SparseMatrix(MatrixBase):
 
         Symbolic Sparse Cholesky Factorization using Elimination Trees,
         Jeroen Van Grondelle (1999)
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.39.7582,
-        downloaded from http://tinyurl.com/9o2jsxj
+        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.39.7582
         """
 
         R, parent = self.liupc()
@@ -1041,7 +1114,7 @@ class SparseMatrix(MatrixBase):
 
     def as_immutable(self):
         """Returns an Immutable version of this Matrix."""
-        from immutable import ImmutableSparseMatrix
+        from .immutable import ImmutableSparseMatrix
         return ImmutableSparseMatrix(self)
 
     def nnz(self):
@@ -1051,15 +1124,7 @@ class SparseMatrix(MatrixBase):
     @classmethod
     def zeros(cls, r, c=None):
         """Return an r x c matrix of zeros, square if c is omitted."""
-        if is_sequence(r):
-            SymPyDeprecationWarning(
-                feature="The syntax zeros([%i, %i])" % tuple(r),
-                useinstead="zeros(%i, %i)." % tuple(r),
-                issue=3381, deprecated_since_version="0.7.2",
-            ).warn()
-            r, c = r
-        else:
-            c = r if c is None else c
+        c = r if c is None else c
         r = as_int(r)
         c = as_int(c)
         return cls(r, c, {})

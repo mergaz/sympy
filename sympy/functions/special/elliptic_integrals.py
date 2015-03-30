@@ -47,8 +47,6 @@ class elliptic_k(Function):
     elliptic_f
     """
 
-    nargs = 1
-
     @classmethod
     def eval(cls, z):
         if z is S.Zero:
@@ -81,6 +79,10 @@ class elliptic_k(Function):
 
     def _eval_rewrite_as_meijerg(self, z):
         return meijerg(((S.Half, S.Half), []), ((S.Zero,), (S.Zero,)), -z)/2
+
+    def _sage_(self):
+        import sage.all as sage
+        return sage.elliptic_kc(self.args[0]._sage_())
 
 
 class elliptic_f(Function):
@@ -115,8 +117,6 @@ class elliptic_f(Function):
 
     elliptic_k
     """
-
-    nargs = 2
 
     @classmethod
     def eval(cls, z, m):
@@ -187,12 +187,9 @@ class elliptic_e(Function):
     .. [3] http://functions.wolfram.com/EllipticIntegrals/EllipticE
     """
 
-    nargs = (1, 2)
-
     @classmethod
-    def eval(cls, *args):
-        if len(args) == 2:
-            z, m = args
+    def eval(cls, z, m=None):
+        if m is not None:
             k = 2*z/pi
             if m.is_zero:
                 return z
@@ -205,7 +202,6 @@ class elliptic_e(Function):
             elif z.could_extract_minus_sign():
                 return -elliptic_e(-z, m)
         else:
-            z = args[0]
             if z.is_zero:
                 return pi/2
             elif z is S.One:
@@ -231,9 +227,14 @@ class elliptic_e(Function):
         raise ArgumentIndexError(self, argindex)
 
     def _eval_conjugate(self):
-        z, m = self.args
-        if (m.is_real and (m - 1).is_positive) is False:
-            return self.func(z.conjugate(), m.conjugate())
+        if len(self.args) == 2:
+            z, m = self.args
+            if (m.is_real and (m - 1).is_positive) is False:
+                return self.func(z.conjugate(), m.conjugate())
+        else:
+            z = self.args[0]
+            if (z.is_real and (z - 1).is_positive) is False:
+                return self.func(z.conjugate())
 
     def _eval_nseries(self, x, n, logx):
         from sympy.simplify import hyperexpand
@@ -289,12 +290,10 @@ class elliptic_pi(Function):
     .. [3] http://functions.wolfram.com/EllipticIntegrals/EllipticPi
     """
 
-    nargs = (2, 3)
-
     @classmethod
-    def eval(cls, *args):
-        if len(args) == 3:
-            n, z, m = args
+    def eval(cls, n, m, z=None):
+        if z is not None:
+            n, z, m = n, m, z
             k = 2*z/pi
             if n == S.Zero:
                 return elliptic_f(z, m)
@@ -316,7 +315,6 @@ class elliptic_pi(Function):
             elif z.could_extract_minus_sign():
                 return -elliptic_pi(n, -z, m)
         else:
-            n, m = args
             if n == S.Zero:
                 return elliptic_k(m)
             elif n == S.One:
