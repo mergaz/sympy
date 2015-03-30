@@ -9,7 +9,7 @@ from collections import defaultdict
 from .containers import Tuple
 from .sympify import converter, sympify, _sympify, SympifyError
 from .singleton import S, Singleton
-from .expr import Expr, AtomicExpr
+from .expr import Expr, AtomicExpr, make_repr
 from .decorators import _sympifyit
 from .cache import cacheit, clear_cache
 from .logic import fuzzy_not

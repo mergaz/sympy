@@ -5,7 +5,7 @@ from __future__ import print_function, division
 import math
 
 from sympy.core.symbol import Dummy, Symbol, symbols
-from sympy.core import S, I, pi
+from sympy.core import S, I, pi, Add
 from sympy.core.compatibility import ordered
 from sympy.core.mul import expand_2arg, Mul
 from sympy.core.power import Pow
@@ -28,7 +28,7 @@ from sympy.polys.rationaltools import together
 from sympy.simplify import simplify, powsimp
 from sympy.utilities import public
 
-from sympy.core.compatibility import reduce, range, xrange
+from sympy.core.compatibility import reduce, range
 from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine, commit_subroutine
 
 

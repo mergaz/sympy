@@ -4182,7 +4182,7 @@ def unrad(eq, *syms, **flags):
                 if not inv:
                     raise NotImplementedError
                 add_comment("We have")
-                add_eq(poly.subs(b, Pow(p, lcm, evaluate=False)).as_expr(), 0)
+                add_eq(poly.subs(b, Pow(covsym, lcm, evaluate=False)).as_expr(), 0)
                 eq = poly.as_expr().subs(b, covsym**lcm).subs(x, inv[0])
                 _cov(covsym, covsym**lcm - b)
                 return _canonical(eq, cov)
