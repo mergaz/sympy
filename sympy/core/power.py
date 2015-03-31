@@ -174,7 +174,7 @@ class Pow(Expr):
                     return S.NaN
                 return S.One
             else:
-                if e.func == log:
+                if e.func == _log:
                     if len(e.args) == 2:
                         lbase = e.args[1]
                     else:
@@ -182,7 +182,7 @@ class Pow(Expr):
                     if lbase == b:
                         return e.args[0]
 
-                if e is Mul and e.args[1].func == log:
+                if e is Mul and e.args[1].func == _log:
                     if len(e.args[1].args) == 2:
                         lbase = e.args[1].args[1]
                     else:

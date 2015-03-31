@@ -113,7 +113,7 @@ def sqrt(arg):
 
     """
     # arg = sympify(arg) is handled by Pow
-    res = C.Pow(arg, S.Half)
+    res = Pow(arg, S.Half)
     if isinstance(arg, Expr):
         r = arg.repr()
         if not isinstance(r, tuple):

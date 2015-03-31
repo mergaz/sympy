@@ -2,21 +2,18 @@
 
 from __future__ import print_function, division
 from sympy import sqrt
-from sympy.core import Symbol, Interval
 from sympy.core.mul import Mul
 from sympy.core.numbers import pi
 from sympy.core.power import Pow
-from sympy.core.relational import Relational, Eq, Ge, Lt, GreaterThan, StrictGreaterThan, StrictLessThan, LessThan
+from sympy.core.relational import GreaterThan, StrictGreaterThan, StrictLessThan, LessThan
 
-from sympy.core import Symbol, Dummy
+from sympy.core import Symbol
 from sympy.core.compatibility import iterable, reduce
 from sympy.sets import Interval
 from sympy.core.relational import Relational, Eq, Ge, Lt
 from sympy.sets.sets import FiniteSet, Union
 from sympy.core.singleton import S
-from sympy.assumptions import ask, AppliedPredicate, Q
 from sympy.core.symbol import Wild, Dummy
-from sympy.functions import re, im, Abs
 from sympy.functions.elementary.exponential import log
 from sympy.functions.elementary.trigonometric import sin, cos, tan, cot, atan, acot, acos, asin
 
@@ -779,21 +776,10 @@ def solve_trig_ineq(trig_ineq_params):
 def _reduce_inequalities(inequalities, symbols):
     # helper for reduce_inequalities
 
-    if not hasattr(inequalities, '__iter__'):
-        inequalities = [inequalities]
-
-    if len(inequalities) == 1 and len(symbols) == 1 \
-            and inequalities[0].is_Relational:
-        try:
-            return _solve_inequality(inequalities[0], symbols[0])
-        except NotImplementedError:
-            pass
-
-    poly_part, abs_part, extra_assume = {}, {}, []
-
     if len(inequalities) == 1 and len(symbols) == 1:
         ineq = inequalities[0]
-        symbol = symbols[0]
+        symbol = symbols.pop()
+        symbols.add(symbol)
         trig_ineq_params = is_trig_ineq(ineq, symbol)
         if trig_ineq_params is not None:
             return solve_trig_ineq(trig_ineq_params)

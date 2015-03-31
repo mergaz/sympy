@@ -15,12 +15,10 @@ from sympy.core.sympify import sympify
 from sympy.integrals.manualintegrate import manualintegrate
 from sympy.integrals.trigonometry import trigintegrate
 from sympy.integrals.meijerint import meijerint_definite, meijerint_indefinite
-from sympy.simplify.fu import fu
-from sympy.utilities import xthreaded, flatten
+from sympy.utilities import xthreaded
 from sympy.utilities.misc import filldedent
 from sympy.polys import Poly, PolynomialError
 from sympy.functions import Piecewise, sqrt, sign
-from sympy.geometry import Curve
 from sympy.functions.elementary.exponential import log
 from sympy.series import limit
 from sympy.series.order import Order
@@ -28,7 +26,7 @@ from sympy.series.order import Order
 
 # TODO get these helper functions into a super class for sum-like
 # objects: Sum, Product, Integral (issue 3662)
-from sympy.utilities.solution import add_comment, add_exp, add_eq
+from sympy.utilities.solution import add_comment, add_exp
 
 
 class Integral(AddWithLimits):

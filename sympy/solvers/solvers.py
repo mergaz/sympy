@@ -17,7 +17,7 @@ from __future__ import print_function, division
 from sympy.core.compatibility import (iterable, is_sequence, ordered,
     default_sort_key, range)
 from sympy.core.sympify import sympify
-from sympy.core import S, Add, Symbol, Equality, Dummy, Expr, Mul, Pow
+from sympy.core import S, Add, Symbol, Equality, Dummy, Expr, Mul, Pow, Wild
 from sympy.core.exprtools import factor_terms
 from sympy.core.function import (expand_mul, expand_multinomial, expand_log,
                           Derivative, AppliedUndef, UndefinedFunction, nfloat,
@@ -28,7 +28,7 @@ from sympy.core.relational import Relational, Ge
 from sympy.logic.boolalg import And, Or, BooleanAtom
 from sympy.core.basic import preorder_traversal
 
-from sympy.functions import (log, exp, LambertW, cos, sin, tan, acos, asin, atan,
+from sympy.functions import (log, exp, LambertW, cos, sin, tan, cot, acot, acos, asin, atan,
                              Abs, re, im, arg, sqrt, atan2)
 from sympy.functions.elementary.trigonometric import (TrigonometricFunction,
                                                       HyperbolicFunction)
@@ -1972,8 +1972,7 @@ def _solve(f, *symbols, **flags):
                     u = None  # hope for best with original equation
             if u:
                 flags['unrad'] = False  # don't unrad next time
-                eq, cov, dens2 = u
-                dens.update(dens2)
+                eq, cov = u
                 if cov:
                     if len(cov) > 1:
                         raise NotImplementedError('Not sure how to handle this.')
@@ -2014,84 +2013,84 @@ def _solve(f, *symbols, **flags):
                 return _solve(simplified_f, symbol, **flags)
             raise ValueError('expression appears to be a constant')
 
-            if f_num - poly.as_expr() != 0:
-                add_comment("Rewrite the equation as")
+        if f_num - poly.as_expr() != 0:
+            add_comment("Rewrite the equation as")
+            add_eq(poly.as_expr(), 0)
+
+
+        gens = [g for g in poly.gens if g.has(symbol)]
+
+        def is_sin_cos(gens):
+            for g in gens:
+                if not g.func in [sin, cos]:
+                    return False
+            return True
+
+        # Rewrite equations containg abs(f(x)) to two eqs
+        abss = [a for a in f_num.atoms(Abs) if a.has(*symbols)]
+        if len(abss) > 0:
+            f_num_p = f.xreplace({abss[0]: abss[0].args[0]})
+            add_comment('Solve the following two equations')
+            add_eq(f_num_p, 0)
+            add_comment('assuming that')
+            add_exp(abss[0].args[0] > 0)
+            add_comment('and')
+            f_num_m = f.xreplace({abss[0]: -abss[0].args[0]})
+            add_eq(f_num_m, 0)
+            add_comment('assuming that')
+            add_exp(abss[0].args[0] < 0)
+            result_p = _solve(f_num_p, symbol, **flags)
+            result = []
+            for r in result_p:
+                v = abss[0].args[0].subs(symbol, r)
+                if v.is_real and v >= 0:
+                    add_comment('The value {} is a root', str(r))
+                    result.append(r)
+                else:
+                    add_comment('The value {} is an extraneous root', str(r))
+            result_m = _solve(f_num_m, symbol, **flags)
+            for r in result_m:
+                v = abss[0].args[0].subs(symbol, r)
+                if v.is_real and v <= 0:
+                    add_comment('The value {} is a root', str(r))
+                    result.append(r)
+                else:
+                    add_comment('The value {} is an extraneous root', str(r))
+            if len(result) > 0:
+                add_comment("Finally we have")
+                for r in result:
+                    add_eq(symbol, r)
+            else:
+                add_comment("Therefore there is no root")
+            return result
+
+        # Transform equations of the forms f(cos(x), sin**2(x)) = 0 and f(sin(x), cos**2(x)) = 0
+        if len(gens) == 2 and is_sin_cos(gens):
+            tr5_gens = [g for g in Poly(TR5(poly)).gens if g.has(symbol)]
+            if len(tr5_gens) == 1:
+                add_comment('Rewrite equation')
+                poly = Poly(TR5(poly))
                 add_eq(poly.as_expr(), 0)
-
-
-            gens = [g for g in poly.gens if g.has(symbol)]
-
-            def is_sin_cos(gens):
-                for g in gens:
-                    if not g.func in [sin, cos]:
-                        return False
-                return True
-
-            # Rewrite equations containg abs(f(x)) to two eqs
-            abss = [a for a in f_num.atoms(Abs) if a.has(*symbols)]
-            if len(abss) > 0:
-                f_num_p = f.xreplace({abss[0]: abss[0].args[0]})
-                add_comment('Solve the following two equations')
-                add_eq(f_num_p, 0)
-                add_comment('assuming that')
-                add_exp(abss[0].args[0] > 0)
-                add_comment('and')
-                f_num_m = f.xreplace({abss[0]: -abss[0].args[0]})
-                add_eq(f_num_m, 0)
-                add_comment('assuming that')
-                add_exp(abss[0].args[0] < 0)
-                result_p = _solve(f_num_p, symbol, **flags)
-                result = []
-                for r in result_p:
-                    v = abss[0].args[0].subs(symbol, r)
-                    if v.is_real and v >= 0:
-                        add_comment('The value {} is a root', str(r))
-                        result.append(r)
-                    else:
-                        add_comment('The value {} is an extraneous root', str(r))
-                result_m = _solve(f_num_m, symbol, **flags)
-                for r in result_m:
-                    v = abss[0].args[0].subs(symbol, r)
-                    if v.is_real and v <= 0:
-                        add_comment('The value {} is a root', str(r))
-                        result.append(r)
-                    else:
-                        add_comment('The value {} is an extraneous root', str(r))
-                if len(result) > 0:
-                    add_comment("Finally we have")
-                    for r in result:
-                        add_eq(symbol, r)
-                else:
-                    add_comment("Therefore there is no root")
-                return result
-
-            # Transform equations of the forms f(cos(x), sin**2(x)) = 0 and f(sin(x), cos**2(x)) = 0
-            if len(gens) == 2 and is_sin_cos(gens):
-                tr5_gens = [g for g in Poly(TR5(poly)).gens if g.has(symbol)]
-                if len(tr5_gens) == 1:
+                gens = tr5_gens
+            else:
+                tr6_gens = [g for g in Poly(TR6(poly)).gens if g.has(symbol)]
+                if len(tr6_gens) == 1:
                     add_comment('Rewrite equation')
-                    poly = Poly(TR5(poly))
+                    poly = Poly(TR6(poly))
+                    gens = tr6_gens
                     add_eq(poly.as_expr(), 0)
-                    gens = tr5_gens
-                else:
-                    tr6_gens = [g for g in Poly(TR6(poly)).gens if g.has(symbol)]
-                    if len(tr6_gens) == 1:
-                        add_comment('Rewrite equation')
-                        poly = Poly(TR6(poly))
-                        gens = tr6_gens
-                        add_eq(poly.as_expr(), 0)
 
-            try:
-                if isAcosFpBsinGpC(f_num, symbol):
-                    return solveAcosFpBsinGpC(f_num, symbol)
-                if isAcosFpBcosG(f_num, symbol):
-                    return solveAcosFpBcosG(f_num, symbol)
-                if isAsinFpBsinG(f_num, symbol):
-                    return solveAsinFpBsinG(f_num, symbol)
-                if isASinX_p_BSin2X_p_ASin3X(f_num, symbol):
-                    return solveASinX_p_BSin2X_p_ASin3X(f_num, symbol)
-            except DontKnowHowToSolve:
-                pass
+        try:
+            if isAcosFpBsinGpC(f_num, symbol):
+                return solveAcosFpBsinGpC(f_num, symbol)
+            if isAcosFpBcosG(f_num, symbol):
+                return solveAcosFpBcosG(f_num, symbol)
+            if isAsinFpBsinG(f_num, symbol):
+                return solveAsinFpBsinG(f_num, symbol)
+            if isASinX_p_BSin2X_p_ASin3X(f_num, symbol):
+                return solveASinX_p_BSin2X_p_ASin3X(f_num, symbol)
+        except DontKnowHowToSolve:
+            pass
 
         def _as_base_q(x):
             """Return (b**e, q) for x = b**(p*e/q) where p/q is the leading
@@ -4314,18 +4313,18 @@ def unrad(eq, *syms, **flags):
                     # (r1+r2)**2 - (r0+others)**2
                     r0, r1, r2 = rterms
                     add_comment("Rewrite the equation as")
-                    add_eq(r0 + r1, r2 + args)
+                    add_eq(r1 + r2, r0 + others)
                     add_comment("Raise both sides of the equation to the {} power", th(2))
-                    add_eq(Pow(r0 + r1, 2, evaluate=False), Pow(r2 + args, 2, evaluate=False))
+                    add_eq(Pow(r1 + r2, 2, evaluate=False), Pow(r0 + others, 2, evaluate=False))
                     eq = _norm2(r1, r2) - _norm2(r0, others)
                     ok = True
                 elif len(rterms) == 2:
                     # r0**2 - (r1+others)**2
                     r0, r1 = rterms
                     add_comment("Rewrite the equation as")
-                    add_eq(r0, r1 + args)
+                    add_eq(r0, r1 + others)
                     add_comment("Raise both sides of the equation to the {} power", th(2))
-                    add_eq(Pow(r0, 2, evaluate=False), Pow(r1 + args, 2, evaluate=False))
+                    add_eq(Pow(r0, 2, evaluate=False), Pow(r1 + others, 2, evaluate=False))
                     eq = r0**2 - _norm2(r1, others)
                     ok = True
 
