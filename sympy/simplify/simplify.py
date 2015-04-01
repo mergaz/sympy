@@ -3660,14 +3660,12 @@ def simplify(expr, ratio=1.7, measure=count_ops, fu=False):
     function, we get a completely different result that is still different
     from the input expression by doing this.
     """
-    expr = sympify(expr)
+    original_expr = expr = signsimp(expr)
 
     try:
         return expr._eval_simplify(ratio=ratio, measure=measure)
     except AttributeError:
         pass
-
-    original_expr = expr = signsimp(expr)
 
     from sympy.simplify.hyperexpand import hyperexpand
     from sympy.functions.special.bessel import BesselBase
