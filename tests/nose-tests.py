@@ -44,6 +44,11 @@ def test_solve_10_moriarty_genh():
         yield t
 
 
+@attr(version='master', dataset='solve-10-hangs')
+def test_solve_10_master_genh():
+    for t in test_gen_master('solve-10', solve_10_hangs, partial(check_master, solve)):
+        yield t
+
 @attr(version='master', dataset='solve-10')
 def test_solve_10_master_gen():
     for t in test_gen_master('solve-10', solve_10 + solve_10_hangs, partial(check_master, solve)):

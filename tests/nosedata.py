@@ -320,13 +320,13 @@ solve_10_trig = [
 
 ]
 solve_10_hangs = [
+    ((log(x + 1, 10)) ** 2 - (log((x + 1), 10)) * (log((x - 1), 10)) - 2 * (log((x + 1) ** 2, 10)), [sqrt(2), 3]),
     (Eq(sqrt(x + 3), sqrt(5 - x)), [S(1)]),
     (Eq(sqrt(1 - 2 * x) - sqrt(13 + x), sqrt(x + 4)), [S(-4)]),
     (3 - x - sqrt(9 - sqrt(36 * (x ** 2) - 5 * (x ** 4))), [S(0), S(2)]),
     ((sqrt(3 - x) + sqrt(3 + x)) / (sqrt(3 - x) - sqrt(3 + x)) - 2, [-S(24) / 10]),
     (Eq(sqrt(x + 3), sqrt(5 - x)), [S(1)]),
     (Eq(sqrt(x + 3), sqrt(5 - x)), [S(1)]),
-    ((log(x + 1, 10)) ** 2 - (log((x + 1), 10)) * (log((x - 1), 10)) - 2 * (log((x + 1) ** 2, 10)), [sqrt(2), 3]),
     (sqrt(5 * cos(x) - cos(2 * x)) + 2 * (sin(x)), [-acos((sqrt(65) - 5) / 4) + 2 * pi * k]),
     ([(5 ** (x + 1)) * (3 ** y) - 75, (3 ** x) * (5 ** (y - 1)) - 3], {x: 1, y: 1}),
 
