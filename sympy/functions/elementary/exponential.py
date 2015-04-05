@@ -586,8 +586,6 @@ class log(Function):
         from sympy import unpolarify, expand_log
         from sympy.concrete import Sum, Product
         force = hints.get('force', False)
-        if (len(self.args) == 2):
-            return expand_log(self.func(*self.args), deep=deep, force=force)
         arg = self.args[0]
         if len(self.args) == 2:
             base = self.args[1]

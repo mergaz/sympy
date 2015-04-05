@@ -19,7 +19,7 @@ from sympy.functions.elementary.trigonometric import sin, cos, tan, cot, atan, a
 
 from sympy.functions import Abs
 from sympy.logic import And
-from sympy.mpmath import inf
+from mpmath import inf
 from sympy.polys import Poly, PolynomialError, parallel_poly_from_expr
 from sympy.polys.polyroots import roots
 from sympy.printing.latex import latex
