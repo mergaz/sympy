@@ -38,6 +38,12 @@ def test_solve_9_moriarty_genh():
         yield t
 
 
+@attr(version='master', dataset='solve-9-hangs')
+def test_solve_9_master_genh():
+    for t in test_gen_master('solve-9-hangs', solve_9_hangs, partial(check_master, solve)):
+        yield t
+
+
 @attr(version='moriarty', dataset='solve-10-hangs')
 def test_solve_10_moriarty_genh():
     for t in test_gen_moriarty('solve-10-hangs', solve_10_hangs, partial(check_moriarty, solve)):
@@ -46,12 +52,12 @@ def test_solve_10_moriarty_genh():
 
 @attr(version='master', dataset='solve-10-hangs')
 def test_solve_10_master_genh():
-    for t in test_gen_master('solve-10', solve_10_hangs, partial(check_master, solve)):
+    for t in test_gen_master('solve-10-hangs', solve_10_hangs, partial(check_master, solve)):
         yield t
 
 @attr(version='master', dataset='solve-10')
 def test_solve_10_master_gen():
-    for t in test_gen_master('solve-10', solve_10 + solve_10_hangs, partial(check_master, solve)):
+    for t in test_gen_master('solve-10', solve_10, partial(check_master, solve)):
         yield t
 
 
@@ -138,7 +144,7 @@ def check_master(func, input, expected_answer, log_name):
         status = 'Passed'
     except Exception as e:
         if answer is None:
-            answer = e.__class__.__name__
+            answer = "{}: {}".format(e.__class__.__name__, e.message)
         raise
     finally:
         with open(log_name, 'a') as f:
@@ -157,7 +163,7 @@ def check_moriarty(func, input, expected_answer, log_name):
         status = 'Passed'
     except Exception as e:
         if answer is None:
-            answer = e.__class__.__name__
+            answer = "{}: {}".format(e.__class__.__name__, e.message)
         raise
     finally:
         number_of_steps = len([s for s in last_solution() if s.startswith('_')])
