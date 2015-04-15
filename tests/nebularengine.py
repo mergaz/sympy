@@ -1,10 +1,9 @@
 import inspect
 import billiard as mp
 import sys
-from sympy.core.cache import clear_cache
 from sympy.core.compatibility import exec_
 
-TIMEOUT = 60
+TIMEOUT = 10
 
 TASKS = []
 
@@ -36,7 +35,6 @@ def load_test_files():
 
 def exec_expectation(exp_no):
     TASKS[exp_no]()
-    # return
 
 def runtests():
     load_test_files()
@@ -50,7 +48,7 @@ def runtests():
             r.get()
             passed = True
         except Exception as e:
-            comment = e.message
+            comment = e
         print 'example,expected,actual,{},{}'.format('Passed' if passed else 'Failed', comment)
 
 
