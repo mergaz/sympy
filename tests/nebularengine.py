@@ -5,36 +5,39 @@ from sympy.core.compatibility import exec_
 
 TIMEOUT = 10
 
+
+# def add_expectation(func):
+# TASKS.append(func)
+#
+
 TASKS = []
 
 
-def add_expectation(func):
-    TASKS.append(func)
-
-
+import nebulartests
 def load_test_files():
-    filename = 'nebulartests.py'
-    gl = {'__file__': filename, 'add_expectation': add_expectation}
-    try:
-        with open(filename) as f:
-            source = f.read()
+    # gl = {'__file__': filename}
+    # try:
+    # with open(filename) as f:
+    #         source = f.read()
+    #
+    #     code = compile(source, filename, "exec")
+    #     exec_(code, gl)
+    # except (SystemExit, KeyboardInterrupt):
+    #     raise
+    # except ImportError:
+    #     print("import error", sys.exc_info())
+    #     return
 
-        code = compile(source, filename, "exec")
-        exec_(code, gl)
-    except (SystemExit, KeyboardInterrupt):
-        raise
-    except ImportError:
-        print("import error", sys.exc_info())
-        return
-
-    funcs = [gl[f] for f in gl.keys() if f.startswith("test_") and
-             (inspect.isfunction(gl[f]) or inspect.ismethod(gl[f])) and
-             (inspect.getsourcefile(gl[f]) == filename)]
+    funcs = [f for name, f in inspect.getmembers(nebulartests) if name.startswith("test_") and
+             inspect.isgeneratorfunction(f)]
     for f in funcs:
-        f()
+        for expectation in f():
+            TASKS.append(expectation)
+
 
 def exec_expectation(exp_no):
     TASKS[exp_no]()
+
 
 def runtests():
     load_test_files()
