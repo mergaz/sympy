@@ -39,6 +39,18 @@ def test_solve_9_moriarty_genh():
         yield t
 
 
+@attr(version='moriarty', dataset='solve-10-hangs')
+def test_solve_10_moriarty_genh():
+    for t in test_gen_moriarty('solve-10-hangs', solve_10_hangs, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve-9-hangs')
+def test_solve_9_moriarty_genh():
+    for t in test_gen_moriarty('solve-9-hangs', solve_9_hangs, partial(check_moriarty, solve)):
+        yield t
+
+
 @attr(version='master', dataset='solve-9-hangs')
 def test_solve_9_master_genh():
     for t in test_gen_master('solve-9-hangs', solve_9_hangs, partial(check_master, solve)):
