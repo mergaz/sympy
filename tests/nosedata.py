@@ -1,7 +1,7 @@
 from functools import partial
 
 from sympy import Symbol, sin, cot, pi, E, Abs, tan, S, Rational, log, Eq, sqrt, cos, ln, asin, acos, acot, atan, root, \
-    And, oo, Or, Derivative, exp, dsolve, Dummy, limit, diff, Integral, integrate
+    And, oo, Or, Derivative, exp, dsolve, Dummy, limit, diff, integrate
 
 
 x = Symbol("x", real=True)
@@ -320,13 +320,13 @@ solve_10_trig = [
 
 ]
 solve_10_hangs = [
+    ((log(x + 1, 10)) ** 2 - (log((x + 1), 10)) * (log((x - 1), 10)) - 2 * (log((x + 1) ** 2, 10)), [sqrt(2), 3]),
     (Eq(sqrt(x + 3), sqrt(5 - x)), [S(1)]),
     (Eq(sqrt(1 - 2 * x) - sqrt(13 + x), sqrt(x + 4)), [S(-4)]),
     (3 - x - sqrt(9 - sqrt(36 * (x ** 2) - 5 * (x ** 4))), [S(0), S(2)]),
     ((sqrt(3 - x) + sqrt(3 + x)) / (sqrt(3 - x) - sqrt(3 + x)) - 2, [-S(24) / 10]),
     (Eq(sqrt(x + 3), sqrt(5 - x)), [S(1)]),
     (Eq(sqrt(x + 3), sqrt(5 - x)), [S(1)]),
-    ((log(x + 1, 10)) ** 2 - (log((x + 1), 10)) * (log((x - 1), 10)) - 2 * (log((x + 1) ** 2, 10)), [sqrt(2), 3]),
     (sqrt(5 * cos(x) - cos(2 * x)) + 2 * (sin(x)), [-acos((sqrt(65) - 5) / 4) + 2 * pi * k]),
     ([(5 ** (x + 1)) * (3 ** y) - 75, (3 ** x) * (5 ** (y - 1)) - 3], {x: 1, y: 1}),
 
@@ -514,4 +514,47 @@ integrate_data = [
     ((sqrt(2 * x - 3), (x, 2, 6)), 8 + S(2) / 3),
 ]
 
-integrate_func = lambda args: integrate(*args) 
+integrate_func = lambda args: integrate(*args)
+
+t = Symbol("t")
+
+solve_basecamp = [
+    ((2 ** (3 * log(x, 10))) * (5 ** log(x, 10)) - 1600, [S(100)]),
+    (2 / (3 ** x - 1) <= 7 / (9 ** x - 2), [S(0), S(2)]),
+    (log(log(x ** 2, 2), 1 / 3) > 0, [-S(24) / 10]),
+    (log((3 * x - 2) / (x ** 2 + 1), 5) > 0, [S(1)]),
+    (4 * log(x, 4) - 33 * log(4, x) <= 1, [S(1)]),
+
+    (root((81 - x), 3) < 3, [S(1)]),
+    (root((69 - 5 * x), 3) < 5, [S(1)]),
+    (root((x ** 2 - 9), 5) < 2, [S(1)]),
+    (sqrt((x + 1) ** 2) - x - 1, [S(1)]),
+    (x ** 4 - 2 * (x ** 3) - 11 * (x ** 2) - 4 * x - 4, [S(1)]),
+    ((2 * x) / (4 * (x ** 2) + 3 * x + 8) + (3 * x) / (4 * (x ** 2) - 6 * x + 8) - 1 / 6, [S(1)]),
+    ([x - 2 * y - 6, 5 * x + 2 - 1], [S(1)]),
+    ([7 * x - 2 * y - 5, x ** 2 - y ** 2 - (12 * (x - y))], [S(1)]),
+    ([x ** 2 - 2 * x * y - 7, x - 3 * y + 2], [S(1)]),
+    ([2 * (x ** 2) - x * y + 3 * (y ** 2) - 7 * x - 12 * y - 1, x - y - 1], [S(1)]),
+    ([x ** 2 + 2 * (y ** 2) - 208, 3 * (x ** 2) - y ** 2 - 1], [S(1)]),
+    ([(2 * x - 5) ** 2 + (3 * y - 2) ** 2 - 17, (2 * x - 5) * (3 * y - 2) - 4], [S(1)]),
+    ([x ** 4 + y ** 4 + x ** 2 + y ** 2 - 92, x * y - 3], [S(1)]),
+    ([x ** 2 + y ** 2 - 10, x ** 3 + y ** 3 - (6 * (x + y))], [S(1)]),
+    ([x ** 2 - 4 * (y ** 2) - 9, x * y + 2 * (y ** 2) - 18], [S(1)]),
+    ([(x + 2 * y) / (x - y) + (x - 2 * y) / (x + y) - 4, x ** 2 + x * y + y ** 2 - 21], [S(1)]),
+    (root((x + 1) / x, 3) > -1, [S(1)]),
+    (sqrt(7 - 2 * x) > x - 2, [S(1)]),
+
+    (sin(t) + sin(3 * t) - (2 * sin(2 * t) * cos(t)), [S(1)]),
+    (cos(5 * t) * cos(2 * t) - cos(7 * t) * cos(4 * t), [S(1)]),
+    (sin(t) > 0, [S(1)]),
+    (log(5, x) > log(6, x), [S(1)]),
+    ((S(1) / 4) ** x < S(1) / 16, [S(1)]),
+    (log(S(1) / 2) * (4 * x - 14) <= -1, [S(1)]),
+    (x ** (sqrt(x)) - x ** (x / 2), [S(1)]),
+
+]
+
+solve_basecamp_hangs = [
+    ((2 ** (log(x ** 2, 3))) * (5 ** (log(x, 3))) - 400, [S(9)]),
+    (root(2 * x - 1, 3) + root(x - 1, 3) - 1, [S(1)]),
+]
