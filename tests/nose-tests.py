@@ -4,7 +4,7 @@ from nose.plugins.attrib import attr
 
 from nosedata import solve_generic, solve_9, dsolve_generic, solve_10, solve_10_trig, solve_10_hangs, limit_func, \
     limit_data, \
-    diff_data, diff_func, integrate_data, integrate_func, solve_basecamp, solve_9_hangs
+    diff_data, diff_func, integrate_data, integrate_func, solve_basecamp, solve_9_hangs, logsolve
 from sympy import solve, simplify
 from nosedata import dsolve_func
 
@@ -149,6 +149,18 @@ def test_basecamp_solve_master_gen():
 @attr(version='moriarty', dataset='solve_basecamp')
 def test_basecamp_solve_moriarty_gen():
     for t in test_gen_moriarty('solve_basecamp', solve_basecamp, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='master', dataset='logsolve')
+def test_logsolve_master_gen():
+    for t in test_gen_master('logsolve', logsolve, partial(check_master, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='logsolve')
+def test_logsolve_moriarty_gen():
+    for t in test_gen_moriarty('logsolve', logsolve, partial(check_moriarty, solve)):
         yield t
 
 
