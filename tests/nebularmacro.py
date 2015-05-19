@@ -47,7 +47,11 @@ def distribute_asserts(tree, gen_sym, exact_src, **kw):
     print expected_results_src
     print unparse(List(elts=exp_res_vars))
 
-    wrappers = Return(List(elts=list(Name(id=n) for n in func_names)))
+    res = list(Tuple(elts=list(elts)) for elts in zip((Str(s=s) for s in input_expr_src),
+                                                      (Str(s=s) for s in expected_results_src),
+                                                      exp_res_vars,
+                                                      list(Name(id=n) for n in func_names)))
+    wrappers = Return(List(elts=res))
     new_tree.body = new_body + [wrappers]
     print unparse(new_tree)
     return new_tree
