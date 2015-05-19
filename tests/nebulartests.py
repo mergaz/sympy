@@ -12,12 +12,7 @@ b = Symbol("b")
 k = Dummy('k')
 n = Dummy('n')
 
-u = symbolize[3 * (x ** 2) - 2 * x + (x + 0.1) * (x + 6.3) - 4/7 * (x + 0.9) * (x - 3.2)]
-
-@distribute_asserts
-def omicron():
-    assert 3 * x ** 2 != 3 * x * x
-    assert 3 * (x ** 2) == 3 * x * x
+# u = symbolize[3 * (x ** 2) - 2 * x + (x + 0.1) * (x + 6.3) - 4/7 * (x + 0.9) * (x - 3.2)]
 
 @distribute_asserts
 def test_solve_10():
@@ -25,6 +20,11 @@ def test_solve_10():
     assert solve(0.5 ** x > 0.25) == (x < 2)
     assert solve(Eq(sqrt(x + 3), sqrt(5 - x))) == [1]
     assert solve(cos(x) - 1) == [2 * k * pi]
+
+@distribute_asserts
+def omicron():
+    assert 3 * x ** 2 != 3 * x * x
+    assert 3 * (x ** 2) == 3 * x * x
 
 #
 # def solve_10():
