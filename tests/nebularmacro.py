@@ -3,7 +3,7 @@ from fractions import Fraction
 from macropy.core.macros import *
 from macropy.core.quotes import macros, q, u
 
-from sympy import S
+S = None
 
 
 @macros.expr
@@ -13,27 +13,33 @@ def symbolize(tree, **kw):
 
 
 @macros.decorator
-def distribute_asserts(tree, gen_sym, **kw):
-    new_tree = number_search.recurse(tree)
+def distribute_asserts(tree, gen_sym, exact_src, **kw):
+    expressions = []
+    expected_results = []
+    for statement in tree.body:
+        if isinstance(statement, Assert): # assert solve(a) == b
+            expressions.append(exact_src(statement.test.left)) # solve(a)
     new_body = []
     func_names = []
-    for stmt in new_tree.body:
-        if isinstance(stmt, Assert):
+    new_tree = number_search.recurse(tree)
+    for statement in new_tree.body:
+        if isinstance(statement, Assert): # assert solve(a) == b
+            expected_results.append(statement.test.comparators[0]) # b
             new_stmt = FunctionDef(
                 gen_sym(),
                 arguments([], None, None, []),
-                [stmt],
+                [Return(value=statement.test.left)],
                 []
             )
             func_names.append(new_stmt.name)
             new_body.append(new_stmt)
         else:
-            new_body.append(stmt)
-    wrappers = List(elts=list(Name(id=n) for n in func_names))
-    with q as code:
-        return ast[wrappers]
-    new_tree.body = new_body + code
-    # print unparse(new_tree)
+            new_body.append(statement)
+    wrappers = Return(List(elts=list(Name(id=n) for n in func_names)))
+    new_tree.body = new_body + [wrappers]
+    print expressions
+    print unparse(List(elts=expected_results))
+    print unparse(new_tree)
     return new_tree
 
 
