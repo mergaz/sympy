@@ -1,29 +1,58 @@
-from macropy.core.macros import *
-from macropy.core.quotes import macros, q, ast, u
-from sympy import S
 from fractions import Fraction
+
+from macropy.core.macros import *
+from macropy.core.quotes import macros, q, u
+
+from sympy import S
 
 
 @macros.expr
-def parallel(tree, **kw):
+def symbolize(tree, **kw):
     new_tree = number_search.recurse(tree)
+    return new_tree
+
+
+@macros.decorator
+def distribute_asserts(tree, gen_sym, **kw):
+    new_tree = number_search.recurse(tree)
+    new_body = []
+    func_names = []
+    for stmt in new_tree.body:
+        if isinstance(stmt, Assert):
+            new_stmt = FunctionDef(
+                gen_sym(),
+                arguments([], None, None, []),
+                [stmt],
+                []
+            )
+            func_names.append(new_stmt.name)
+            new_body.append(new_stmt)
+        else:
+            new_body.append(stmt)
+    wrappers = List(elts=list(Name(id=n) for n in func_names))
+    with q as code:
+        return ast[wrappers]
+    new_tree.body = new_body + code
     # print unparse(new_tree)
     return new_tree
 
 
 @Walker
 def number_search(tree, **kw):
-    if type(tree) is BinOp:
-        if type(tree.left) is Num:
+    if isinstance(tree, BinOp):
+        if isinstance(tree.left, Num):
             tree.left = num2S(tree.left.n)
-        if type(tree.right) is Num:
+        if isinstance(tree.right, Num):
             tree.right = num2S(tree.right.n)
-        # print unparse(tree)
+    elif isinstance(tree, Compare):
+        if isinstance(tree.left, Num):
+            tree.left = num2S(tree.left.n)
+        tree.comparators = list(num2S(cr.n) if isinstance(cr, Num) else cr for cr in tree.comparators)
 
 
 def num2S(n):
     frac = Fraction(n).limit_denominator()
     if frac.denominator != 1:
-        return q[S(u[frac.numerator]) / u[frac.denominator]]
+        return q[S(u[int(frac.numerator)]) / u[int(frac.denominator)]]
     else:
-        return q[S(u[frac.numerator])]
+        return q[S(u[int(frac.numerator)])]
