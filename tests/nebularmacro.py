@@ -1,7 +1,9 @@
 from fractions import Fraction
+from operator import add
+from functools import reduce
 
 from macropy.core.macros import *
-from macropy.core.quotes import macros, q, u
+from macropy.core.quotes import macros, q, u, name, ast, ast_list
 
 macros = Macros()
 S = None
@@ -14,47 +16,41 @@ def symbolize(tree, **kw):
 
 
 @macros.decorator
-def distribute_asserts(tree, gen_sym, exact_src, **kw):
-    input_expr_src = []
-    expected_results_src = []
-    for statement in tree.body:
-        if isinstance(statement, Assert):  # assert solve(a) == b
-            input_expr_src.append(exact_src(statement.test.left))  # solve(a)
-            expected_results_src.append(exact_src(statement.test.comparators[0]))  # b
+def parallelize_asserts(tree, gen_sym, exact_src, **kw):
+    transformer = lambda stmt: (transform_assert(stmt, gen_sym, exact_src) if isinstance(stmt, Assert)
+                                else ([stmt], None, None, None, None))
+    transformed_statements = map(transformer, tree.body)
+    new_body = reduce(add, [ts[0] for ts in transformed_statements])
 
-    new_body = []
-    func_names = []
+    ret = list(q[u[in_str], u[ex_str], name[ex_sym], name[ac_sym]]
+               for code, in_str, ex_str, ex_sym, ac_sym in transformed_statements
+               if in_str is not None)
+    tree.body = new_body + [Return(value=q[ast_list[ret]])]
     new_tree = number_search.recurse(tree)
-    exp_res_vars = []
-    for statement in new_tree.body:
-        if isinstance(statement, Assert):  # assert solve(a) == b
-            assign_stmt = Assign(targets=[Name(id=gen_sym())],
-                                 value=statement.test.comparators[0])  # b
-            exp_res_vars.append(assign_stmt.targets[0])
-            new_body.append(assign_stmt)
-
-            func_stmt = FunctionDef(
-                name=gen_sym(),
-                args=arguments([], None, None, []),
-                body=[Return(value=statement.test.left)],
-                decorator_list=[]
-            )
-            func_names.append(func_stmt.name)
-            new_body.append(func_stmt)
-        else:
-            new_body.append(statement)
-    print input_expr_src
-    print expected_results_src
-    print unparse(List(elts=exp_res_vars))
-
-    res = list(Tuple(elts=list(elts)) for elts in zip((Str(s=s) for s in input_expr_src),
-                                                      (Str(s=s) for s in expected_results_src),
-                                                      exp_res_vars,
-                                                      list(Name(id=n) for n in func_names)))
-    wrappers = Return(List(elts=res))
-    new_tree.body = new_body + [wrappers]
     print unparse(new_tree)
     return new_tree
+
+
+def transform_assert(stmt, gen_sym, exact_src):
+    """
+    Transforms a statement of the form
+        assert solve(a) == b
+    into
+        expected_1 = lambda: b
+        actual_1 = lambda: solve(a)
+    :return: tuple ('solve(a)', 'b', expected_1, actual_1)
+    """
+    input_str = exact_src(stmt.test.left)  # solve(a)
+    expected_str = exact_src(stmt.test.comparators[0])  # b
+    expected_sym = gen_sym("expected_")
+    actual_sym = gen_sym("actual_")
+    with q as code:
+        name[expected_sym] = lambda: ast[stmt.test.comparators[0]]
+        name[actual_sym] = lambda: ast[stmt.test.left]
+    copy_location(code[0], stmt.test.comparators[0])
+    copy_location(code[1], stmt.test.left)
+
+    return code, input_str, expected_str, expected_sym, actual_sym
 
 
 @Walker

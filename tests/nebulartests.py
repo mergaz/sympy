@@ -1,4 +1,4 @@
-from nebularmacro import macros, symbolize, distribute_asserts
+from nebularmacro import macros, symbolize, parallelize_asserts
 
 from sympy import solve, simplify
 from sympy import Symbol, sin, cot, pi, E, Abs, tan, S, Rational, log, Eq, sqrt, cos, ln, asin, acos, acot, atan, root, \
@@ -14,12 +14,12 @@ n = Dummy('n')
 
 # u = symbolize[3 * (x ** 2) - 2 * x + (x + 0.1) * (x + 6.3) - 4/7 * (x + 0.9) * (x - 3.2)]
 
-@distribute_asserts
+@parallelize_asserts
 def omicron():
     assert 3 * x ** 2 != 3 * x * x
     assert 3 * (x ** 2) == 3 * x * x
 
-@distribute_asserts
+@parallelize_asserts
 def test_solve_10():
     assert solve([x ** 2 - 1 >= 0, x > 2]) == (x > 2)
     assert solve(0.5 ** x > 0.25) == (x < 2)
