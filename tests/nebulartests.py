@@ -1,5 +1,4 @@
 from nebularmacro import macros, symbolize, parallelize_asserts
-from macropy.case_classes import macros, case
 
 from sympy import solve, simplify
 from sympy import Symbol, sin, cot, pi, E, Abs, tan, S, Rational, log, Eq, sqrt, cos, ln, asin, acos, acot, atan, root, \
@@ -14,17 +13,10 @@ k = Dummy('k')
 n = Dummy('n')
 
 
-@case
-class EvaluationFailure(exception): pass
-@case
-class ComparisonFailure(actual, exception): pass
-@case
-class Success(actual): pass
-
 @parallelize_asserts
-def omicron():
-    assert 3 * x ** 2 != 3 * x * x
-    assert 3 * (x ** 2) == 3 * x * x
+def test_omicron():
+    assert 3 * x ** 2 == 3 * x * x
+    assert 3 * (x ** 2) == 8 * x * x
 
 
 @parallelize_asserts

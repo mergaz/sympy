@@ -1,26 +1,23 @@
 import macropy.activate
 import nebulartests
-from nebulartests import ComparisonFailure, EvaluationFailure, Success
-from traceback import print_exception
-from sys import exc_info
 import inspect
 
 import billiard as mp
+from collections import namedtuple
 from sympy import simplify
 
 TIMEOUT = 10
 
-# a task is a tuple 'solve(a)', 'b', expected_1, actual_1
+# a task is a tuple func_name, 'solve(a)', 'b', expected_1, actual_1
 TASKS = []
+Task = namedtuple("Task", ['func_name', 'input_str', 'expected_str', 'expected_func', 'actual_func'])
 
 
 def exec_task(task_no):
-    input_str, expected_str, expected_func, actual_func = TASKS[task_no]
-    actual_is_computed = False
+    actual, actual_is_computed, t = None, False, TASKS[task_no]
     try:
-        expected = expected_func()
-        actual = actual_func()
-        actual_is_computed = True
+        expected = t.expected_func()
+        actual, actual_is_computed = t.actual_func(), True
         assert_matches(expected, actual)
     except Exception as e:
         if actual_is_computed:
@@ -31,37 +28,48 @@ def exec_task(task_no):
 
 
 def collect_tasks():
-    funcs = [f for name, f in inspect.getmembers(nebulartests) if name.startswith("test_")]
-    for f in funcs:
-        for tasks in f():
-            TASKS.append(tasks)
+    for func_name, func in inspect.getmembers(
+            nebulartests, lambda f: hasattr(f, 'func_name') and f.func_name.startswith("test_")):
+        for input_str, expected_str, expected_func, actual_func in func():
+            TASKS.append(Task(func_name, input_str, expected_str, expected_func, actual_func))
+
+
+def print_traceback(task, result):
+    print result._value.traceback,
+    print "Caused by assertion at"
+    print '  File "{}", line {}, in {}'.format(task.actual_func.func_code.co_filename,
+                                               task.actual_func.func_code.co_firstlineno,
+                                               task.func_name)
+    print "    assert {} == {}".format(task.input_str, task.expected_str)
+
+
+def process_result(task, result):
+    actual, status = '', 'Failed'
+    try:
+        actual, status = result.get(), 'Passed'
+    except Exception as e:
+        actual = e.actual if hasattr(e, 'actual') else '{}: {}'.format(e.__class__.__name__, e.message)
+        status = 'Answer' if isinstance(e, AssertionError) else 'Exception'
+        print_traceback(task, result)
+        if isinstance(e, AssertionError):
+            print '{} != {}'.format(actual, task.expected_str)
+        print
+    finally:
+        return actual, status
 
 
 def run_tests():
     collect_tasks()
-
+    log_name = 'nebular-moriarty.txt'
     pool = mp.Pool(timeout=TIMEOUT, initializer=collect_tasks)
-    results = [pool.apply_async(exec_task, args=(i,)) for i in range(len(TASKS))]
-    for i, r in enumerate(results):
-        status = 'Failed'
-        try:
-            actual = r.get()
-            status = 'Passed'
-        except Exception as e:
-            if hasattr(e, 'actual'):
-                actual = e.actual
-            else:
-                actual = "{}: {}".format(e.__class__.__name__, e.message)
-            status = 'Answer' if isinstance(e, AssertionError) else 'Exception'
-
-            print r._value.traceback,
-            print "Caused by example at"
-            print '  File "{}", line {}'.format(TASKS[i][3].func_code.co_filename, TASKS[i][3].func_code.co_firstlineno)
-            print "    assert {} == {}\n".format(TASKS[i][0], TASKS[i][1])
-        print '{input},{expected},{actual},{status}'.format(input=TASKS[i][0],
-                                                            expected=TASKS[i][1],
-                                                            actual=actual,
-                                                            status=status)
+    with open(log_name, 'w') as f:
+        f.write('func_name,input,expected,actual,status\n')
+        for t, r in [(t, pool.apply_async(exec_task, args=(i,))) for i, t in enumerate(TASKS)]:
+            actual, status = process_result(t, r)
+            record = '{func_name},"{input}","{expected}","{actual}",{status}\n'.format(
+                func_name=t.func_name, input=t.input_str, expected=t.expected_str, actual=actual, status=status)
+            f.write(record)
+            f.flush()
 
 
 if __name__ == '__main__':
