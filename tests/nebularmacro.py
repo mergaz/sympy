@@ -17,6 +17,21 @@ def symbolize(tree, **kw):
 
 @macros.decorator
 def parallelize_asserts(tree, gen_sym, exact_src, **kw):
+    """
+    Transforms all asserts in a function of the form
+        def test_me():
+            assert solve(a1) == b1
+            print "hi"
+            assert solve(a2) == b2
+    into
+        def test_me():
+            expected_1 = lambda: b1
+            actual_1 = lambda: solve(a1)
+            print "hi"
+            expected_2 = lambda: b2
+            actual_2 = lambda: solve(a2)
+            return [('solve(a1)', 'b1', expected_1, actual_1), ('solve(a2)', 'b2', expected_2, actual_2)]
+    """
     transformer = lambda stmt: (transform_assert(stmt, gen_sym, exact_src) if isinstance(stmt, Assert)
                                 else ([stmt], None, None, None, None))
     transformed_statements = map(transformer, tree.body)
@@ -27,18 +42,18 @@ def parallelize_asserts(tree, gen_sym, exact_src, **kw):
                if in_str is not None)
     tree.body = new_body + [Return(value=q[ast_list[ret]])]
     new_tree = number_search.recurse(tree)
-    print unparse(new_tree)
+    # print unparse(new_tree)
     return new_tree
 
 
 def transform_assert(stmt, gen_sym, exact_src):
     """
-    Transforms a statement of the form
+    Transforms and assert statement of the form
         assert solve(a) == b
     into
         expected_1 = lambda: b
         actual_1 = lambda: solve(a)
-    :return: tuple ('solve(a)', 'b', expected_1, actual_1)
+    :return: ('solve(a)', 'b', expected_1, actual_1)
     """
     input_str = exact_src(stmt.test.left)  # solve(a)
     expected_str = exact_src(stmt.test.comparators[0])  # b
