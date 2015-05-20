@@ -32,9 +32,8 @@ def parallelize_asserts(tree, gen_sym, exact_src, **kw):
             actual_2 = lambda: solve(a2)
             return [('solve(a1)', 'b1', expected_1, actual_1), ('solve(a2)', 'b2', expected_2, actual_2)]
     """
-    transformer = lambda stmt: (transform_assert(stmt, gen_sym, exact_src) if isinstance(stmt, Assert)
-                                else ([stmt], None, None, None, None))
-    transformed_statements = map(transformer, tree.body)
+    transformed_statements = [transform_assert(stmt, gen_sym, exact_src) if isinstance(stmt, Assert)
+                              else ([stmt], None, None, None, None) for stmt in tree.body]
     new_body = reduce(add, [ts[0] for ts in transformed_statements])
 
     ret = list(q[u[in_str], u[ex_str], name[ex_sym], name[ac_sym]]

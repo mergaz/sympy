@@ -14,21 +14,23 @@ TIMEOUT = 10
 TASKS = []
 
 
-def exec_expectation(exp_no):
-    input_str, expected_str, expected_func, actual_func = TASKS[exp_no]
-    actual = None
+def exec_task(task_no):
+    input_str, expected_str, expected_func, actual_func = TASKS[task_no]
+    actual_is_computed = False
     try:
         expected = expected_func()
         actual = actual_func()
+        actual_is_computed = True
         assert_matches(expected, actual)
     except Exception as e:
-        e.actual = actual
+        if actual_is_computed:
+            e.actual = actual
         raise
     else:
         return actual
 
 
-def load_test_files():
+def collect_tasks():
     funcs = [f for name, f in inspect.getmembers(nebulartests) if name.startswith("test_")]
     for f in funcs:
         for tasks in f():
@@ -36,23 +38,23 @@ def load_test_files():
 
 
 def run_tests():
-    load_test_files()
+    collect_tasks()
 
-    pool = mp.Pool(timeout=TIMEOUT, initializer=load_test_files)
-    results = [pool.apply_async(exec_expectation, args=(i,)) for i in range(len(TASKS))]
+    pool = mp.Pool(timeout=TIMEOUT, initializer=collect_tasks)
+    results = [pool.apply_async(exec_task, args=(i,)) for i in range(len(TASKS))]
     for i, r in enumerate(results):
         status = 'Failed'
         try:
             actual = r.get()
             status = 'Passed'
         except Exception as e:
-            if hasattr(e, 'actual') and e.actual is not None:
+            if hasattr(e, 'actual'):
                 actual = e.actual
             else:
                 actual = "{}: {}".format(e.__class__.__name__, e.message)
-            if isinstance(e, AssertionError):
-                status = 'Answer'
-            print r._value.traceback
+            status = 'Answer' if isinstance(e, AssertionError) else 'Exception'
+
+            print r._value.traceback,
             print "Caused by example at"
             print '  File "{}", line {}'.format(TASKS[i][3].func_code.co_filename, TASKS[i][3].func_code.co_firstlineno)
             print "    assert {} == {}\n".format(TASKS[i][0], TASKS[i][1])
