@@ -40,9 +40,8 @@ def parallelize_asserts(tree, gen_sym, exact_src, **kw):
                for code, in_str, ex_str, ex_sym, ac_sym in transformed_statements
                if in_str is not None)
     tree.body = new_body + [Return(value=q[ast_list[ret]])]
-    new_tree = sympylizer.recurse(tree)
-    # print unparse(new_tree)
-    return new_tree
+    # print unparse(tree)
+    return tree
 
 
 def transform_assert(stmt, gen_sym, exact_src):
@@ -55,16 +54,23 @@ def transform_assert(stmt, gen_sym, exact_src):
     :return: ('solve(a)', 'b', expected_1, actual_1)
     """
     input_str = exact_src(stmt.test.left)  # solve(a)
+    actual_sym = gen_sym("actual_")
+    new_actual = sympylizer.recurse(stmt.test.left)
+
     expected_str = exact_src(stmt.test.comparators[0])  # b
     expected_sym = gen_sym("expected_")
-    actual_sym = gen_sym("actual_")
+    new_expected = sympylizer.recurse(stmt.test.comparators[0])
+
     with q as code:
-        name[expected_sym] = lambda: ast[stmt.test.comparators[0]]
-        name[actual_sym] = lambda: ast[stmt.test.left]
+        name[expected_sym] = lambda: ast[new_expected]
+        name[actual_sym] = lambda: ast[new_actual]
     copy_location(code[0], stmt.test.comparators[0])
     copy_location(code[1], stmt.test.left)
 
     return code, input_str, expected_str, expected_sym, actual_sym
+
+
+MAPPING = {Eq: 'Eq', NotEq: 'Ne'}  # , Lt: 'Lt', LtE: 'Le', Gt: 'Gt', GtE: 'Ge'}
 
 
 @Walker
@@ -78,6 +84,9 @@ def sympylizer(tree, **kw):
         if isinstance(tree.left, Num):
             tree.left = num2S(tree.left.n)
         tree.comparators = list(num2S(cr.n) if isinstance(cr, Num) else cr for cr in tree.comparators)
+        if isinstance(tree.ops[0], (Eq, NotEq)) and len(tree.comparators) == 1:
+            sympy_op = MAPPING[type(tree.ops[0])]
+            return q[name[sympy_op](ast[tree.left], ast[tree.comparators[0]])]
 
 
 def num2S(n):
