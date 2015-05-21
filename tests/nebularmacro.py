@@ -10,8 +10,8 @@ S = None
 
 
 @macros.expr
-def symbolize(tree, **kw):
-    new_tree = number_search.recurse(tree)
+def sympylize(tree, **kw):
+    new_tree = sympylizer.recurse(tree)
     return new_tree
 
 
@@ -40,7 +40,7 @@ def parallelize_asserts(tree, gen_sym, exact_src, **kw):
                for code, in_str, ex_str, ex_sym, ac_sym in transformed_statements
                if in_str is not None)
     tree.body = new_body + [Return(value=q[ast_list[ret]])]
-    new_tree = number_search.recurse(tree)
+    new_tree = sympylizer.recurse(tree)
     # print unparse(new_tree)
     return new_tree
 
@@ -68,7 +68,7 @@ def transform_assert(stmt, gen_sym, exact_src):
 
 
 @Walker
-def number_search(tree, **kw):
+def sympylizer(tree, **kw):
     if isinstance(tree, BinOp):
         if isinstance(tree.left, Num):
             tree.left = num2S(tree.left.n)

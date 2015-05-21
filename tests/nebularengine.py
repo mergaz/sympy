@@ -34,8 +34,8 @@ def collect_tasks():
             TASKS.append(Task(func_name, input_str, expected_str, expected_func, actual_func))
 
 
-def print_traceback(task, result):
-    print result._value.traceback,
+def print_traceback(task, traceback):
+    print traceback,
     print "Caused by assertion at"
     print '  File "{}", line {}, in {}'.format(task.actual_func.func_code.co_filename,
                                                task.actual_func.func_code.co_firstlineno,
@@ -43,14 +43,14 @@ def print_traceback(task, result):
     print "    assert {} == {}".format(task.input_str, task.expected_str)
 
 
-def process_result(task, result):
+def process_result(task, async_res):
     actual, status = '', 'Failed'
     try:
-        actual, status = result.get(), 'Passed'
+        actual, status = async_res.get(), 'Passed'
     except Exception as e:
         actual = e.actual if hasattr(e, 'actual') else '{}: {}'.format(e.__class__.__name__, e.message)
         status = 'Answer' if isinstance(e, AssertionError) else 'Exception'
-        print_traceback(task, result)
+        print_traceback(task, async_res._value.traceback)
         if isinstance(e, AssertionError):
             print '{} != {}'.format(actual, task.expected_str)
         print
@@ -64,8 +64,9 @@ def run_tests():
     pool = mp.Pool(timeout=TIMEOUT, initializer=collect_tasks)
     with open(log_name, 'w') as f:
         f.write('func_name,input,expected,actual,status\n')
-        for t, r in [(t, pool.apply_async(exec_task, args=(i,))) for i, t in enumerate(TASKS)]:
-            actual, status = process_result(t, r)
+        jobs = [(t, pool.apply_async(exec_task, args=(i,))) for i, t in enumerate(TASKS)]
+        for t, async_res in jobs:
+            actual, status = process_result(t, async_res)
             record = '{func_name},"{input}","{expected}","{actual}",{status}\n'.format(
                 func_name=t.func_name, input=t.input_str, expected=t.expected_str, actual=actual, status=status)
             f.write(record)

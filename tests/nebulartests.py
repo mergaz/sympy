@@ -1,4 +1,4 @@
-from nebularmacro import macros, symbolize, parallelize_asserts
+from nebularmacro import macros, sympylize, parallelize_asserts
 
 from sympy import solve, simplify
 from sympy import Symbol, sin, cot, pi, E, Abs, tan, S, Rational, log, Eq, sqrt, cos, ln, asin, acos, acot, atan, root, \
