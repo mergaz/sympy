@@ -33,11 +33,11 @@ def parallelize_asserts(tree, gen_sym, exact_src, **kw):
             return [('solve(a1)', 'b1', expected_1, actual_1), ('solve(a2)', 'b2', expected_2, actual_2)]
     """
     transformed_statements = [transform_assert(stmt, gen_sym, exact_src) if isinstance(stmt, Assert)
-                              else ([stmt], None, None, None, None) for stmt in tree.body]
+                              else ([stmt],) + (None,)*5 for stmt in tree.body]
     new_body = reduce(add, [ts[0] for ts in transformed_statements])
 
-    ret = list(q[u[in_str], u[ex_str], name[ex_sym], name[ac_sym]]
-               for code, in_str, ex_str, ex_sym, ac_sym in transformed_statements
+    ret = list(q[u[in_str], u[sympylized], u[ex_str], name[ex_sym], name[ac_sym]]
+               for _, in_str, sympylized, ex_str, ex_sym, ac_sym in transformed_statements
                if in_str is not None)
     tree.body = new_body + [Return(value=q[ast_list[ret]])]
     # print unparse(tree)
@@ -67,7 +67,7 @@ def transform_assert(stmt, gen_sym, exact_src):
     copy_location(code[0], stmt.test.comparators[0])
     copy_location(code[1], stmt.test.left)
 
-    return code, input_str, expected_str, expected_sym, actual_sym
+    return code, input_str, unparse(new_actual), expected_str, expected_sym, actual_sym
 
 
 MAPPING = {Eq: 'Eq', NotEq: 'Ne'}  # , Lt: 'Lt', LtE: 'Le', Gt: 'Gt', GtE: 'Ge'}

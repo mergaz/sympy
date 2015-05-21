@@ -6,32 +6,44 @@ import billiard as mp
 from collections import namedtuple
 from sympy import simplify
 
+try:
+    from sympy.utilities.solution import last_solution, reset_solution
+
+    is_moriarty = True
+except ImportError:
+    is_moriarty = False
+
 TIMEOUT = 10
 
-# a task is a tuple func_name, 'solve(a)', 'b', expected_1, actual_1
+# a task is a tuple func_name, 'solve(a==0)', 'solve(Eq(a,0))', 'b', expected_1, actual_1
 TASKS = []
-Task = namedtuple("Task", ['func_name', 'input_str', 'expected_str', 'expected_func', 'actual_func'])
+Task = namedtuple("Task", ['func_name', 'input_str', 'sympylized', 'expected_str', 'expected_func', 'actual_func'])
 
 
 def exec_task(task_no):
     actual, actual_is_computed, t = None, False, TASKS[task_no]
     try:
+        if is_moriarty:
+            reset_solution()
         expected = t.expected_func()
         actual, actual_is_computed = t.actual_func(), True
         assert_matches(expected, actual)
     except Exception as e:
         if actual_is_computed:
             e.actual = actual
+        if is_moriarty:
+            e.number_of_steps = len([s for s in last_solution() if s.startswith('_')])
         raise
     else:
-        return actual
+        number_of_steps = len([s for s in last_solution() if s.startswith('_')]) if is_moriarty else 0
+        return actual, number_of_steps
 
 
 def collect_tasks():
     for func_name, func in inspect.getmembers(
             nebulartests, lambda f: hasattr(f, 'func_name') and f.func_name.startswith("test_")):
-        for input_str, expected_str, expected_func, actual_func in func():
-            TASKS.append(Task(func_name, input_str, expected_str, expected_func, actual_func))
+        for input_str, sympylized, expected_str, expected_func, actual_func in func():
+            TASKS.append(Task(func_name, input_str, sympylized, expected_str, expected_func, actual_func))
 
 
 def print_traceback(task, traceback):
@@ -44,31 +56,42 @@ def print_traceback(task, traceback):
 
 
 def process_result(task, async_res):
-    actual, status = '', 'Failed'
+    actual, status, number_of_steps = '', 'Failed', 0
     try:
-        actual, status = async_res.get(), 'Passed'
+        actual, number_of_steps = async_res.get()
+        status = 'Passed'
     except Exception as e:
-        actual = e.actual if hasattr(e, 'actual') else '{}: {}'.format(e.__class__.__name__, e.message)
+        actual = e.actual if hasattr(e, 'actual') else '{}: {}'.format(e.__class__.__name__,
+                                                                       str(e.message).replace("\n", " "))
         status = 'Answer' if isinstance(e, AssertionError) else 'Exception'
+        number_of_steps = e.number_of_steps if hasattr(e, 'number_of_steps') else 0
+
         print_traceback(task, async_res._value.traceback)
         if isinstance(e, AssertionError):
             print '{} != {}'.format(actual, task.expected_str)
         print
     finally:
-        return actual, status
+        return actual, status, number_of_steps
 
 
 def run_tests():
     collect_tasks()
-    log_name = 'nebular-moriarty.txt'
+
+    log_name = 'nebular-moriarty.txt' if is_moriarty else 'nebular-master.txt'
     pool = mp.Pool(timeout=TIMEOUT, initializer=collect_tasks)
     with open(log_name, 'w') as f:
-        f.write('func_name,input,expected,actual,status\n')
+        header = 'func_name,input,sympylized,expected,actual,status\n'
+        if is_moriarty:
+            header = '{},{}\n'.format(header[:-1],'steps')
+        f.write(header)
         jobs = [(t, pool.apply_async(exec_task, args=(i,))) for i, t in enumerate(TASKS)]
         for t, async_res in jobs:
-            actual, status = process_result(t, async_res)
-            record = '{func_name},"{input}","{expected}","{actual}",{status}\n'.format(
-                func_name=t.func_name, input=t.input_str, expected=t.expected_str, actual=actual, status=status)
+            actual, status, number_of_steps = process_result(t, async_res)
+            record = '{func_name},"{input}","{sympylized}","{expected}","{actual}",{status}\n'.format(
+                func_name=t.func_name, input=t.input_str, sympylized=t.sympylized,
+                expected=t.expected_str, actual=actual, status=status)
+            if is_moriarty:
+                record = '{},{}\n'.format(record[:-1], number_of_steps)
             f.write(record)
             f.flush()
 
