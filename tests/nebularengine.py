@@ -13,7 +13,7 @@ try:
 except ImportError:
     is_moriarty = False
 
-TIMEOUT = 10
+TIMEOUT = 90
 
 # a task is a tuple func_name, 'solve(a==0)', 'solve(Eq(a,0))', 'b', expected_1, actual_1
 TASKS = []
@@ -89,7 +89,7 @@ def run_tests():
             actual, status, number_of_steps = process_result(t, async_res)
             record = '{func_name},"{input}","{sympylized}","{expected}","{actual}",{status}\n'.format(
                 func_name=t.func_name, input=t.input_str, sympylized=t.sympylized,
-                expected=t.expected_str, actual=actual, status=status)
+                expected=t.expected_str.replace("\n", " "), actual=actual, status=status)
             if is_moriarty:
                 record = '{},{}\n'.format(record[:-1], number_of_steps)
             f.write(record)
