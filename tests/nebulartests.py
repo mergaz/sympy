@@ -49,7 +49,7 @@ def stest_solve_9():
 
 
 @parallelize_asserts
-def test_basecamp():
+def stest_basecamp():
     assert solve((2 ** (3 * log(x, 10))) * (5 ** log(x, 10)) - 1600) == [100]
     assert solve((2 ** (log(x ** 2, 3))) * (5 ** (log(x, 3))) - 400) == [9]
     assert solve(2 / (3 ** x - 1) <= 7 / (9 ** x - 2)) == Or(And(-log(2) / log(3) <= x, x < 0),
@@ -95,3 +95,59 @@ def test_basecamp():
     assert diff(exp(-3 * x), x) == -3 * exp(-3 * x)
     assert diff((-9 * y), y) == -9
     assert diff(3 * (y - 4), y) == 3
+
+
+@parallelize_asserts
+def test_logsolve():
+    assert simplify(log(125, 3) - 3) == 125
+    assert simplify(log(27, (sqrt(1 / 3))) + 6) == 27
+    assert simplify(log(0.008, 0.2) - 3) == 0.008
+    assert simplify(1.7 ** log(2, 1.7)) == 2
+    assert solve(log(x, 1 / 6) + 3) == [216]
+    assert solve(log(1 / 4, x) + 2) == [2]
+    assert solve(log(1 / 9, x) + 1) == [9]
+    assert solve(log(1 / 9, x) + 1 / 3) == [729]
+    assert solve(log(x, 3 / 10) - 2 * log(6, 3 / 10) + log(12, 3 / 10)) == [3]
+    assert solve(log((2 * x - 4), 1 / 3) + 2) == [65 / 10]
+    assert solve(log(x, 3) > 2) == And(9 < x, x < oo)
+    assert solve(log((12 - 2 * x - x ** 2), 3) > 2) == And(-3 < x, x < 1)
+    assert solve(log(x + 1, pi) + log(x, pi) < log(2, pi)) == And(0 < x, x < 1)
+    assert solve(log(x, 10) ** 2 + 2 * log(x, 10) < 3) == Or(And(0 < x, x < 1), And(10 < x, x < oo))
+    assert solve(4 ** x - 2 ** x <= 2) == And(-oo < x, x <= 1)
+    assert solve(log(x, a) - log(3, a) - log(5, a)) == [15]
+    assert solve(log(x, a) - log(2, sqrt(a)) + log(3, 1 / a)) == [4 / 3]
+    assert solve(log(x, 10) ** 2 - 1) == [10, 1 / 100]
+    assert solve(log(x + 1, 2) ** 2 - log(x + 1, 1 / 4) - 5) == [25, 1 / 5]
+    assert solve(x ** log(x, 10) - 10000) == [1 / 100, 100]
+    assert solve(x ** log(x, 5) - 125 * (x ** 2)) == [0]
+    assert solve(x ** log(x - 2, 2) - 8) == [8, 1 / 2]
+    assert solve(1 / (log(x, 10) - 6) + 5 / (log(x, 10) + 2) - 1) == [100, 10 ** 8]
+    assert solve(log(x, 2) + 4 / log(2, x) - 5) == [2]
+    assert solve(2 * log(x, sqrt(3)) + log(1 / 3, x) - 3) == [0]
+    assert solve(log(1 / 8, x) + 3) == [2]
+    assert solve(log(9, x) - 1 / 2) == [81]
+    assert solve(log(x, 7) + 1) == [1 / 7]
+    assert solve(log(x, 3 / 10) - 2) == [9 / 100]
+    assert solve(log(x, 6) >= 2) == And(36 <= x, x < oo)
+    assert solve(log(x, 9) <= 1 / 2) == And(-oo < x, x <= 3)
+    assert solve(log(x, 1 / 3) < -4) == And(81 < x, x < oo)
+    assert solve(log(x, 2 / 10) > -3) == And(-oo < x, x < 125)
+    assert solve(log(x, 1 / 3) - log(7, 1 / 3) - log(4, 1 / 3)) == [28]
+    assert solve(log(x, 1 / 4) - log(9, 1 / 4) - log(5, 1 / 4)) == [45]
+    assert solve(log(3, 1 / 2) + log(x, 1 / 2) - log(12, 1 / 2)) == [45]
+    assert solve(log(8, 1 / 3) + log(x, 1 / 3) - log(4, 1 / 3)) == [1 / 2]
+    assert solve(log(x / 2, sqrt(3)) - log(6, sqrt(3)) - log(2, sqrt(3))) == [24]
+    assert solve(log(x / 3, sqrt(2)) - log(15, sqrt(2)) + log(6, sqrt(3))) == [15 / 2]
+    assert solve(3 * log(1 / 2, 2) - log(1 / 32, 2) - log(x, 2)) == [45]
+    assert solve(log(x ** 2 - 5 * x + 8, 34 / 10) - log(x, 34 / 10)) == [4, 2]
+    assert solve(log(x / 3, 1 / 2) >= -2) == And(0 > x, x < 5 / 4)
+    assert solve(log(5 * x - 9, 1 / 3) >= log(4 * x, 1 / 3)) == And(9 / 5 < x, x <= 9)
+    assert solve(log(-x, 1 / 3) > log(4 - 2 * x, 1 / 3)) == And(-oo < x, x < 0)
+    assert solve(log(x, 2) ** 2 > 4 * log(x, 2) - 3) == Or(And(0 < x, x < 2), And(8 < x, x < oo))
+    assert solve(2 * log(x, 3 / 10) ** 2 - 7 * log(x, 3 / 10) - 4 <= 0) == And(-1 / 2 <= x, x <= 4)
+    assert solve(log(x ** 2, 1 / 3) ** 2 - 7 * log(x, 1 / 3) + 3 <= 0) == \
+           And(1 / 3 <= x, x <= 1 / root(27, 4))
+    assert solve(3 * log(x, 1 / 3) < log(9, 1 / 3) + log(3, 1 / 3)) == And(3 < x, x < oo)
+    assert solve(log(x, 1 / 2) + log(10 - x, 1 / 2) >= -1 + log(9 / 2, 1 / 2)) == \
+                 Or(And(0 < x, x <= 1), And(9 <= x, x < 10))
+    assert solve(log(7 - x, 4 / 10) >= log(3 * x + 6, 4 / 10)) == Or(x >= 1 / 4, Eq(x, 6))
