@@ -15,7 +15,7 @@ n = Dummy('n')
 
 
 @parallelize_asserts
-def test_solve_9():
+def stest_solve_9():
     assert solve(x ** 3 - 5 * x ** 2 + 8 * x - 6) == [3]
     assert solve(5 * x ** 5 == -160) == [-2]
     assert solve(2 ** (2 * x + 1) == 32) == [2]
