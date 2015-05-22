@@ -68,11 +68,11 @@ def assert_matches(expected, actual):
         assert expected == actual
     except AssertionError:
         if isinstance(expected, list):
-            assert len(expected) == len(actual)
+            assert isinstance(actual, list) and len(expected) == len(actual)
             for e, a in zip(expected, actual):
                 assert_matches(e, a)
         elif isinstance(expected, dict):
-            assert expected.keys() == actual.keys()
+            assert isinstance(actual, dict) and expected.keys() == actual.keys()
             for k in expected.keys():
                 assert_matches(expected[k], actual[k])
         else:

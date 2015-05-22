@@ -10,8 +10,8 @@ S = None
 
 
 @macros.expr
-def sympylize(tree, **kw):
-    new_tree = sympylizer.recurse(tree)
+def sy(tree, **kw):
+    new_tree = sympylizer.recurse(tree, False)
     return new_tree
 
 
@@ -33,7 +33,7 @@ def parallelize_asserts(tree, gen_sym, exact_src, **kw):
             return [('solve(a1)', 'b1', expected_1, actual_1), ('solve(a2)', 'b2', expected_2, actual_2)]
     """
     transformed_statements = [transform_assert(stmt, gen_sym, exact_src) if isinstance(stmt, Assert)
-                              else ([stmt],) + (None,)*5 for stmt in tree.body]
+                              else ([stmt],) + (None,) * 5 for stmt in tree.body]
     new_body = reduce(add, [ts[0] for ts in transformed_statements])
 
     ret = list(q[u[in_str], u[sympylized], u[ex_str], name[ex_sym], name[ac_sym]]
@@ -55,11 +55,11 @@ def transform_assert(stmt, gen_sym, exact_src):
     """
     input_str = exact_src(stmt.test.left)  # solve(a)
     actual_sym = gen_sym("actual_")
-    new_actual = sympylizer.recurse(stmt.test.left)
+    new_actual = sy(stmt.test.left)
 
     expected_str = exact_src(stmt.test.comparators[0])  # b
     expected_sym = gen_sym("expected_")
-    new_expected = sympylizer.recurse(stmt.test.comparators[0])
+    new_expected = sy(stmt.test.comparators[0])
 
     with q as code:
         name[expected_sym] = lambda: ast[new_expected]
@@ -74,16 +74,11 @@ MAPPING = {Eq: 'Eq', NotEq: 'Ne'}  # , Lt: 'Lt', LtE: 'Le', Gt: 'Gt', GtE: 'Ge'}
 
 
 @Walker
-def sympylizer(tree, **kw):
-    if isinstance(tree, BinOp):
-        if isinstance(tree.left, Num):
-            tree.left = num2S(tree.left.n)
-        if isinstance(tree.right, Num):
-            tree.right = num2S(tree.right.n)
+def sympylizer(tree, ctx, set_ctx, **kw):
+    if isinstance(tree, Num) and not ctx:
+        set_ctx(True)  # prevent infinite descent
+        return num2S(tree.n)
     elif isinstance(tree, Compare):
-        if isinstance(tree.left, Num):
-            tree.left = num2S(tree.left.n)
-        tree.comparators = list(num2S(cr.n) if isinstance(cr, Num) else cr for cr in tree.comparators)
         if isinstance(tree.ops[0], (Eq, NotEq)) and len(tree.comparators) == 1:
             sympy_op = MAPPING[type(tree.ops[0])]
             return q[name[sympy_op](ast[tree.left], ast[tree.comparators[0]])]

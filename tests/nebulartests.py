@@ -98,7 +98,7 @@ def stest_basecamp():
 
 
 @parallelize_asserts
-def test_logsolve():
+def stest_logsolve():
     assert simplify(log(125, 3) - 3) == 125
     assert simplify(log(27, (sqrt(1 / 3))) + 6) == 27
     assert simplify(log(0.008, 0.2) - 3) == 0.008
@@ -114,8 +114,8 @@ def test_logsolve():
     assert solve(log(x + 1, pi) + log(x, pi) < log(2, pi)) == And(0 < x, x < 1)
     assert solve(log(x, 10) ** 2 + 2 * log(x, 10) < 3) == Or(And(0 < x, x < 1), And(10 < x, x < oo))
     assert solve(4 ** x - 2 ** x <= 2) == And(-oo < x, x <= 1)
-    assert solve(log(x, a) - log(3, a) - log(5, a)) == [15]
-    assert solve(log(x, a) - log(2, sqrt(a)) + log(3, 1 / a)) == [4 / 3]
+    assert solve(log(x, a) - log(3, a) - log(5, a), x) == [15]
+    assert solve(log(x, a) - log(2, sqrt(a)) + log(3, 1 / a), x) == [4 / 3]
     assert solve(log(x, 10) ** 2 - 1) == [10, 1 / 100]
     assert solve(log(x + 1, 2) ** 2 - log(x + 1, 1 / 4) - 5) == [25, 1 / 5]
     assert solve(x ** log(x, 10) - 10000) == [1 / 100, 100]
@@ -149,5 +149,123 @@ def test_logsolve():
            And(1 / 3 <= x, x <= 1 / root(27, 4))
     assert solve(3 * log(x, 1 / 3) < log(9, 1 / 3) + log(3, 1 / 3)) == And(3 < x, x < oo)
     assert solve(log(x, 1 / 2) + log(10 - x, 1 / 2) >= -1 + log(9 / 2, 1 / 2)) == \
-                 Or(And(0 < x, x <= 1), And(9 <= x, x < 10))
+           Or(And(0 < x, x <= 1), And(9 <= x, x < 10))
     assert solve(log(7 - x, 4 / 10) >= log(3 * x + 6, 4 / 10)) == Or(x >= 1 / 4, Eq(x, 6))
+
+
+@parallelize_asserts
+def stest_absolve():
+    assert solve(abs(2 * x - 5) - abs(7 - 2 * x)) == [3]
+    assert solve(abs(x - 2) - 2 * abs(3 - x)) == [2 + 2 / 3, 4]
+    assert solve(x ** 2 + abs(x) - 2) == '???'
+    assert solve(x ** 2 - 3 * abs(x) + 2) == [-1, 1, -2, 2]
+    assert solve(abs(3 * x - 25 / 10) >= 2) == Or(And(-oo < x, x <= 1 / 6), And(3 / 2 <= x, x < oo))
+    assert solve(abs(5 - 2 * x) < 1) == And(2 < x, x < 3)
+    assert solve(x ** 2 - 4 * abs(x) + 3 > 0) == Or(And(-oo < x, x < -3), And(-1 < x, x < 1))
+    assert solve(2 * (x ** 2) - 5 * abs(x) + 3 >= 0) == \
+           Or(And(-oo < x, x <= -3 / 2), And(-1 <= x, x <= 1), And(3 / 2 <= x, x < oo))
+    assert solve(abs(x) - 5) == '???'
+    assert solve(abs(x) < 5) == And(-5 < x, x < 5)
+    assert solve(abs(x) >= 5) == '???'
+    assert solve(abs(x - 10) - 4) == [6]
+    assert solve(abs(x - 10) <= 4) == '???'
+    assert solve(abs(x - 10) > 4) == Or(And(-oo < x, x < 6), And(14 < x, x < oo))  # -oo < x < 6 or 14 < x < oo
+    assert solve(abs(x - 3) < 1) == '???'
+    assert solve([abs(x) < 1, abs(y) < 1]) == '???'
+    assert solve([abs(x) > 1, abs(y) > 1]) == '???'
+    assert solve([abs(x - 2) <= 1, abs(y + 3) <= 1]) == '???'
+    assert solve(abs(x + y) + abs(x - y) - 4) == '???'
+    assert solve(sqrt(x + y) >= abs(x)) == '???'
+    assert solve(abs(sin(x)) + abs(cos(x)) >= 1) == And(-oo < x, x < oo)
+    assert solve(abs(x - sqrt(3))) == '???'
+    assert solve(abs(x) - 2 / 10) == '???'
+    assert solve(abs(x + 7)) == '???'
+    assert solve(abs(x) - 1) == '???'
+    assert solve(abs(x - 1) - 2) == '???'
+    assert solve(abs(x - 1 + 5 / 6) - 2) == '???'
+    assert solve(abs(x - 11) - 9) == '???'
+    assert solve(abs(x + 3 / 4) - 3 - 3 / 4) == '???'
+    assert solve(abs(2 * x - 1) - 3) == '???'
+    assert solve(abs(1 + 3 * x) - 2) == '???'
+    assert solve(abs(2 + 2 * x) - 6) == '???'
+    assert solve(abs(4 * x + 1) - 5) == '???'
+    assert solve(abs(1 / 5 * x - 2) - 36 / 10) == [-8, 28]
+    assert solve(abs(3 - 3 / 2 * x) - 25 / 10) == [1 / 3, 3 + 2 / 3]
+    assert solve(abs(2 - 7 / 2 * x) - 62 / 10) == [-12 / 10, 2 + 12 / 35]
+    assert solve(abs(2 / 5 * x + 1) - 23 / 10) == [8 + 1 / 4, 3 + 1 / 4]
+    assert solve([y - abs(x), y - 1 / 2 * x - 3]) == '???'
+    assert solve([y + abs(x), y - 1 / 3 * x + 4]) == '???'
+    assert solve([y - 3 * abs(x), y - x ** 2]) == '???'
+    assert solve(abs(x) >= 3) == And(-3 <= x, x <= 3)
+    assert solve(x ** 2 > abs(x)) == And(1 > x, x > -1)
+    assert solve(-abs(x) < 4) == And(-oo < x, x < oo)
+    assert solve(sqrt(x) >= abs(x)) == And(0 <= x, x <= 1)
+    assert solve(abs(x) <= -x + 4) == And(-oo < x, x <= 2)
+    assert solve(abs(x) > x - 2) == And(-oo < x, x < oo)
+    assert solve(abs(x) > -x + 4) == And(x > 2, x < oo)
+    assert solve(-abs(x) > 3 - x) == [0]
+    assert solve(1 / (sqrt(abs(x) ** 3))) == And(-oo < x, x < 0)
+
+
+@parallelize_asserts
+def test_varsolve():
+    assert solve(2 + x - x ** 2 > 0) == And(-1 < x, x < 2)
+    assert solve(3 / 10 * (x ** 2) + x + 3 / 10 <= 0) == And(-3 <= x, x <= -1 / 3)
+    assert solve(3 * (x ** 2) - 2 * x - 1 <= 0) == And(-1 / 3 <= x, x <= 1)
+    assert solve(6 * (x ** 2) + x - 2 <= 0) == [0]
+    assert solve(x ** 2 - 2 * x + 1 <= 0) == [1]
+    assert solve(-1 / 4 * (x ** 2) - 2 * x + 5 > 0) == [0]
+    assert solve(4 * (x ** 2) + 4 * x + 1 > 0) == Or(And(-oo < x, x < -1 / 2), And(-1 / 2 < x, x < oo))
+    assert solve(3 * (x ** 2) + 7 * x - 7 > 0) == [0]
+    assert solve(9 * (x ** 4) - 10 * (x ** 2) + 1 <= 0) == Or(And(-1 <= x, x <= -1 / 3), And(1 / 3 < x, x < 1))
+    assert solve(4 * (x ** 4) + 10 * (x ** 2) - 66 >= 0) == [0]
+    assert solve(x ** 3 < 5) == And(-oo < x, x < root(5, 3))
+    assert solve(x ** 7 >= 11) == And(root(11, 7) <= x, x < oo)
+    assert solve(3 ** (6 - x) - 3 ** (3 * x - 2)) == [2]
+    assert solve(3 ** (x ** 2 - x - 2) - 81) == [-2, 3]
+    assert solve(7 ** (x + 2) + 4 * (7 ** (x - 1)) - 347) == [1]
+    assert solve((1 / 5) ** (1 - x) - (1 / 5) ** x - 496 / 100) == [2]
+    assert solve(x / (x - 2) - 8 / (x + 5) - 14 / (x ** 2 + 3 * x - 10)) == [1]
+    assert solve(y / (2 * y - 3) + 1 / (y + 7) + 17 / (2 * (y ** 2) + 11 * y - 21)) == [-2]
+    assert solve(x ** 3 + 5 * x - 6) == [1]
+    assert solve(13 * (5 * x - 1) - 15 * (4 * x + 2) < 0) == And(-oo < x, x < 86 / 10)
+    assert solve(6 * (7 - 1 / 5 * x) - 5 * (8 - 2 / 5 * x) > 0) == And(oo > x, x > -5 / 2)
+    assert solve(x ** 2 + 2 * x - 48 < 0) == And(-8 < x, x < 6)
+    assert solve(-x ** 2 + 2 * x + 15 < 0) == Or(And(-oo < x, x < 3 / 2), And(2 < x, x < oo))
+    assert solve(4 * (x ** 2) - 12 * x + 9 > 0) == Or(And(-oo < x, x < 3 / 2), And(3 / 2 < x, x < oo))
+    assert solve(2 * (x ** 2) + 13 * x - 7 > 0) == Or(And(-oo < x, x < -7), And(1 / 2 < x, x < oo))
+    assert solve(6 * (x ** 2) - 13 * x + 5 <= 0) == And(1 / 2 <= x, x <= 1 + 2 / 3)
+    assert solve(3 * (x ** 2) - 2 * x > 0) == Or(And(-oo < x, x < 0), And(2 / 3 < x, x < oo))
+    assert solve(1 / 5 * (x ** 2) > 18 / 10) == Or(And(-oo < x, x < -3), And(3 < x, x < oo))
+    assert solve(7 * x < x ** 2) == Or(And(-oo < x, x < 0), And(7 < x, x < oo))
+    assert solve(1 / 100 * (x ** 2) <= 1) == And(-10 <= x, x <= 10)
+    assert solve(4 * x <= -x ** 2) == And(-4 <= x, x <= 0)
+    assert solve(-3 / 10 * x < 3 / 5 * (x ** 2)) == Or(And(-oo < x, x < -1 / 2), And(0 < x, x < oo))
+    assert solve(3 * (x ** 2) + 40 * x + 10 < -x ** 2 + 11 * x + 3) == And(-7 <= x, x <= -1 / 4)
+    assert solve(2 * (x ** 2) + 8 * x - 111 < (3 * x - 5) * (2 * x + 6)) == [0]
+    assert solve(2 * x * (3 * x - 1) > 4 * (x ** 2) + 5 * x + 9) == Or(And(-oo < x, x < -1), And(9 / 2 < x, x < oo))
+    assert solve((5 * x + 7) * (x - 2) < 21 * (x ** 2) - 11 * x - 13) == [0]
+    assert solve((x - 14) * (x + 10) < 0) == And(-10 < x, x < 14)
+    assert solve((x + 1 / 10) * (x + 63 / 10) >= 0) == \
+           Or(And(-oo < x, x <= -63 / 10), And(-1 / 10 <= x, x < oo))
+    assert solve((x - 2) * (x - 5) * (x - 12) > 0) == Or(And(2 < x, x < 5), And(12 < x, x < oo))
+    assert solve(-4 * (x + 9 / 10) * (x - 32 / 10) < 0) == \
+           Or(And(-oo < x, x < -9 / 10), And(32 / 10 < x, x < oo))
+    assert solve((14 / 10 - x) / (x + 38 / 10) < 0) ==\
+           Or(And(-oo < x, x < -38 / 10), And(14 / 10 < x, x < oo))
+    assert solve((5 * x - 3 / 2) / (x - 4) > 0) == Or(And(-oo < x, x < 3 / 10), And(4 < x, x < oo))
+    assert solve((x - 21) / (x + 7) < 0) == And(-7 < x, x < 21)
+    assert solve((x + 47 / 10) / (x - 72 / 10) > 0) ==\
+           Or(And(-oo < x, x < -47 / 10), And(72 / 10 < x, x < oo))
+    assert solve(tan(-x / 2) < 1) == And(-pi / 2 + 2 * pi * k < x, x < pi + 2 * pi * k)
+    assert solve(sin((3 * pi) / 2 - x) < sqrt(3) / 2) ==\
+           And(-(5 * pi) / 6 + 2 * pi * k < x, x < (5 * pi) / 6 + 2 * pi * k)
+    assert solve(sin(x) * cos(pi / 3) + sin(pi / 3) * cos(x) <= 1 / 2) == \
+           And(-(3 * pi) / 2 + 2 * pi * k <= x, x <= (-pi) / 6 + 2 * pi * k)
+    assert solve(sin(pi / 6) * cos(x) + cos(pi / 6) * sin(x) <= 1) == And(-oo < x, x < oo)
+    assert solve(1 - cos(x) - 2 * sin(x / 2)) == [2 * pi * k, pi + 4 * pi * k]
+    assert solve(2 / (3 * sqrt(2) * sin(x) - 1) - 1) == [((-1) ** k) * (pi / 4) + pi * k]
+    assert solve(4 / (sqrt(3) * tan(x) + 5) - 1 / 2) == [pi / 3 + pi * k]
+    assert solve(sqrt(13 - x ** 2) - 3) == [-2, 2]
+    assert solve(x - sqrt(x + 1) - 5) == [8]
+    assert solve(sqrt(x) + x ** 2 - 18) == [4]
