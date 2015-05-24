@@ -3,32 +3,35 @@ import billiard as mp
 
 from nebularengine import collect_tasks, process_result, enqueue_tasks, is_moriarty
 
-TIMEOUT = 10 # seconds
+TIMEOUT = 10  # seconds
 
 
 def run_tests():
     collect_tasks()
 
-    log_name = 'nebular-moriarty.txt' if is_moriarty else 'nebular-master.txt'
     pool = mp.Pool(timeout=TIMEOUT, initializer=collect_tasks)
+    log_name = 'nebular-moriarty.txt' if is_moriarty else 'nebular-master.txt'
     with open(log_name, 'w') as f:
-        header = 'func_name,input,sympylized,expected,actual,status\n'
-        if is_moriarty:
-            header = '{},{}\n'.format(header[:-1],'steps')
-        f.write(header)
-        for t, async_res in enqueue_tasks(pool):
-            actual, status, number_of_steps = process_result(t, async_res)
-            record = '{func_name},"{input}","{sympylized}","{expected}","{actual}",{status}\n'.format(
-                func_name=t.func_name, input=t.input_str, sympylized=t.sympylized,
-                expected=t.expected_str.replace("\n", " "), actual=actual, status=status)
-            if is_moriarty:
-                record = '{},{}\n'.format(record[:-1], number_of_steps)
-            f.write(record)
+        f.write(format_header())
+        for task, async_res in enqueue_tasks(pool):
+            actual, status, number_of_steps = process_result(task, async_res)
+            f.write(format_record(actual, number_of_steps, status, task))
             f.flush()
+
+
+def format_record(actual, number_of_steps, status, t):
+    return '{func_name},"{input}","{sympylized}","{expected}","{actual}",{status}{steps}\n'.format(
+        func_name=t.func_name, input=t.input_str, sympylized=t.sympylized,
+        expected=t.expected_str.replace("\n", " "), actual=actual, status=status,
+        steps=',' + str(number_of_steps) if is_moriarty else '')
+
+
+def format_header():
+    return 'func_name,input,sympylized,expected,{actual},status{steps}\n'.format(
+        actual='moriarty' if is_moriarty else 'master',
+        steps=',steps' if is_moriarty else '')
 
 
 if __name__ == '__main__':
     mp.freeze_support()
     run_tests()
-
-
