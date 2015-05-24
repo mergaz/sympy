@@ -1,5 +1,6 @@
 import inspect
-from sympy import simplify
+from sympy import *
+from sympy.core.relational import Relational
 import nebulartests
 from macropy.case_classes import macros, case
 
@@ -61,6 +62,9 @@ def assert_matches(expected, actual):
     if hasattr(expected, 'is_number') and expected.is_number:
         assert simplify(expected - actual) == 0
         return
+    if isinstance(expected, (And, Or, Relational, Interval)) and len(expected.free_symbols) == 1:
+        assert as_interval(expected) == as_interval(actual)
+        return
     if hasattr(expected, 'dummy_eq'):
         assert expected.dummy_eq(actual)
         return
@@ -77,6 +81,37 @@ def assert_matches(expected, actual):
                 assert_matches(expected[k], actual[k])
         else:
             raise
+
+
+def as_interval(expr):
+    if isinstance(expr, Interval):
+        return expr
+    if expr == False:
+        return S.EmptySet
+    if expr == True:
+        return S.UniversalSet
+    if len(expr.free_symbols) != 1:
+        raise ValueError('There must be exactly one variable in the expression: {}'.format(expr))
+    if isinstance(expr, LessThan):  # x <= 2 ; 2 <= x
+        return Interval(-oo, expr.rhs) if expr.lhs.is_Symbol else Interval(expr.lhs, oo)
+    if isinstance(expr, StrictLessThan):  # x < 2 ; 2 < x
+        return Interval(-oo, expr.rhs, right_open=True) if expr.lhs.is_Symbol \
+            else Interval(expr.lhs, oo, left_open=True)
+    if isinstance(expr, GreaterThan):  # x >= 2 ; 2 >= x
+        return Interval(expr.rhs, oo) if expr.lhs.is_Symbol else Interval(-oo, expr.lhs)
+    if isinstance(expr, StrictGreaterThan):  # x > 2 ; 2 > x
+        return Interval(expr.rhs, oo, left_open=True) if expr.lhs.is_Symbol \
+            else Interval(-oo, expr.lhs, right_open=True)
+    if isinstance(expr, Equality):  # x == 2
+        return FiniteSet(expr.rhs if expr.lhs.is_Symbol else expr.lhs)
+    if isinstance(expr, Unequality):  # x != 2
+        point = expr.rhs if expr.lhs.is_Symbol else expr.lhs
+        return Interval(-oo, point, right_open=True).union(Interval(point, oo, left_open=True))
+    if isinstance(expr, And):
+        return reduce(lambda i1, i2: i1.intersect(i2), (as_interval(a) for a in expr.args))
+    if isinstance(expr, Or):
+        return reduce(lambda i1, i2: i1.union(i2), (as_interval(a) for a in expr.args))
+    raise ValueError('Cannot convert {} to Interval'.format(expr))
 
 
 def exec_task(task_no):
