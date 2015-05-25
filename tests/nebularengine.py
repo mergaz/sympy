@@ -1,6 +1,7 @@
 import inspect
 from sympy import *
 from sympy.core.relational import Relational
+from sympy.printing import srepr
 import nebulartests
 from macropy.case_classes import macros, case
 
@@ -63,7 +64,9 @@ def assert_matches(expected, actual):
         assert simplify(expected - actual) == 0
         return
     if isinstance(expected, (And, Or, Relational, Interval)) and len(expected.free_symbols) == 1:
-        assert as_interval(expected) == as_interval(actual)
+        int_exp = as_interval(expected)
+        int_act = as_interval(actual)
+        assert (int_exp - int_act).is_EmptySet and (int_act - int_exp).is_EmptySet
         return
     if hasattr(expected, 'dummy_eq'):
         assert expected.dummy_eq(actual)
@@ -91,7 +94,7 @@ def as_interval(expr):
     if expr == True:
         return S.UniversalSet
     if len(expr.free_symbols) != 1:
-        raise ValueError('There must be exactly one variable in the expression: {}'.format(expr))
+        raise ValueError('There must be exactly one variable in the expression: {}'.format(srepr(expr)))
     if isinstance(expr, LessThan):  # x <= 2 ; 2 <= x
         return Interval(-oo, expr.rhs) if expr.lhs.is_Symbol else Interval(expr.lhs, oo)
     if isinstance(expr, StrictLessThan):  # x < 2 ; 2 < x
@@ -108,10 +111,10 @@ def as_interval(expr):
         point = expr.rhs if expr.lhs.is_Symbol else expr.lhs
         return Interval(-oo, point, right_open=True).union(Interval(point, oo, left_open=True))
     if isinstance(expr, And):
-        return reduce(lambda i1, i2: i1.intersect(i2), (as_interval(a) for a in expr.args))
+        return reduce(Set.intersect, map(as_interval, expr.args))
     if isinstance(expr, Or):
-        return reduce(lambda i1, i2: i1.union(i2), (as_interval(a) for a in expr.args))
-    raise ValueError('Cannot convert {} to Interval'.format(expr))
+        return reduce(Set.union, map(as_interval, expr.args))
+    raise ValueError('Cannot convert to Interval: {}'.format(srepr(expr)))
 
 
 def exec_task(task_no):
