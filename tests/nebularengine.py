@@ -1,6 +1,7 @@
 import inspect
 from sympy import *
 from sympy.core.relational import Relational
+from sympy.logic.boolalg import BooleanAtom
 from sympy.printing import srepr
 import nebulartests
 from macropy.case_classes import macros, case
@@ -27,13 +28,17 @@ def collect_tasks():
             TASKS.append(Task(func_name, input_str, sympylized, expected_str, expected_func, actual_func))
 
 
-def print_traceback(task, traceback):
+def print_traceback(task, traceback, actual, e):
     print traceback,
     print "Caused by assertion at"
     print '  File "{}", line {}, in {}'.format(task.actual_func.func_code.co_filename,
                                                task.actual_func.func_code.co_firstlineno,
                                                task.func_name)
     print "    assert {} == {}".format(task.input_str, task.expected_str)
+    if isinstance(e, AssertionError):
+        expected = e.expected if hasattr(e, 'expected') else task.expected_str
+        print '{} != {}'.format(srepr(actual), srepr(expected))
+    print
 
 
 def process_result(task, async_res):
@@ -42,15 +47,12 @@ def process_result(task, async_res):
         actual, number_of_steps = async_res.get()
         status = 'Passed'
     except Exception as e:
-        actual = e.actual if hasattr(e, 'actual') else '{}: {}'.format(e.__class__.__name__,
-                                                                       str(e.message).replace("\n", " "))
+        actual = e.actual if hasattr(e, 'actual') \
+            else '{}: {}'.format(e.__class__.__name__, str(e.message).replace("\n", " "))
         status = 'Answer' if isinstance(e, AssertionError) else 'Exception'
         number_of_steps = e.number_of_steps if hasattr(e, 'number_of_steps') else 0
 
-        print_traceback(task, async_res._value.traceback)
-        if isinstance(e, AssertionError):
-            print '{} != {}'.format(actual, task.expected_str)
-        print
+        print_traceback(task, async_res._value.traceback, actual, e)
     finally:
         return actual, status, number_of_steps
 
@@ -63,7 +65,7 @@ def assert_matches(expected, actual):
     if hasattr(expected, 'is_number') and expected.is_number:
         assert simplify(expected - actual) == 0
         return
-    if isinstance(expected, (And, Or, Relational, Interval)) and len(expected.free_symbols) == 1:
+    if isinstance(expected, (And, Or, Relational, Interval, BooleanAtom, bool)) and len(expected.free_symbols) == 1:
         int_exp = as_interval(expected)
         int_act = as_interval(actual)
         assert (int_exp - int_act).is_EmptySet and (int_act - int_exp).is_EmptySet
@@ -89,10 +91,10 @@ def assert_matches(expected, actual):
 def as_interval(expr):
     if isinstance(expr, Interval):
         return expr
-    if expr == False:
+    if expr in (False, S.false):
         return S.EmptySet
-    if expr == True:
-        return S.UniversalSet
+    if expr in (True, S.true):
+        return Interval(-oo, oo)
     if len(expr.free_symbols) != 1:
         raise ValueError('There must be exactly one variable in the expression: {}'.format(srepr(expr)))
     if isinstance(expr, LessThan):  # x <= 2 ; 2 <= x
@@ -128,6 +130,7 @@ def exec_task(task_no):
     except Exception as e:
         if actual_is_computed:
             e.actual = actual
+            e.expected = expected
         if is_moriarty:
             e.number_of_steps = len([s for s in last_solution() if s.startswith('_')])
         raise
