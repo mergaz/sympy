@@ -1,10 +1,10 @@
+from macropy.case_classes import macros, case
 import inspect
 from sympy import *
 from sympy.core.relational import Relational
 from sympy.logic.boolalg import BooleanAtom
 from sympy.printing import srepr
 import nebulartests
-from macropy.case_classes import macros, case
 
 try:
     from sympy.utilities.solution import last_solution, reset_solution
@@ -65,11 +65,21 @@ def assert_matches(expected, actual):
     if hasattr(expected, 'is_number') and expected.is_number:
         assert simplify(expected - actual) == 0
         return
-    if isinstance(expected, (And, Or, Relational, Interval, BooleanAtom, bool)) and len(expected.free_symbols) == 1:
-        int_exp = as_interval(expected)
-        int_act = as_interval(actual)
-        assert (int_exp - int_act).is_EmptySet and (int_act - int_exp).is_EmptySet
+    if isinstance(expected, (And, Or, Relational, Interval, BooleanAtom, bool)) and len(expected.free_symbols) <= 1:
+        int_exp, int_act = as_interval(expected), as_interval(actual)
+        assert (int_exp == int_act or
+                int_act == int_exp or
+                (int_exp - int_act).is_EmptySet and
+                (int_act - int_exp).is_EmptySet)
         return
+    if isinstance(expected, list) and all(hasattr(e, 'is_number') and e.is_number for e in expected):
+        assert isinstance(actual, list) and all(hasattr(a, 'is_number') and a.is_number for a in actual)
+        fs_exp, fs_act = FiniteSet(*expected), FiniteSet(*actual)
+        if fs_exp == fs_act:
+            return
+        assert len(expected) == len(actual)
+        for e, a in zip(sorted(expected), sorted(actual)):
+            assert_matches(e, a)
     if hasattr(expected, 'dummy_eq'):
         assert expected.dummy_eq(actual)
         return
