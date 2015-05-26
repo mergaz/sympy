@@ -272,7 +272,7 @@ def stest_varsolve():
 
 
 @parallelize_asserts
-def test_solve_10():
+def stest_solve_10():
     assert solve([(3 - x) <= 2, (2 * x) + 1 <= 4]) == And(1 <= x, x <= 3 / 2)
     assert solve([(x ** 2) - 1 >= 0, x > 2]) == (x > 2)
     assert solve((1 / 2) ** x > 1 / 4) == (x < 2)
@@ -424,3 +424,29 @@ def test_solve_10():
     assert solve(sqrt(abs(x - 3) + 2) - 3) == '???'
     assert solve(sqrt(5 - abs(1 - x ** 2)) - 2) == '???'
     assert solve(sqrt(3 - abs(x + 3)) - (x + 2)) == '???'
+
+
+C1 = Symbol('C1')
+C2 = Symbol('C2')
+C3 = Symbol('C3')
+C4 = Symbol('C4')
+
+
+@parallelize_asserts
+def test_dsolve():
+    assert dsolve(Derivative(y(x), x) - 3 * y(x) * x, y(x)).rhs == C1 * exp(3 * x ** 2 / 2)  # separable
+
+    assert dsolve(y(x).diff(x, 4) + 2 * y(x).diff(x, 3) - 2 * y(x).diff(x, 2) - 6 * y(x).diff(x) + 5 * y(x), y(x)).rhs \
+           == (C1 + C2 * x) * exp(x) + (C3 * sin(x) + C4 * cos(x)) * exp(-2 * x)
+
+    assert dsolve(y(x).diff(x) - y(x) - y(x) ** 2 * exp(x), y(x)).rhs == exp(x) / (C1 - exp(2 * x) / 2)  # Bernoulli eq
+
+    assert dsolve(y(x).diff(x, 2) * x ** 2 - 4 * y(x).diff(x) * x + 6 * y(x), y(x)).rhs == x ** 2 * (C1 + C2 * x)
+
+    # assert dsolve(cos(y(x)) - (x * sin(y(x)) - y(x) ** 2) * y(x).diff(x), y(x)).rhs == (x * cos(y(x)) + y(x) ** 3 / 3 == C1)  # exact
+
+    assert dsolve(y(x).diff(x, 2) + 2 * y(x).diff(x) + y(x) - 4 * exp(-x) * x ** 2 + cos(2 * x), y(x)).rhs == \
+           (C1 + C2 * x + x ** 4 / 3) * exp(-x) - 4 * sin(2 * x) / 25 + 3 * cos(2 * x) / 25
+
+    assert dsolve(y(x).diff(x, 3) - 3 * y(x).diff(x, 2) + 3 * y(x).diff(x) - y(x) - exp(x) * log(x), y(x)).rhs == \
+           (C1 + C2 * x + C3 * x ** 2 + x ** 3 * (6 * log(x) - 11) / 36) * exp(x)
