@@ -10,7 +10,7 @@ def run_tests():
     collect_tasks()
 
     pool = mp.Pool(timeout=TIMEOUT, initializer=collect_tasks)
-    log_name = 'nebular-moriarty.txt' if is_moriarty else 'nebular-master.txt'
+    log_name = 'nebular-moriarty.csv' if is_moriarty else 'nebular-master.csv'
     with open(log_name, 'w') as f:
         f.write(format_header())
         for task, async_res in enqueue_tasks(pool):
