@@ -457,7 +457,7 @@ n = Symbol('n')
 
 
 @parallelize_asserts
-def test_limit():
+def stest_limit():
     assert limit(1 + (1 / (7 ** n)), n, oo) == 1
     assert limit((3 - (2 ** n)) / (2 ** n), n, oo) == -1
     assert limit(3 / (2 ** n) - 1, n, oo) == -1
@@ -492,3 +492,52 @@ def test_limit():
     assert limit(-6 * x - 3 * h, h, 0) == -6 * x
     assert limit(10 * t + 5 * h, h, 0) == 10 * t
     assert limit(2 * t + h, h, 0) == 2 * t
+
+
+@parallelize_asserts
+def test_diff():
+    assert diff((x ** (1 / 2))) == 1 / (2 * sqrt(x))
+    assert diff(root(x, 4)) == 1 / (4 * (root(x ** 3, 4)))
+    assert diff(1 / (root(x ** 3, 4))) == -3 / (4 * x * (root(x ** 2, 4)))
+    assert diff((5 * x + 2) ** (-3)) == (-15) * ((5 * x + 2) ** (-4))
+    assert diff((2 * x) ** 3) == 24 * (x ** 2)
+    assert diff(root(7 - 3 * x, 4)) == -3 / (4 * root((7 - 3 * x) ** 3, 4))
+    assert diff(root(5 * x, 3)) == root(5, 3) / (3 * root(x ** 2, 3))
+    assert diff(x ** (-2)) == -2 / (x ** 3)
+    assert diff(root(x, 3)) == 1 / (3 * root(x ** 2, 3))
+    assert diff(1 / (2 + 3 * x) ** 2) == -6 / (2 + 3 * x) ** 3
+    assert diff(root((3 * x - 2) ** 2, 3)) == 2 / root(3 * x - 2, 3)
+    assert diff((3 * x - 7) ** (1 / 2)) == 3 / (2 * sqrt(3 * x - 7))
+    assert diff(x ** 2 - x) == 2 * x - 1
+    assert diff(0.5 * (x ** 3)) == 1.5 * (x ** 2)
+    assert diff(x ** 4 + 2 * (x ** 2)) == 4 * (x ** 3) + 4 * x
+    assert diff(2 * (x ** 3) - 3 * (x ** 2) + 6 * x + 1) == 6 * (x ** 2) - 6 * x + 6
+    assert diff(2 * (root(x, 4)) - sqrt(x)) == 1 / (2 * (root(x ** 3, 4))) - 1 / (2 * sqrt(x))
+    assert diff(sqrt(x) + 1 / x + 1) == 1 / (2 * sqrt(x)) - 1 / (x ** 2)
+    assert diff(x ** (3 / 2) - x ** (-3 / 2)) == (-3 / (2 * sqrt(x ** 3)) + 6 / (x ** 4))
+    assert diff(2 * (x ** 3) + 3 * (x ** 2) - 12 * x - 3) == 6 * (x ** 2) + 6 * x - 12
+    assert diff(3 * (x ** 4) - 4 * (x ** 3) - 12 * (x ** 2)) == 12 * (x ** 3) - 12 * (x ** 2) - 24 * x
+    assert diff((x + 2) * (root(x, 3))) == (4 * x + 2) / (3 * (root(x ** 2, 3)))
+    assert diff((x - 1) * sqrt(x)) == (3 * x - 1) / (2 * sqrt(x))
+    assert diff(((2 * x - 1) ** 5) * ((x + 1) ** 4)) == ((2 * x - 1) ** 4) * ((1 + x) ** 3) * (18 * x + 6)
+    assert diff(((5 * x - 4) ** 6) * (sqrt(3 * x - 2))) == ((3 * ((5 * x - 4) ** 5)) / (sqrt(3 * x - 2))) * (65 / 2 * x) - 44 / 2
+    assert diff(((x - 3) ** 5) * ((2 + 5 * x) ** 6)) == 5 * ((x - 3) ** 4) * ((2 + 5 * x) ** 5) * (11 * x - 16)
+    assert diff((x ** 5 + x ** 3 + x) / (x + 1)) == (4 * (x ** 5) + 5 * (x ** 4) + 2 * (x ** 3) + 3 * (x ** 2) + 1) / ((x + 1) ** 2)
+    assert diff((sqrt(x) + x ** 2 + 1) / (x - 1)) == (2 * (x ** 2) * (sqrt(x)) - 4 * x * (sqrt(x)) - x - 2 * sqrt(x) - 1) / (2 * sqrt(x) * ((x - 1) ** 2))
+    assert diff((x ** 2 - 1) / (x ** 2) + 1) == (4 * x) / (x ** 2 + 1) ** 2
+    assert diff((2 * (x ** 2)) / (1 - 7 * x)) == ((4 * x) - 14 * (x ** 2)) / (1 - 7 * x) ** 2
+    assert diff(((x ** 3) + (x ** 2) + 16) / x) == (2 * (x ** 3) + x ** 2 - 16) / (x ** 2)
+    assert diff((x * (root(x, 3)) + 3 * x + 18) / (root(x, 3))) == (x * (root(x, 3)) + 2 * x - 6) / (x * (root(x, 3)))
+    assert diff((x ** 2 - 4) / (sqrt(x))) == (3 * (x ** 2) + 4) / (2 * x * sqrt(x))
+    assert diff(((root(x, 4)) + (1 / (root(x, 4))) * (root(x, 4)) - (1 / (root(x, 4))))) == (x + 1) / (2 * x * sqrt(x))
+    assert diff(((x - 1) ** 4) * ((x + 1) ** 7)) == ((x - 1) ** 3) * ((x + 1) ** 6) * (11 * x - 3)
+    assert diff((root(2 * x + 1, 3)) * ((2 * x - 3) ** 3)) == (4 * ((2 * x - 3) ** 2) * (10 * x + 3)) / (3 * root((2 * x + 1) ** 2, 1 / 3))
+    assert diff((2 * (x ** 2) - 3 * x + 1) / (x + 1)) == (2 * (x ** 2) + 4 * x - 4) / ((x + 1) ** 2)
+    assert diff((x ** 2 - 3 * x + 4) / (2 * sqrt(x) - x * sqrt(x))) == (-x ** 3 + 3 * (x ** 2) + 6 * x - 8) / (2 * x * (sqrt(x)) * ((2 - x) ** 2))
+    assert diff(2 * (x ** 3) - 3 * (x ** 2) - 12 * x + 1) == 6 * (x ** 2) - 6 * x - 12
+    assert diff((2 * x - 1) / (x + 1)) == 3 / ((x + 1) ** 2)
+    assert diff(3 * (x ** 3) / (1 - 3 * x)) == x > 1 / 2
+    assert diff(exp(x) + x ** 2) == exp(x) + 2 * x
+    assert diff(exp(1 / 2 * x - 1) - sqrt(x - 1)) == 1 / 2 * (exp(1 / 2 * x - 1)) - 1 / (2 * sqrt(x - 1))
+    assert diff(exp(1 - x) + x ** (-3)) == 1
+    assert diff(exp(2 * (x ** 3))) == 6 * (x ** 2) * (exp(2 * (x ** 3)))
