@@ -438,7 +438,7 @@ def dsolve_(expr):
 
 
 @parallelize_asserts
-def test_dsolve():
+def stest_dsolve():
     assert dsolve_(Derivative(y(x), x) - 3 * y(x) * x) == (y == C1 * exp(3 * x ** 2 / 2))  # separable
     assert dsolve_(y(x).diff(x, 4) + 2 * y(x).diff(x, 3) - 2 * y(x).diff(x, 2) - 6 * y(x).diff(x) + 5 * y(x)) == \
            (y == (C1 + C2 * x) * exp(x) + (C3 * sin(x) + C4 * cos(x)) * exp(-2 * x))
@@ -450,3 +450,45 @@ def test_dsolve():
            (y == (C1 + C2 * x + x ** 4 / 3) * exp(-x) - 4 * sin(2 * x) / 25 + 3 * cos(2 * x) / 25)
     assert dsolve_(y(x).diff(x, 3) - 3 * y(x).diff(x, 2) + 3 * y(x).diff(x) - y(x) - exp(x) * log(x)) == \
            (y == (C1 + C2 * x + C3 * x ** 2 + x ** 3 * (6 * log(x) - 11) / 36) * exp(x))
+
+
+h = Symbol('h')
+n = Symbol('n')
+
+
+@parallelize_asserts
+def test_limit():
+    assert limit(1 + (1 / (7 ** n)), n, oo) == 1
+    assert limit((3 - (2 ** n)) / (2 ** n), n, oo) == -1
+    assert limit(3 / (2 ** n) - 1, n, oo) == -1
+    assert limit(1 / (4 ** n), n, oo) == 0
+    assert limit(0.2 ** n, n, oo) == 0
+    assert limit(0.6 ** n - 2, n, oo) == -2
+    assert limit(1 - (1 / (2 ** n)), n, oo) == 1
+    assert limit((-1.3) ** n, n, oo) == 0
+    assert limit((3 ** (n + 2) + 2) / (3 ** n), n, oo) == 9
+    assert limit(((9 * (3 ** n) + 2) / (3 ** n)), n, oo) == 9
+    assert limit(9 + (2 / (3 ** n)), n, oo) == 9
+    assert limit((((5 ** n) + 1) ** 2) / (5 ** (2 * n)), n, oo) == 1
+    assert limit((5 ** (2 * n) + 1 + 2 * (5 ** n)) / (5 ** (2 * n)), n, oo) == 1
+    assert limit(1 + (1 / (5 ** (2 * n)) + (2 / (5 ** n))), n, oo) == 1
+    assert limit((6 - 7 / (n ** 2) - 3 / n - 3 / (sqrt(n))), n, oo) == 6
+    assert limit((1 / n) + 3 / (sqrt(n)) - 4 + 7 / (n ** 2), n, oo) == -4
+    assert limit((5 * n + 3) / (n + 1), n, oo) == 5
+    assert limit(((2 * n + 1) / (3 * n - 1)), n, oo) == 2 / 3
+    assert limit((0.5 * 5 ** (-n)), n, oo) == 0
+    assert limit((2 * (n ** 2) - 1) / (n ** 2), n, oo) == 2
+    assert limit((3 - (n ** 2)) / (n ** 2), n, oo) == -1
+    assert limit((2 * n + 1) * (n - 3) / (n ** 2), n, oo) == 2
+    assert limit(((3 * n - 2) * (2 * n + 3)) / (n ** 2), n, oo) == 6
+    assert limit((n ** 2 * (2 * n + 5) - 2 * n ** 3 + 5 * n ** 2 - 13) / (n * (n + 1) * (n - 7) + 1 - n), n, oo) == 0
+    assert limit(((1 - n) * (n ** 2) + 1 + (n ** 3)) / ((n ** 2) + 2 * n), n, oo) == 1
+    assert limit(1 / (x ** 2) + 3 / (x ** 3), x, oo) == 0
+    assert limit((2 / (x ** 9)) + 1, x, oo) == 1
+    assert limit(7 / (x ** 2) - 7, x, oo) == -7
+    assert limit((12 - 1 / (x ** 2)) * (16 / (x ** 7)), x, oo) == 0
+    assert limit(((5 / (x ** 3) + 1) * ((-8) / (x ** 2) - 2)), x, oo) == -2
+    assert limit((6 * x + 3 * h - 5), h, 0) == 6 * x - 5
+    assert limit(-6 * x - 3 * h, h, 0) == -6 * x
+    assert limit(10 * t + 5 * h, h, 0) == 10 * t
+    assert limit(2 * t + h, h, 0) == 2 * t
