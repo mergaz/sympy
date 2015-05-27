@@ -495,7 +495,7 @@ def stest_limit():
 
 
 @parallelize_asserts
-def test_diff():
+def stest_diff():
     assert diff((x ** (1 / 2))) == 1 / (2 * sqrt(x))
     assert diff(root(x, 4)) == 1 / (4 * (root(x ** 3, 4)))
     assert diff(1 / (root(x ** 3, 4))) == -3 / (4 * x * (root(x ** 2, 4)))
@@ -520,10 +520,13 @@ def test_diff():
     assert diff((x + 2) * (root(x, 3))) == (4 * x + 2) / (3 * (root(x ** 2, 3)))
     assert diff((x - 1) * sqrt(x)) == (3 * x - 1) / (2 * sqrt(x))
     assert diff(((2 * x - 1) ** 5) * ((x + 1) ** 4)) == ((2 * x - 1) ** 4) * ((1 + x) ** 3) * (18 * x + 6)
-    assert diff(((5 * x - 4) ** 6) * (sqrt(3 * x - 2))) == ((3 * ((5 * x - 4) ** 5)) / (sqrt(3 * x - 2))) * (65 / 2 * x) - 44 / 2
+    assert diff(((5 * x - 4) ** 6) * (sqrt(3 * x - 2))) == ((3 * ((5 * x - 4) ** 5)) / (sqrt(3 * x - 2))) * (
+    65 / 2 * x) - 44 / 2
     assert diff(((x - 3) ** 5) * ((2 + 5 * x) ** 6)) == 5 * ((x - 3) ** 4) * ((2 + 5 * x) ** 5) * (11 * x - 16)
-    assert diff((x ** 5 + x ** 3 + x) / (x + 1)) == (4 * (x ** 5) + 5 * (x ** 4) + 2 * (x ** 3) + 3 * (x ** 2) + 1) / ((x + 1) ** 2)
-    assert diff((sqrt(x) + x ** 2 + 1) / (x - 1)) == (2 * (x ** 2) * (sqrt(x)) - 4 * x * (sqrt(x)) - x - 2 * sqrt(x) - 1) / (2 * sqrt(x) * ((x - 1) ** 2))
+    assert diff((x ** 5 + x ** 3 + x) / (x + 1)) == (4 * (x ** 5) + 5 * (x ** 4) + 2 * (x ** 3) + 3 * (x ** 2) + 1) / (
+    (x + 1) ** 2)
+    assert diff((sqrt(x) + x ** 2 + 1) / (x - 1)) == (2 * (x ** 2) * (sqrt(x)) - 4 * x * (sqrt(x)) - x - 2 * sqrt(
+        x) - 1) / (2 * sqrt(x) * ((x - 1) ** 2))
     assert diff((x ** 2 - 1) / (x ** 2) + 1) == (4 * x) / (x ** 2 + 1) ** 2
     assert diff((2 * (x ** 2)) / (1 - 7 * x)) == ((4 * x) - 14 * (x ** 2)) / (1 - 7 * x) ** 2
     assert diff(((x ** 3) + (x ** 2) + 16) / x) == (2 * (x ** 3) + x ** 2 - 16) / (x ** 2)
@@ -531,9 +534,11 @@ def test_diff():
     assert diff((x ** 2 - 4) / (sqrt(x))) == (3 * (x ** 2) + 4) / (2 * x * sqrt(x))
     assert diff(((root(x, 4)) + (1 / (root(x, 4))) * (root(x, 4)) - (1 / (root(x, 4))))) == (x + 1) / (2 * x * sqrt(x))
     assert diff(((x - 1) ** 4) * ((x + 1) ** 7)) == ((x - 1) ** 3) * ((x + 1) ** 6) * (11 * x - 3)
-    assert diff((root(2 * x + 1, 3)) * ((2 * x - 3) ** 3)) == (4 * ((2 * x - 3) ** 2) * (10 * x + 3)) / (3 * root((2 * x + 1) ** 2, 1 / 3))
+    assert diff((root(2 * x + 1, 3)) * ((2 * x - 3) ** 3)) == (4 * ((2 * x - 3) ** 2) * (10 * x + 3)) / (
+    3 * root((2 * x + 1) ** 2, 1 / 3))
     assert diff((2 * (x ** 2) - 3 * x + 1) / (x + 1)) == (2 * (x ** 2) + 4 * x - 4) / ((x + 1) ** 2)
-    assert diff((x ** 2 - 3 * x + 4) / (2 * sqrt(x) - x * sqrt(x))) == (-x ** 3 + 3 * (x ** 2) + 6 * x - 8) / (2 * x * (sqrt(x)) * ((2 - x) ** 2))
+    assert diff((x ** 2 - 3 * x + 4) / (2 * sqrt(x) - x * sqrt(x))) == (-x ** 3 + 3 * (x ** 2) + 6 * x - 8) / (
+    2 * x * (sqrt(x)) * ((2 - x) ** 2))
     assert diff(2 * (x ** 3) - 3 * (x ** 2) - 12 * x + 1) == 6 * (x ** 2) - 6 * x - 12
     assert diff((2 * x - 1) / (x + 1)) == 3 / ((x + 1) ** 2)
     assert diff(3 * (x ** 3) / (1 - 3 * x)) == x > 1 / 2
@@ -541,3 +546,43 @@ def test_diff():
     assert diff(exp(1 / 2 * x - 1) - sqrt(x - 1)) == 1 / 2 * (exp(1 / 2 * x - 1)) - 1 / (2 * sqrt(x - 1))
     assert diff(exp(1 - x) + x ** (-3)) == 1
     assert diff(exp(2 * (x ** 3))) == 6 * (x ** 2) * (exp(2 * (x ** 3)))
+
+
+@parallelize_asserts
+def test_integrate():
+    assert integrate(x ** 3, (x, 2, 4)) == 60
+    assert integrate(x ** 2 + 1, (x, -2, 1)) == 6
+    assert integrate(cos(x), (x, -pi / 6, 0)) == 1 / 2
+    assert integrate(4 - x ** 2, (x, -2, 2)) == 10 + 2 / 3
+    assert integrate((-x) ** 2 + 4 * x - 3, (x, 1, 3)) == 1 + 1 / 3
+    assert integrate(1 / (x ** 2), (x, 2, 3)) == 1 / 6
+    assert integrate(1 / (sqrt(x)), (x, 4, 9)) == 2
+    assert integrate(sin(2 * x), (x, -2 * pi, pi)) == -1
+    assert integrate(1 - 3 * (x ** 2), (x, -1, 2)) == -6
+    assert integrate(2 * x - (3 / sqrt(x)), (x, 1, 9)) == 68
+    assert integrate((x + 1 / x) ** 2, (x, 1, 2)) == 4 + 5 / 6
+    assert integrate((3 * x - 1) / sqrt(x), (x, 1, 3)) == 4 * sqrt(3)
+    assert integrate((4 / (3 * x + 2)), (x, 0, 1)) == 4 / 3 * log(5 / 2, 10)
+    assert integrate((sin(2 * x + pi / 3)), (x, 0, pi / 2)) == 1 / 2
+    assert integrate(sin(x) * cos(x), (x, 0, pi / 2)) == 1 / 2
+    assert integrate((sin(x) ** 4 + cos(x) ** 4), (x, 0, pi)) == 3 * pi / 4
+    assert integrate((x ** 2) * sqrt(x + 1), (x, 0, 3)) == 3888
+    assert integrate(b - 4 * x, (x, 1, b)) == b - 2
+    assert integrate((x + 1) ** 2, (x, -1, 0)) == 0
+    assert integrate(x - 1, (x, 0, 1)) == 5 / 6
+    assert integrate(1 / (x ** 3), (x, -1, 1)) == 3 / 8
+    assert integrate(cos(x), (x, -pi / 2, pi / 2)) == 2
+    assert integrate((x + 2) ** 2, (x, -2, 1 / 2)) == 0
+    assert integrate((x - 3) ** 2, (x, 1 / 2, 3)) == 10 + 5 / 12
+    assert integrate(2 * sqrt(2 * x), (x, 0, 2)) == 0
+    assert integrate(x ** 2, (x, 0, 2)) == 8 / 3
+    assert integrate(x ** 2 - 2 * x + 2, (x, 0, 1)) == 0
+    assert integrate(-2 * x + 2, (x, 0, 1)) == 1 / 3
+    assert integrate(x ** 4 - 2 * (x ** 2) + 5, (x, 0, 1)) == 0
+    assert integrate(1, (x, 0, 1)) == 3 + 8 / 15
+    assert integrate((1 / 2) * cos(x + pi / 4), (x, 0, pi / 4)) == (2 - sqrt(2)) / 4
+    assert integrate((1 / 3) * sin(x - pi / 3), (x, 0, pi / 3)) == -1 / 6
+    assert integrate(3 * sin(3 * x - 6), (x, 1, 3)) == 0
+    assert integrate(8 * cos(4 * x - 12), (x, 0, 3)) == 2 * sin(12)
+    assert integrate(sqrt(x) * (3 - 7 / x), (x, 1, 4)) == 0
+    assert integrate(sqrt(2 * x - 3), (x, 2, 6)) == 8 + 2 / 3
