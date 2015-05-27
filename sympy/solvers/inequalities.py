@@ -2,6 +2,7 @@
 
 from __future__ import print_function, division
 from sympy import sqrt
+from sympy.assumptions import assume
 from sympy.core.mul import Mul
 from sympy.core.numbers import pi
 from sympy.core.power import Pow

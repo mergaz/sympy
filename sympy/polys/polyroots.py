@@ -6,7 +6,7 @@ import math
 
 from sympy.core.symbol import Dummy, Symbol, symbols
 from sympy.core import S, I, pi, Add
-from sympy.core.compatibility import ordered
+from sympy.core.compatibility import ordered, default_sort_key
 from sympy.core.mul import expand_2arg, Mul
 from sympy.core.power import Pow
 from sympy.core.relational import Eq
@@ -106,9 +106,7 @@ def roots_quadratic(f):
         r0 = -R
         r1 = R
     else:
-        d = b**2 - 4*a*c
-        A = 2*a
-        B = -b/A
+        d = b**2 - S(4)*a*c
         add_comment('The discriminant is')
         add_eq('D', d.simplify())
         d.clear_repr()
@@ -124,6 +122,12 @@ def roots_quadratic(f):
         else:
             D = sqrt(_simplify(d))
             A = 2*a
+
+            E = _simplify(-b/A)
+            F = D/A
+
+            r0 = E + F
+            r1 = E - F
 
     add_comment("Therefore the roots of this quadratic equation are")
     add_eq(f.gen, r0)
