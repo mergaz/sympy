@@ -520,13 +520,13 @@ def stest_diff():
     assert diff((x + 2) * (root(x, 3))) == (4 * x + 2) / (3 * (root(x ** 2, 3)))
     assert diff((x - 1) * sqrt(x)) == (3 * x - 1) / (2 * sqrt(x))
     assert diff(((2 * x - 1) ** 5) * ((x + 1) ** 4)) == ((2 * x - 1) ** 4) * ((1 + x) ** 3) * (18 * x + 6)
-    assert diff(((5 * x - 4) ** 6) * (sqrt(3 * x - 2))) == ((3 * ((5 * x - 4) ** 5)) / (sqrt(3 * x - 2))) * (
-    65 / 2 * x) - 44 / 2
+    assert diff(((5 * x - 4) ** 6) * (sqrt(3 * x - 2))) \
+           == ((3 * ((5 * x - 4) ** 5)) / (sqrt(3 * x - 2))) * (65 / 2 * x) - 44 / 2
     assert diff(((x - 3) ** 5) * ((2 + 5 * x) ** 6)) == 5 * ((x - 3) ** 4) * ((2 + 5 * x) ** 5) * (11 * x - 16)
-    assert diff((x ** 5 + x ** 3 + x) / (x + 1)) == (4 * (x ** 5) + 5 * (x ** 4) + 2 * (x ** 3) + 3 * (x ** 2) + 1) / (
-    (x + 1) ** 2)
-    assert diff((sqrt(x) + x ** 2 + 1) / (x - 1)) == (2 * (x ** 2) * (sqrt(x)) - 4 * x * (sqrt(x)) - x - 2 * sqrt(
-        x) - 1) / (2 * sqrt(x) * ((x - 1) ** 2))
+    assert diff((x ** 5 + x ** 3 + x) / (x + 1)) \
+           == (4 * (x ** 5) + 5 * (x ** 4) + 2 * (x ** 3) + 3 * (x ** 2) + 1) / ((x + 1) ** 2)
+    assert diff((sqrt(x) + x ** 2 + 1) / (x - 1)) \
+           == (2 * (x ** 2) * (sqrt(x)) - 4 * x * (sqrt(x)) - x - 2 * sqrt(x) - 1) / (2 * sqrt(x) * ((x - 1) ** 2))
     assert diff((x ** 2 - 1) / (x ** 2) + 1) == (4 * x) / (x ** 2 + 1) ** 2
     assert diff((2 * (x ** 2)) / (1 - 7 * x)) == ((4 * x) - 14 * (x ** 2)) / (1 - 7 * x) ** 2
     assert diff(((x ** 3) + (x ** 2) + 16) / x) == (2 * (x ** 3) + x ** 2 - 16) / (x ** 2)
@@ -534,11 +534,11 @@ def stest_diff():
     assert diff((x ** 2 - 4) / (sqrt(x))) == (3 * (x ** 2) + 4) / (2 * x * sqrt(x))
     assert diff(((root(x, 4)) + (1 / (root(x, 4))) * (root(x, 4)) - (1 / (root(x, 4))))) == (x + 1) / (2 * x * sqrt(x))
     assert diff(((x - 1) ** 4) * ((x + 1) ** 7)) == ((x - 1) ** 3) * ((x + 1) ** 6) * (11 * x - 3)
-    assert diff((root(2 * x + 1, 3)) * ((2 * x - 3) ** 3)) == (4 * ((2 * x - 3) ** 2) * (10 * x + 3)) / (
-    3 * root((2 * x + 1) ** 2, 1 / 3))
+    assert diff((root(2 * x + 1, 3)) * ((2 * x - 3) ** 3)) \
+           == (4 * ((2 * x - 3) ** 2) * (10 * x + 3)) / (3 * root((2 * x + 1) ** 2, 1 / 3))
     assert diff((2 * (x ** 2) - 3 * x + 1) / (x + 1)) == (2 * (x ** 2) + 4 * x - 4) / ((x + 1) ** 2)
-    assert diff((x ** 2 - 3 * x + 4) / (2 * sqrt(x) - x * sqrt(x))) == (-x ** 3 + 3 * (x ** 2) + 6 * x - 8) / (
-    2 * x * (sqrt(x)) * ((2 - x) ** 2))
+    assert diff((x ** 2 - 3 * x + 4) / (2 * sqrt(x) - x * sqrt(x))) \
+           == (-x ** 3 + 3 * (x ** 2) + 6 * x - 8) / (2 * x * (sqrt(x)) * ((2 - x) ** 2))
     assert diff(2 * (x ** 3) - 3 * (x ** 2) - 12 * x + 1) == 6 * (x ** 2) - 6 * x - 12
     assert diff((2 * x - 1) / (x + 1)) == 3 / ((x + 1) ** 2)
     assert diff(3 * (x ** 3) / (1 - 3 * x)) == x > 1 / 2
@@ -549,7 +549,7 @@ def stest_diff():
 
 
 @parallelize_asserts
-def test_integrate():
+def stest_integrate():
     assert integrate(x ** 3, (x, 2, 4)) == 60
     assert integrate(x ** 2 + 1, (x, -2, 1)) == 6
     assert integrate(cos(x), (x, -pi / 6, 0)) == 1 / 2
@@ -586,3 +586,154 @@ def test_integrate():
     assert integrate(8 * cos(4 * x - 12), (x, 0, 3)) == 2 * sin(12)
     assert integrate(sqrt(x) * (3 - 7 / x), (x, 1, 4)) == 0
     assert integrate(sqrt(2 * x - 3), (x, 2, 6)) == 8 + 2 / 3
+
+
+@parallelize_asserts
+def test_originals():
+    # sys
+    assert solve([x ** 2 + x * y + y ** 2 - 4, x + x * y + y - 2]) == [{x: 0, y: 2}, {x: 2, y: 0}]
+    assert solve([(x + 1) * (y + 1) - 10, (x + y) * (x * y + 1) - 25]) == [{x: 1, y: 4}, {x: 4, y: 1}]
+    assert solve([x + y - 1, x ** 4 + y ** 4 - 7]) \
+           == [{x: (1 + sqrt(5)) / 2, y: (1 - sqrt(5)) / 2}, {x: (1 - sqrt(5)) / 2, y: (1 + sqrt(5)) / 2}]
+    assert solve([x ** 2 + y ** 2 - 5 * x * y / 2, x - y - x * y / 4]) == '???'
+    assert solve([3 * x - 2 * y - 5, 81 * x ** 4 + 16 * y ** 4 - 6817]) == '???'
+    assert solve([x ** 2 + y ** 2 - 1, x - y]) == '???'
+    assert solve([x + x * y + y - 11, x ** 2 * y + x * y ** 2 - 30]) == '???'
+    assert solve([2 * x ** 2 - 3 * x * y + y ** 2, y ** 2 - x ** 2 - 12]) == '???'
+    assert solve([x ** 2 + y ** 4 - 20, 2 * x ** 4 + 2 * y ** 2 - 40]) == '???'
+    # lin-sys
+    assert solve([x - 3 * y + z - 4, 2 * x - 8 * y + 8 * z + 2, -6 * x + 3 * y - 15 * z - 9]) == '???'
+    assert solve([x - 3 * y + z - 4, 2 * x - 8 * y + 8 * z + 2, ]) == '???'
+    assert solve([x - 3 * y + z - 4, 2 * x - 8 * y + 8 * z + 2, 2 * x - 8 * y + 8 * z + 3]) == '???'
+    assert solve([y + z - 1, x - y + z, 2 * x - 2 * y + 2 * z, 2 * x + y, 2 * x + y, y + z - 1, y + z - 1]) \
+           == [{x: -1 / 5, z: 3 / 5, y: 2 / 5}]
+    assert solve([y + z - 1, y + z, 2 * x - 2 * y + 2 * z, 2 * x + y, 2 * x + y, y + z - 1, 2 * y + z - 1]) == '???'
+    assert solve([x - y + 2 * z + 3, 4 * x + 4 * y - 2 * z - 1, -2 * x + 2 * y - 4 * z - 6]) == '???'
+    assert solve([x - y, x + y + a]) == '???'
+    assert solve([x - y, 2 * x - 2 * y, -x + y - 3]) == '???'
+    # abs
+    assert solve(abs(x) - 5) == '???'
+    assert solve(abs(3 * x + 4) - 7) == '???'
+    assert solve(abs(2 - 5 * x) + 3) == '???'
+    assert solve(abs(2 * x - 5) - abs(4 - x) + 18) == '???'
+    assert solve(abs(abs(x) - 3) - 15) == '???'
+    assert solve(abs(x ** 2 - 1 * x) - 2) == '???'
+    # av
+    assert solve(sin(3 * x) * cot(4 * x)) == '???'
+    assert solve(sin(6 * x) / sin(4 * x)) == '???'
+    assert solve(sin(2 * x) * sin(4 * x) * sin(6 * x) / sin(x)) == '???'
+    # exp
+    assert solve(2 ** (pi * x + E) - 4) == '???'
+    assert solve(2 ** x - 8) == '???'
+    assert solve(5 ** (x + 2) - 125) == '???'
+    assert solve(2 ** (2 * x) - 8 ** (x + 1)) == '???'
+    assert solve(3 ** (2 * x + 4) - 11 * 9 ** x - 210) == '???'
+    assert solve(4 ** x - 3 * 2 ** x + 2) == '???'
+    assert solve(2 ** (5 * x - 1) * 3 ** (3 * x - 1) * 5 ** (2 * x - 1) - 720 ** x) == '???'
+    # ineq
+    assert solve([x ** 2 - 5 * x + 3 > 0]) == '???'
+    assert solve([x ** 2 - 5 * x + 3 <= 0]) == '???'
+    assert solve([x ** 2 - 5 * x + 3 < 0]) == '???'
+    assert solve([x ** 2 - 5 * x + 3 >= 0, x > 0]) == '???'
+    assert solve([(x ** 2 - 5 * x + 3) / (x - 3) >= 0]) == '???'
+    assert solve([Abs(4 * x + 1) - 4 > 0]) == '???'
+    assert solve([tan(x) < 1 / 2]) == '???'
+    assert solve([tan(x) <= 1 / 2]) == '???'
+    assert solve([tan(x) > 1 / 2]) == '???'
+    assert solve([tan(x) >= 1 / 2]) == '???'
+    assert solve([cot(x) < 1 / 2]) == '???'
+    assert solve([cot(x) <= 1 / 2]) == '???'
+    assert solve([cot(x) > 1 / 2]) == '???'
+    assert solve([cot(x) >= 1 / 2]) == '???'
+    assert solve([sin(x) < -2]) == '???'
+    assert solve([sin(x) < 2]) == '???'
+    assert solve([sin(x) < 1]) == '???'
+    assert solve([sin(x) <= 1]) == '???'
+    assert solve([sin(x) > -1]) == '???'
+    assert solve([sin(x) >= -1]) == '???'
+    assert solve([sin(2 * x) < 0]) == '???'
+    assert solve([sin(2 * x + 1) < 0]) == '???'
+    # poly
+    assert solve(5 * x ** 2 + 2) == '???'
+    assert solve(4 * x ** 2 + 3 * x) == [0, -3 / 4]
+    assert solve(2 * x ** 2 - 10 * x + 12) == '???'
+    assert solve(3 * x ** 3 + 5 * x ** 2 + 2 * x - 4) == '???'
+    assert solve(6 * x ** 3 - 11 * x ** 2 - 2 * x + 8) == '???'
+    assert solve(x ** 4 + 5 * x ** 2 + 1) == '???'
+    assert solve(x ** 4 + x ** 3 - 11 * x ** 2 - 5 * x + 30) == '???'
+    assert solve(36 * x ** 4 - 13 * x ** 2 + 1) == '???'
+    assert solve(179 * x ** 5 - 12351 * x ** 4 + 22557 * x ** 3 + 95737 * x ** 2 + 378 * x + 1608) == '???'
+    assert solve((x + 1) ** 4 + 5 * (x + 1) ** 2 + 1 * (x + 1)) == '???'
+    assert solve((x ** 2 + 6 * x + 2) * (x ** 2 - 4 * x + 2)) == '???'
+    assert solve(((x + 1) ** 4) ** 2 + 5 * (x + 1) ** 4 + 1) == '???'
+    assert solve((3 * x + 2) ** 4 - 13 * (3 * x + 2) ** 2 + 36) == '???'
+    assert solve((x + 1) * (x + 2) * (x + 3) * (x + 4) - 24) == '???'
+    assert solve((8 * x + 7) ** 2 * (4 * x + 3) * (x + 1) - 9 / 2) == '???'
+    # log
+    assert solve(log(x, 2) - 10) == '???'
+    assert solve(log(50 * x - 1, 7) - 5) == '???'
+    assert solve(log(x, 1 / 3) - 2) == '???'
+    assert solve(log(2 * x - 1, 1 / 3) - 2) == '???'
+    assert solve(log(8, x - 1) - 1) == '???'
+    assert solve(ln(E ** 2 + 2 * x - 3) - 2) == '???'
+    assert solve(log(x, 3) - log(9, 3)) == '???'
+    assert solve(log(x ** 2 - 3, 3) - log(2 * x, 3)) == '???'
+    assert solve(2 * log((x - 1) ** 2, 7) + log((2 * x + 9) / (7 * x + 9), sqrt(7))) == '???'
+    assert solve(log(x + 1) ** 2 + 10 - 11 * log(x + 1)) == '???'
+    assert solve(log(x ** 2 + 9 * x, 10) + log((x + 9) / x, 10)) == [-10]
+    assert solve(
+        log(6 * sin(x) + 4, 3) * log(6 * sin(x) + 4, 5) - log(6 * sin(x) + 4, 3) - log(6 * sin(x) + 4, 5)) == '???'
+    assert solve(log(x ** 2 + 5 * x - 6, 2) - log(4 * x, 2)) == '???'
+    assert solve(log((x ** 3 - 5 * x ** 2) / (x - 5), 5) - 2) == '???'
+    assert solve(log(2 * x) ** 2 + 3 * log(2 * x) + 2) == '???'
+    # trig
+    assert solve(cos(5 * x - pi / 6) == sqrt(2) / 2) == '???'
+    assert solve(tan(x ** 2 + 4 * x + pi / 4) == 1) == '???'
+    assert solve(sin(6 * x - pi / 3) == sin(2 * x + pi / 4)) == '???'
+    assert solve(cos(x ** 2) == cos(4 * x - 3)) == '???'
+    assert solve(6 * sin(x) ** 2 - 5 * sin(x) + 1) == '???'
+    assert solve(cos(6 * x + pi / 6) ** 2 == 1 / 2) == '???'
+    assert solve(cos(3 * x ** 2) ** 2 == 3 / 4) == '???'
+    assert solve(5 * sin(x) ** 2 + 3 * sin(x) + 4 * cos(x) ** 2 == 5 + 3 / 4) == '???'
+    assert solve(sin(x) ** 4 + 3 * cos(x) - cos(x) ** 4 - 2) == '???'
+    assert solve(sin(x)) == '???'
+    assert solve(sin(x) - 1) == '???'
+    assert solve(sin(x) + 1) == '???'
+    assert solve(3 * sin(x) - 1) == '???'
+    assert solve(sin(x) + 5 * sin(x)) == '???'
+    assert solve(sin(x) - 1 / 2) == '???'
+    assert solve(sin(x) - sqrt(2) / 2) == '???'
+    assert solve(sin(x) - 1 / 3) == '???'
+    assert solve(cos(x)) == '???'
+    assert solve(cos(x) + 1) == '???'
+    assert solve(cos(x) - 1) == '???'
+    assert solve(tan(x) + -sqrt(3)) == '???'
+    assert solve(cot(x) - 1) == '???'
+    assert solve(sin(2 * x) - 1 / 2) == '???'
+    assert solve(sin(2 * x / 3)) == '???'
+    assert solve(sin(2 * x / 5 - 1)) == '???'
+    assert solve(sin(3 * x + pi / 4) + 1) == '???'
+    assert solve(cos(x / 3) + sqrt(2) / 2) == '???'
+    assert solve(tan(pi / 4 - x / 2) + 1) == '???'
+    assert solve(cot(pi / 6 - x) - sqrt(3) / 3) == '???'
+    assert solve(asin(x) - 1) == '???'
+    assert solve(asin(2 * x + 1) - 0) == '???'
+    assert solve(asin(x) + 4) == '???'
+    assert solve(acos(x - 3) - pi / 2) == '???'
+    assert solve(acos(x) + 1) == '???'
+    assert solve(atan(x) - pi) == '???'
+    assert solve(acot(2 * x - 4) - pi / 3) == '???'
+    assert solve(5 * cos(x) ** 2 - 5 * cos(x) + 1) == '???'
+    assert solve(8 * cos(x) ** 2 + 6 * sin(x) - 3) == '???'
+    assert solve(3 * tan(x) ** 3 + tan(x)) == '???'
+    assert solve(sin(3 * x) * cos(4 * x)) == '???'
+    assert solve(sin(x) + sin(2 * x) + sin(3 * x)) == '???'
+    assert solve(2 * sin(x) + 3 * sin(2 * x) + 2 * sin(3 * x)) == '???'
+    # vilenkin
+    assert solve(x ** sqrt(x) - x ** (x / 2)) == [0, 1, 4]
+    assert solve(4 - log(x, 10) - 3 * sqrt(log(x, 10))) == [10]
+    assert solve(log(x, 1 / 2) + log(x, 3) - 1) == [3 ** log(2 ** (1 / (-log(3) + log(2))))]
+    assert solve(x ** log(x, 10) - x ** 100) == [1, 10 ** 100]
+    assert solve(sin(3 * x) * cos(2 * x) * tan(7 * x)) == '???'
+    assert solve(cos(x ** 2) + cos(5 * x ** 2)) == '???'
+    assert solve(sqrt(3) * sin(x) + cos(x) - sqrt(2)) == '???'
