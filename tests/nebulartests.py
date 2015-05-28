@@ -3,6 +3,7 @@ from nebularmacro import macros, parallelize_asserts
 from sympy import solve, simplify
 from sympy import Symbol, sin, cot, pi, E, Abs, tan, S, Rational, log, Eq, sqrt, cos, ln, asin, acos, acot, atan, root, \
     And, oo, Or, Derivative, exp, dsolve, Dummy, limit, diff, Integral, integrate
+from sympy.derivative.manualderivative import derivative
 
 x = Symbol("x", real=True)
 y = Symbol("y")
@@ -49,7 +50,7 @@ def stest_solve_9():
 
 
 @parallelize_asserts
-def stest_basecamp():
+def test_basecamp():
     assert solve((2 ** (3 * log(x, 10))) * (5 ** log(x, 10)) - 1600) == [100]
     assert solve((2 ** (log(x ** 2, 3))) * (5 ** (log(x, 3))) - 400) == [9]
     assert solve(2 / (3 ** x - 1) <= 7 / (9 ** x - 2)) == Or(And(-log(2) / log(3) <= x, x < 0),
@@ -86,15 +87,15 @@ def stest_basecamp():
     assert solve(x ** (sqrt(x)) - x ** (x / 2)) == '???'
     assert solve(root(2 * x - 1, 3) + root(x - 1, 3) - 1) == [1]
     assert simplify(sin(3 / 2 * pi)) == -1
-    assert diff(root(x, 4), x) == 1 / (4 * x ** (3 / 4))
-    assert diff(x ** 3, x) == 3 * x ** 2
-    assert diff(1 / (cos(x) ** 2), x) == 2 * sin(x) / cos(x) ** 3
-    assert diff(x ** 4 / (1 + x ** 2), x) == 0
-    assert diff(1 / sqrt(25 - x ** 2), x) == 0
+    assert diff_(root(x, 4)) == 1 / (4 * x ** (3 / 4))
+    assert diff_(x ** 3) == 3 * x ** 2
+    assert diff_(1 / (cos(x) ** 2)) == 2 * sin(x) / cos(x) ** 3
+    assert diff_(x ** 4 / (1 + x ** 2)) == 0
+    assert diff_(1 / sqrt(25 - x ** 2)) == 0
     assert limit((1 / (4 + log(x))), x, 0) == 0
-    assert diff(exp(-3 * x), x) == -3 * exp(-3 * x)
-    assert diff((-9 * y), y) == -9
-    assert diff(3 * (y - 4), y) == 3
+    assert diff_(exp(-3 * x)) == -3 * exp(-3 * x)
+    assert diff_((-9 * x)) == -9
+    assert diff_(3 * (x - 4)) == 3
 
 
 @parallelize_asserts
@@ -494,58 +495,63 @@ def stest_limit():
     assert limit(2 * t + h, h, 0) == 2 * t
 
 
+def diff_(expr):
+    """this is a workaround to make dsolve output pickleable"""
+    return derivative(expr, x)
+
+
 @parallelize_asserts
 def stest_diff():
-    assert diff((x ** (1 / 2))) == 1 / (2 * sqrt(x))
-    assert diff(root(x, 4)) == 1 / (4 * (root(x ** 3, 4)))
-    assert diff(1 / (root(x ** 3, 4))) == -3 / (4 * x * (root(x ** 2, 4)))
-    assert diff((5 * x + 2) ** (-3)) == (-15) * ((5 * x + 2) ** (-4))
-    assert diff((2 * x) ** 3) == 24 * (x ** 2)
-    assert diff(root(7 - 3 * x, 4)) == -3 / (4 * root((7 - 3 * x) ** 3, 4))
-    assert diff(root(5 * x, 3)) == root(5, 3) / (3 * root(x ** 2, 3))
-    assert diff(x ** (-2)) == -2 / (x ** 3)
-    assert diff(root(x, 3)) == 1 / (3 * root(x ** 2, 3))
-    assert diff(1 / (2 + 3 * x) ** 2) == -6 / (2 + 3 * x) ** 3
-    assert diff(root((3 * x - 2) ** 2, 3)) == 2 / root(3 * x - 2, 3)
-    assert diff((3 * x - 7) ** (1 / 2)) == 3 / (2 * sqrt(3 * x - 7))
-    assert diff(x ** 2 - x) == 2 * x - 1
-    assert diff(0.5 * (x ** 3)) == 1.5 * (x ** 2)
-    assert diff(x ** 4 + 2 * (x ** 2)) == 4 * (x ** 3) + 4 * x
-    assert diff(2 * (x ** 3) - 3 * (x ** 2) + 6 * x + 1) == 6 * (x ** 2) - 6 * x + 6
-    assert diff(2 * (root(x, 4)) - sqrt(x)) == 1 / (2 * (root(x ** 3, 4))) - 1 / (2 * sqrt(x))
-    assert diff(sqrt(x) + 1 / x + 1) == 1 / (2 * sqrt(x)) - 1 / (x ** 2)
-    assert diff(x ** (3 / 2) - x ** (-3 / 2)) == (-3 / (2 * sqrt(x ** 3)) + 6 / (x ** 4))
-    assert diff(2 * (x ** 3) + 3 * (x ** 2) - 12 * x - 3) == 6 * (x ** 2) + 6 * x - 12
-    assert diff(3 * (x ** 4) - 4 * (x ** 3) - 12 * (x ** 2)) == 12 * (x ** 3) - 12 * (x ** 2) - 24 * x
-    assert diff((x + 2) * (root(x, 3))) == (4 * x + 2) / (3 * (root(x ** 2, 3)))
-    assert diff((x - 1) * sqrt(x)) == (3 * x - 1) / (2 * sqrt(x))
-    assert diff(((2 * x - 1) ** 5) * ((x + 1) ** 4)) == ((2 * x - 1) ** 4) * ((1 + x) ** 3) * (18 * x + 6)
-    assert diff(((5 * x - 4) ** 6) * (sqrt(3 * x - 2))) \
+    assert diff_((x ** (1 / 2))) == 1 / (2 * sqrt(x))
+    assert diff_(root(x, 4)) == 1 / (4 * (root(x ** 3, 4)))
+    assert diff_(1 / (root(x ** 3, 4))) == -3 / (4 * x * (root(x ** 2, 4)))
+    assert diff_((5 * x + 2) ** (-3)) == (-15) * ((5 * x + 2) ** (-4))
+    assert diff_((2 * x) ** 3) == 24 * (x ** 2)
+    assert diff_(root(7 - 3 * x, 4)) == -3 / (4 * root((7 - 3 * x) ** 3, 4))
+    assert diff_(root(5 * x, 3)) == root(5, 3) / (3 * root(x ** 2, 3))
+    assert diff_(x ** (-2)) == -2 / (x ** 3)
+    assert diff_(root(x, 3)) == 1 / (3 * root(x ** 2, 3))
+    assert diff_(1 / (2 + 3 * x) ** 2) == -6 / (2 + 3 * x) ** 3
+    assert diff_(root((3 * x - 2) ** 2, 3)) == 2 / root(3 * x - 2, 3)
+    assert diff_((3 * x - 7) ** (1 / 2)) == 3 / (2 * sqrt(3 * x - 7))
+    assert diff_(x ** 2 - x) == 2 * x - 1
+    assert diff_(0.5 * (x ** 3)) == 1.5 * (x ** 2)
+    assert diff_(x ** 4 + 2 * (x ** 2)) == 4 * (x ** 3) + 4 * x
+    assert diff_(2 * (x ** 3) - 3 * (x ** 2) + 6 * x + 1) == 6 * (x ** 2) - 6 * x + 6
+    assert diff_(2 * (root(x, 4)) - sqrt(x)) == 1 / (2 * (root(x ** 3, 4))) - 1 / (2 * sqrt(x))
+    assert diff_(sqrt(x) + 1 / x + 1) == 1 / (2 * sqrt(x)) - 1 / (x ** 2)
+    assert diff_(x ** (3 / 2) - x ** (-3 / 2)) == (-3 / (2 * sqrt(x ** 3)) + 6 / (x ** 4))
+    assert diff_(2 * (x ** 3) + 3 * (x ** 2) - 12 * x - 3) == 6 * (x ** 2) + 6 * x - 12
+    assert diff_(3 * (x ** 4) - 4 * (x ** 3) - 12 * (x ** 2)) == 12 * (x ** 3) - 12 * (x ** 2) - 24 * x
+    assert diff_((x + 2) * (root(x, 3))) == (4 * x + 2) / (3 * (root(x ** 2, 3)))
+    assert diff_((x - 1) * sqrt(x)) == (3 * x - 1) / (2 * sqrt(x))
+    assert diff_(((2 * x - 1) ** 5) * ((x + 1) ** 4)) == ((2 * x - 1) ** 4) * ((1 + x) ** 3) * (18 * x + 6)
+    assert diff_(((5 * x - 4) ** 6) * (sqrt(3 * x - 2))) \
            == ((3 * ((5 * x - 4) ** 5)) / (sqrt(3 * x - 2))) * (65 / 2 * x) - 44 / 2
-    assert diff(((x - 3) ** 5) * ((2 + 5 * x) ** 6)) == 5 * ((x - 3) ** 4) * ((2 + 5 * x) ** 5) * (11 * x - 16)
-    assert diff((x ** 5 + x ** 3 + x) / (x + 1)) \
+    assert diff_(((x - 3) ** 5) * ((2 + 5 * x) ** 6)) == 5 * ((x - 3) ** 4) * ((2 + 5 * x) ** 5) * (11 * x - 16)
+    assert diff_((x ** 5 + x ** 3 + x) / (x + 1)) \
            == (4 * (x ** 5) + 5 * (x ** 4) + 2 * (x ** 3) + 3 * (x ** 2) + 1) / ((x + 1) ** 2)
-    assert diff((sqrt(x) + x ** 2 + 1) / (x - 1)) \
+    assert diff_((sqrt(x) + x ** 2 + 1) / (x - 1)) \
            == (2 * (x ** 2) * (sqrt(x)) - 4 * x * (sqrt(x)) - x - 2 * sqrt(x) - 1) / (2 * sqrt(x) * ((x - 1) ** 2))
-    assert diff((x ** 2 - 1) / (x ** 2) + 1) == (4 * x) / (x ** 2 + 1) ** 2
-    assert diff((2 * (x ** 2)) / (1 - 7 * x)) == ((4 * x) - 14 * (x ** 2)) / (1 - 7 * x) ** 2
-    assert diff(((x ** 3) + (x ** 2) + 16) / x) == (2 * (x ** 3) + x ** 2 - 16) / (x ** 2)
-    assert diff((x * (root(x, 3)) + 3 * x + 18) / (root(x, 3))) == (x * (root(x, 3)) + 2 * x - 6) / (x * (root(x, 3)))
-    assert diff((x ** 2 - 4) / (sqrt(x))) == (3 * (x ** 2) + 4) / (2 * x * sqrt(x))
-    assert diff(((root(x, 4)) + (1 / (root(x, 4))) * (root(x, 4)) - (1 / (root(x, 4))))) == (x + 1) / (2 * x * sqrt(x))
-    assert diff(((x - 1) ** 4) * ((x + 1) ** 7)) == ((x - 1) ** 3) * ((x + 1) ** 6) * (11 * x - 3)
-    assert diff((root(2 * x + 1, 3)) * ((2 * x - 3) ** 3)) \
+    assert diff_((x ** 2 - 1) / (x ** 2) + 1) == (4 * x) / (x ** 2 + 1) ** 2
+    assert diff_((2 * (x ** 2)) / (1 - 7 * x)) == ((4 * x) - 14 * (x ** 2)) / (1 - 7 * x) ** 2
+    assert diff_(((x ** 3) + (x ** 2) + 16) / x) == (2 * (x ** 3) + x ** 2 - 16) / (x ** 2)
+    assert diff_((x * (root(x, 3)) + 3 * x + 18) / (root(x, 3))) == (x * (root(x, 3)) + 2 * x - 6) / (x * (root(x, 3)))
+    assert diff_((x ** 2 - 4) / (sqrt(x))) == (3 * (x ** 2) + 4) / (2 * x * sqrt(x))
+    assert diff_(((root(x, 4)) + (1 / (root(x, 4))) * (root(x, 4)) - (1 / (root(x, 4))))) == (x + 1) / (2 * x * sqrt(x))
+    assert diff_(((x - 1) ** 4) * ((x + 1) ** 7)) == ((x - 1) ** 3) * ((x + 1) ** 6) * (11 * x - 3)
+    assert diff_((root(2 * x + 1, 3)) * ((2 * x - 3) ** 3)) \
            == (4 * ((2 * x - 3) ** 2) * (10 * x + 3)) / (3 * root((2 * x + 1) ** 2, 1 / 3))
-    assert diff((2 * (x ** 2) - 3 * x + 1) / (x + 1)) == (2 * (x ** 2) + 4 * x - 4) / ((x + 1) ** 2)
-    assert diff((x ** 2 - 3 * x + 4) / (2 * sqrt(x) - x * sqrt(x))) \
+    assert diff_((2 * (x ** 2) - 3 * x + 1) / (x + 1)) == (2 * (x ** 2) + 4 * x - 4) / ((x + 1) ** 2)
+    assert diff_((x ** 2 - 3 * x + 4) / (2 * sqrt(x) - x * sqrt(x))) \
            == (-x ** 3 + 3 * (x ** 2) + 6 * x - 8) / (2 * x * (sqrt(x)) * ((2 - x) ** 2))
-    assert diff(2 * (x ** 3) - 3 * (x ** 2) - 12 * x + 1) == 6 * (x ** 2) - 6 * x - 12
-    assert diff((2 * x - 1) / (x + 1)) == 3 / ((x + 1) ** 2)
-    assert diff(3 * (x ** 3) / (1 - 3 * x)) == x > 1 / 2
-    assert diff(exp(x) + x ** 2) == exp(x) + 2 * x
-    assert diff(exp(1 / 2 * x - 1) - sqrt(x - 1)) == 1 / 2 * (exp(1 / 2 * x - 1)) - 1 / (2 * sqrt(x - 1))
-    assert diff(exp(1 - x) + x ** (-3)) == 1
-    assert diff(exp(2 * (x ** 3))) == 6 * (x ** 2) * (exp(2 * (x ** 3)))
+    assert diff_(2 * (x ** 3) - 3 * (x ** 2) - 12 * x + 1) == 6 * (x ** 2) - 6 * x - 12
+    assert diff_((2 * x - 1) / (x + 1)) == 3 / ((x + 1) ** 2)
+    assert diff_(3 * (x ** 3) / (1 - 3 * x)) == x > 1 / 2
+    assert diff_(exp(x) + x ** 2) == exp(x) + 2 * x
+    assert diff_(exp(1 / 2 * x - 1) - sqrt(x - 1)) == 1 / 2 * (exp(1 / 2 * x - 1)) - 1 / (2 * sqrt(x - 1))
+    assert diff_(exp(1 - x) + x ** (-3)) == 1
+    assert diff_(exp(2 * (x ** 3))) == 6 * (x ** 2) * (exp(2 * (x ** 3)))
 
 
 @parallelize_asserts
@@ -589,7 +595,7 @@ def stest_integrate():
 
 
 @parallelize_asserts
-def test_originals():
+def stest_originals():
     # sys
     assert solve([x ** 2 + x * y + y ** 2 - 4, x + x * y + y - 2]) == [{x: 0, y: 2}, {x: 2, y: 0}]
     assert solve([(x + 1) * (y + 1) - 10, (x + y) * (x * y + 1) - 25]) == [{x: 1, y: 4}, {x: 4, y: 1}]
@@ -681,8 +687,8 @@ def test_originals():
     assert solve(2 * log((x - 1) ** 2, 7) + log((2 * x + 9) / (7 * x + 9), sqrt(7))) == '???'
     assert solve(log(x + 1) ** 2 + 10 - 11 * log(x + 1)) == '???'
     assert solve(log(x ** 2 + 9 * x, 10) + log((x + 9) / x, 10)) == [-10]
-    assert solve(
-        log(6 * sin(x) + 4, 3) * log(6 * sin(x) + 4, 5) - log(6 * sin(x) + 4, 3) - log(6 * sin(x) + 4, 5)) == '???'
+    assert solve(log(6 * sin(x) + 4, 3) * log(6 * sin(x) + 4, 5) - log(6 * sin(x) + 4, 3) - log(6 * sin(x) + 4, 5)) \
+           == '???'
     assert solve(log(x ** 2 + 5 * x - 6, 2) - log(4 * x, 2)) == '???'
     assert solve(log((x ** 3 - 5 * x ** 2) / (x - 5), 5) - 2) == '???'
     assert solve(log(2 * x) ** 2 + 3 * log(2 * x) + 2) == '???'

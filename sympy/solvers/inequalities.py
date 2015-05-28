@@ -622,7 +622,7 @@ def solve_log_ineq(log_ineq_params):
     add_comment("And we have a restriction")
     dom = StrictGreaterThan(f, 0)
     add_exp(dom)
-    return reduce_inequalities([ineq, dom], True, [symbol])
+    return reduce_inequalities([ineq, dom], [symbol])
 
 
 # solve ineq is in the form log(a, f(x)) REL log(b, g(x))
