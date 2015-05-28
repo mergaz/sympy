@@ -117,8 +117,8 @@ def roots_quadratic(f):
         if dom.is_Numerical:
             D = sqrt(d)
 
-            r0 = (-b + D) / (2*a)
-            r1 = (-b - D) / (2*a)
+            r0 = (-b + D) / (S(2)*a)
+            r1 = (-b - D) / (S(2)*a)
         else:
             D = sqrt(_simplify(d))
             A = 2*a

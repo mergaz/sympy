@@ -3407,8 +3407,8 @@ def ode_Bernoulli(eq, func, order, match):
     add_eq(Derivative(z(x), x) + (1 - r[r['n']]) * r[r['b']]/r[r['a']] * z(x) - (1 - r[r['n']]) * r[r['c']]/r[r['a']], 0)
     add_comment("This is a linear equation")
     C1 = Symbol('C1')
-    t = exp((1 - r[r['n']])*C.Integral(r[r['b']]/r[r['a']], x))
-    tt = (r[r['n']] - 1)*C.Integral(t*r[r['c']]/r[r['a']], x)
+    t = exp((1 - r[r['n']])*Integral(r[r['b']]/r[r['a']], x))
+    tt = (r[r['n']] - 1)*Integral(t*r[r['c']]/r[r['a']], x)
     add_comment("The solution of this equation is")
     add_eq(z(x), ((tt + C1)/t))
     add_comment("Using the invert substitution we have")
@@ -5266,10 +5266,10 @@ def ode_separable(eq, func, order, match):
     r = match  # {'m1':m1, 'm2':m2, 'y':y}
     u = r.get('hint', f(x))  # get u from separable_reduced else get f(x)
     add_comment("Rewrite the equation")
-    add_exp(Eq(C.Integral(r['m2']['coeff']*r['m2'][r['y']]/r['m1'][r['y']],
-        r['y']), C.Integral(-r['m1']['coeff']*r['m1'][x]/ r['m2'][x], x) + C1))
-    return Eq(C.Integral(r['m2']['coeff']*r['m2'][r['y']]/r['m1'][r['y']],
-        (r['y'], None, u)), C.Integral(-r['m1']['coeff']*r['m1'][x]/
+    add_exp(Eq(Integral(r['m2']['coeff']*r['m2'][r['y']]/r['m1'][r['y']],
+        r['y']), Integral(-r['m1']['coeff']*r['m1'][x]/ r['m2'][x], x) + C1))
+    return Eq(Integral(r['m2']['coeff']*r['m2'][r['y']]/r['m1'][r['y']],
+        (r['y'], None, u)), Integral(-r['m1']['coeff']*r['m1'][x]/
         r['m2'][x], x) + C1)
 
 

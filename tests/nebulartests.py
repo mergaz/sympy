@@ -50,7 +50,7 @@ def stest_solve_9():
 
 
 @parallelize_asserts
-def test_basecamp():
+def stest_basecamp():
     assert solve((2 ** (3 * log(x, 10))) * (5 ** log(x, 10)) - 1600) == [100]
     assert solve((2 ** (log(x ** 2, 3))) * (5 ** (log(x, 3))) - 400) == [9]
     assert solve(2 / (3 ** x - 1) <= 7 / (9 ** x - 2)) == Or(And(-log(2) / log(3) <= x, x < 0),
@@ -439,7 +439,7 @@ def dsolve_(expr):
 
 
 @parallelize_asserts
-def stest_dsolve():
+def test_dsolve():
     assert dsolve_(Derivative(y(x), x) - 3 * y(x) * x) == (y == C1 * exp(3 * x ** 2 / 2))  # separable
     assert dsolve_(y(x).diff(x, 4) + 2 * y(x).diff(x, 3) - 2 * y(x).diff(x, 2) - 6 * y(x).diff(x) + 5 * y(x)) == \
            (y == (C1 + C2 * x) * exp(x) + (C3 * sin(x) + C4 * cos(x)) * exp(-2 * x))
@@ -555,7 +555,7 @@ def stest_diff():
 
 
 @parallelize_asserts
-def stest_integrate():
+def test_integrate():
     assert integrate(x ** 3, (x, 2, 4)) == 60
     assert integrate(x ** 2 + 1, (x, -2, 1)) == 6
     assert integrate(cos(x), (x, -pi / 6, 0)) == 1 / 2

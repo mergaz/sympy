@@ -1117,7 +1117,7 @@ class Pow(Expr):
                     ord = b.as_leading_term(x)
                     cf = Order(ord, x).getn()
                     if cf and cf.is_Number:
-                        nuse = n + 2*ceiling(cf)
+                        nuse = n + S(2)*ceiling(cf)
                     else:
                         cf = 1
                 except NotImplementedError:
