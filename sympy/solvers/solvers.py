@@ -2248,7 +2248,8 @@ def _solve(f, *symbols, **flags):
                         try:
                             t = Dummy('t')
                             iv = _solve(u - t, symbol, **flags)
-                            soln = list(ordered(set([i.subs(t, s) for i in iv for s in soln])))
+                            if iv is not None:
+                                soln = list(ordered(set([i.subs(t, s) for i in iv for s in soln])))
                         except NotImplementedError:
                             # perhaps _tsolve can handle f_num
                             soln = None
