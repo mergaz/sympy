@@ -273,7 +273,7 @@ def stest_varsolve():
 
 
 @parallelize_asserts
-def stest_solve_10():
+def test_solve_10():
     assert solve([(3 - x) <= 2, (2 * x) + 1 <= 4]) == And(1 <= x, x <= 3 / 2)
     assert solve([(x ** 2) - 1 >= 0, x > 2]) == (x > 2)
     assert solve((1 / 2) ** x > 1 / 4) == (x < 2)
@@ -439,7 +439,7 @@ def dsolve_(expr):
 
 
 @parallelize_asserts
-def test_dsolve():
+def stest_dsolve():
     assert dsolve_(Derivative(y(x), x) - 3 * y(x) * x) == (y == C1 * exp(3 * x ** 2 / 2))  # separable
     assert dsolve_(y(x).diff(x, 4) + 2 * y(x).diff(x, 3) - 2 * y(x).diff(x, 2) - 6 * y(x).diff(x) + 5 * y(x)) == \
            (y == (C1 + C2 * x) * exp(x) + (C3 * sin(x) + C4 * cos(x)) * exp(-2 * x))
@@ -555,7 +555,7 @@ def stest_diff():
 
 
 @parallelize_asserts
-def test_integrate():
+def stest_integrate():
     assert integrate(x ** 3, (x, 2, 4)) == 60
     assert integrate(x ** 2 + 1, (x, -2, 1)) == 6
     assert integrate(cos(x), (x, -pi / 6, 0)) == 1 / 2
