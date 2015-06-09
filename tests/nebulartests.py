@@ -2,8 +2,11 @@ from nebularmacro import macros, parallelize_asserts
 
 from sympy import solve, simplify
 from sympy import Symbol, sin, cot, pi, E, Abs, tan, S, Rational, log, Eq, sqrt, cos, ln, asin, acos, acot, atan, root, \
-    And, oo, Or, Derivative, exp, dsolve, Dummy, limit, diff, Integral, integrate
-from sympy.derivative.manualderivative import derivative
+    And, oo, Or, Derivative, exp, dsolve, Dummy, limit, Integral, integrate
+try:
+    from sympy.derivative.manualderivative import derivative
+except ImportError:
+    from sympy import diff as derivative
 
 x = Symbol("x", real=True)
 y = Symbol("y")
@@ -273,7 +276,7 @@ def stest_varsolve():
 
 
 @parallelize_asserts
-def test_solve_10():
+def stest_solve_10():
     assert solve([(3 - x) <= 2, (2 * x) + 1 <= 4]) == And(1 <= x, x <= 3 / 2)
     assert solve([(x ** 2) - 1 >= 0, x > 2]) == (x > 2)
     assert solve((1 / 2) ** x > 1 / 4) == (x < 2)
@@ -743,3 +746,10 @@ def stest_originals():
     assert solve(sin(3 * x) * cos(2 * x) * tan(7 * x)) == '???'
     assert solve(cos(x ** 2) + cos(5 * x ** 2)) == '???'
     assert solve(sqrt(3) * sin(x) + cos(x) - sqrt(2)) == '???'
+
+@parallelize_asserts
+def test_gogo():
+    assert solve(root((81 - x), 3) < 3) == '???'
+    assert solve(root((69 - 5 * x), 3) < 5) == '???'
+    assert solve(sqrt(2 * x) <= 2) == And(0 <= x, x <= 2)
+    assert solve(sqrt(3 - x) < 5) == And(-22 < x, x <= 3)
