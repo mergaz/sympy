@@ -2181,7 +2181,10 @@ def _solve(f, *symbols, **flags):
                                         result += [(simplify(r[2]) - b) / a]
                                     else:
                                         flags['tsolve'] = False
-                                        result += _solve(r[1] - simplify(r[2]), symbol, **flags)
+                                        #result += _solve(r[1] - simplify(r[2]), symbol, **flags)
+                                        result += _solve(r[1], symbol, **flags)
+
+
 
                             result = list(map(simplify, result))
                             result = list(map(expand, result))

@@ -4,7 +4,7 @@ from nose.plugins.attrib import attr
 
 from nosedata import solve_generic, solve_9, dsolve_generic, solve_10, solve_10_trig, solve_10_hangs, limit_func, \
     limit_data, \
-    diff_data, diff_func, integrate_data, integrate_func
+    diff_data, diff_func, integrate_data, integrate_func, solve_basecamp, solve_9_hangs, logsolve, absolve, varsolve
 from sympy import solve, simplify
 from nosedata import dsolve_func
 
@@ -33,9 +33,45 @@ def test_solve_9_moriarty_gen():
         yield t
 
 
+@attr(version='moriarty', dataset='solve-9-hangs')
+def test_solve_9_moriarty_genh():
+    for t in test_gen_moriarty('solve-9-hangs', solve_9_hangs, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve-10-hangs')
+def test_solve_10_moriarty_genh():
+    for t in test_gen_moriarty('solve-10-hangs', solve_10_hangs, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve-9-hangs')
+def test_solve_9_moriarty_genh():
+    for t in test_gen_moriarty('solve-9-hangs', solve_9_hangs, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='master', dataset='solve-9-hangs')
+def test_solve_9_master_genh():
+    for t in test_gen_master('solve-9-hangs', solve_9_hangs, partial(check_master, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve-10-hangs')
+def test_solve_10_moriarty_genh():
+    for t in test_gen_moriarty('solve-10-hangs', solve_10_hangs, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='master', dataset='solve-10-hangs')
+def test_solve_10_master_genh():
+    for t in test_gen_master('solve-10-hangs', solve_10_hangs, partial(check_master, solve)):
+        yield t
+
+
 @attr(version='master', dataset='solve-10')
 def test_solve_10_master_gen():
-    for t in test_gen_master('solve-10', solve_10 + solve_10_hangs, partial(check_master, solve)):
+    for t in test_gen_master('solve-10', solve_10, partial(check_master, solve)):
         yield t
 
 
@@ -105,6 +141,54 @@ def test_gen_moriarty(name, test_data, check_func):
         yield t
 
 
+@attr(version='master', dataset='solve_basecamp')
+def test_basecamp_solve_master_gen():
+    for t in test_gen_master('solve_basecamp', solve_basecamp, partial(check_master, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='solve_basecamp')
+def test_basecamp_solve_moriarty_gen():
+    for t in test_gen_moriarty('solve_basecamp', solve_basecamp, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='master', dataset='logsolve')
+def test_logsolve_master_gen():
+    for t in test_gen_master('logsolve', logsolve, partial(check_master, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='logsolve')
+def test_logsolve_moriarty_gen():
+    for t in test_gen_moriarty('logsolve', logsolve, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='master', dataset='absolve')
+def test_absolve_master_gen():
+    for t in test_gen_master('absolve', absolve, partial(check_master, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='absolve')
+def test_absolve_moriarty_gen():
+    for t in test_gen_moriarty('absolve', absolve, partial(check_moriarty, solve)):
+        yield t
+
+
+@attr(version='master', dataset='varsolve')
+def test_varsolve_master_gen():
+    for t in test_gen_master('varsolve', varsolve, partial(check_master, solve)):
+        yield t
+
+
+@attr(version='moriarty', dataset='varsolve')
+def test_varsolve_moriarty_gen():
+    for t in test_gen_moriarty('varsolve', varsolve, partial(check_moriarty, solve)):
+        yield t
+
+
 def test_gen(log_name, log_header, test_data, check_func):
     with open(log_name, 'w') as f:
         f.write(log_header + '\n')
@@ -122,7 +206,7 @@ def check_master(func, input, expected_answer, log_name):
         status = 'Passed'
     except Exception as e:
         if answer is None:
-            answer = e.__class__.__name__
+            answer = "{}: {}".format(e.__class__.__name__, e.message)
         raise
     finally:
         with open(log_name, 'a') as f:
@@ -141,7 +225,7 @@ def check_moriarty(func, input, expected_answer, log_name):
         status = 'Passed'
     except Exception as e:
         if answer is None:
-            answer = e.__class__.__name__
+            answer = "{}: {}".format(e.__class__.__name__, e.message)
         raise
     finally:
         number_of_steps = len([s for s in last_solution() if s.startswith('_')])
