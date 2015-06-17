@@ -316,7 +316,8 @@ def _implicit_application(tokens, local_dict, global_dict):
 def function_exponentiation(tokens, local_dict, global_dict):
     """Allows functions to be exponentiated, e.g. ``cos**2(x)``.
 
-    Example:
+    Examples
+    ========
 
     >>> from sympy.parsing.sympy_parser import (expr,
     ... standard_transformations, function_exponentiation)
@@ -438,7 +439,8 @@ def implicit_multiplication(result, local_dict, global_dict):
     Use this before :func:`implicit_application`, otherwise expressions like
     ``sin 2x`` will be parsed as ``x * sin(2)`` rather than ``sin(2*x)``.
 
-    Example:
+    Examples
+    ========
 
     >>> from sympy.parsing.sympy_parser import (parse_expr,
     ... standard_transformations, implicit_multiplication)
@@ -463,7 +465,8 @@ def implicit_application(result, local_dict, global_dict):
     like ``sin 2x`` will be parsed as ``x * sin(2)`` rather than
     ``sin(2*x)``.
 
-    Example:
+    Examples
+    ========
 
     >>> from sympy.parsing.sympy_parser import (parse_expr,
     ... standard_transformations, implicit_application)
@@ -491,7 +494,8 @@ def implicit_multiplication_application(result, local_dict, global_dict):
 
     - Functions can be exponentiated.
 
-    Example:
+    Examples
+    ========
 
     >>> from sympy.parsing.sympy_parser import (parse_expr,
     ... standard_transformations, implicit_multiplication_application)

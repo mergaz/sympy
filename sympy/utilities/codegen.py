@@ -265,7 +265,7 @@ class Variable(object):
         if datatype is None:
             datatype = get_default_datatype(name)
         elif not isinstance(datatype, DataType):
-            raise TypeError("The (optional) `datatype' argument must be an"
+            raise TypeError("The (optional) `datatype' argument must be an "
                             "instance of the DataType class.")
         if dimensions and not isinstance(dimensions, (tuple, list)):
             raise TypeError(
@@ -567,8 +567,9 @@ class CodeGen(object):
 
             missing = [x for x in arg_list if x.name not in argument_sequence]
             if missing:
-                raise CodeGenArgumentListError("Argument list didn't specify: "
-                        ", ".join([str(m.name) for m in missing]), missing)
+                msg = "Argument list didn't specify: {0} "
+                msg = msg.format(", ".join([str(m.name) for m in missing]))
+                raise CodeGenArgumentListError(msg, missing)
 
             # create redundant arguments to produce the requested sequence
             name_arg_dict = dict([(x.name, x) for x in arg_list])
@@ -1163,8 +1164,9 @@ class OctaveCodeGen(CodeGen):
 
             missing = [x for x in arg_list if x.name not in argument_sequence]
             if missing:
-                raise CodeGenArgumentListError("Argument list didn't specify: %s" %
-                        ", ".join([str(m.name) for m in missing]), missing)
+                msg = "Argument list didn't specify: {0} "
+                msg = msg.format(", ".join([str(m.name) for m in missing]))
+                raise CodeGenArgumentListError(msg, missing)
 
             # create redundant arguments to produce the requested sequence
             name_arg_dict = dict([(x.name, x) for x in arg_list])

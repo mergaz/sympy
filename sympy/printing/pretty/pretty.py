@@ -38,6 +38,7 @@ class PrettyPrinter(Printer):
         "use_unicode": None,
         "wrap_line": True,
         "num_columns": None,
+        "use_unicode_sqrt_char": True,
     }
 
     def __init__(self, settings=None):
@@ -1060,10 +1061,6 @@ class PrettyPrinter(Printer):
 
         prettyFunc = self._print(Symbol(func_name))
         prettyArgs = prettyForm(*self._print_seq(args).parens())
-        #postioning func_name
-        mid = prettyArgs.height()//2
-        if mid > 2:
-            prettyFunc.baseline = -mid + 1
 
         pform = prettyForm(
             binding=prettyForm.FUNC, *stringPict.next(prettyFunc, prettyArgs))
@@ -1328,6 +1325,13 @@ class PrettyPrinter(Printer):
     def _print_nth_root(self, base, expt):
         bpretty = self._print(base)
 
+        # In very simple cases, use a single-char root sign
+        if (self._settings['use_unicode_sqrt_char'] and self._use_unicode
+            and expt is S.Half and bpretty.height() == 1
+            and (bpretty.width() == 1
+                 or (base.is_Integer and base.is_nonnegative))):
+            return prettyForm(*bpretty.left(u('\N{SQUARE ROOT}')))
+
         # Construct root sign, start with the \/ shape
         _zZ = xobj('/', 1)
         rootsign = xobj('\\', 1) + _zZ
@@ -1492,7 +1496,6 @@ class PrettyPrinter(Printer):
              parenthesize=lambda set: set.is_ProductSet or set.is_Intersection
                                or set.is_Union)
 
-
     def _print_ImageSet(self, ts):
         if self._use_unicode:
             inn = u("\N{SMALL ELEMENT OF}")
@@ -1513,6 +1516,28 @@ class PrettyPrinter(Printer):
                                                el, self._print(set)), binding=8)
         else:
             return prettyForm(sstr(e))
+
+    def _print_SeqFormula(self, s):
+        if self._use_unicode:
+            dots = u("\N{HORIZONTAL ELLIPSIS}")
+        else:
+            dots = '...'
+
+        if s.start is S.NegativeInfinity:
+            stop = s.stop
+            printset = (dots, s.coeff(stop - 3), s.coeff(stop - 2),
+                s.coeff(stop - 1), s.coeff(stop))
+        elif s.stop is S.Infinity or s.length > 4:
+            printset = s[:4]
+            printset.append(dots)
+            printset = tuple(printset)
+        else:
+            printset = tuple(s)
+        return self._print_list(printset)
+
+    _print_SeqPer = _print_SeqFormula
+    _print_SeqAdd = _print_SeqFormula
+    _print_SeqMul = _print_SeqFormula
 
     def _print_seq(self, seq, left=None, right=None, delimiter=', ',
             parenthesize=lambda x: False):
@@ -1954,6 +1979,9 @@ def pretty_print(expr, **settings):
         use full precision. Default to "auto"
     order : bool or string, optional
         set to 'none' for long expressions if slow; default is None
+    use_unicode_sqrt_char : bool, optional
+        use compact single-character square root symbol (when unambiguous);
+        default is True.
 
     """
     print(pretty(expr, **settings))

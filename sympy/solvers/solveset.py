@@ -111,7 +111,7 @@ def _invert_real(f, g_ys, symbol):
                         return _invert_real(base, res, symbol)
             else:
                 if not base.is_positive:
-                    raise ValueError("x**w where w is irrational is not"
+                    raise ValueError("x**w where w is irrational is not "
                                      "defined for negative x")
                 return _invert_real(base, res, symbol)
 
@@ -855,7 +855,8 @@ def solveset(f, symbol=None):
     f = sympify(f)
 
     if isinstance(f, Eq):
-        f = f.lhs - f.rhs
+        from sympy.core import Add
+        f = Add(f.lhs, - f.rhs, evaluate=False)
 
     if f.is_Relational:
         if real is False:

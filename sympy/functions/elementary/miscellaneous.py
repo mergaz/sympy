@@ -108,9 +108,8 @@ def sqrt(arg):
     References
     ==========
 
-    * http://en.wikipedia.org/wiki/Square_root
-    * http://en.wikipedia.org/wiki/Principal_value
-
+    .. [1] http://en.wikipedia.org/wiki/Square_root
+    .. [2] http://en.wikipedia.org/wiki/Principal_value
     """
     # arg = sympify(arg) is handled by Pow
     res = Pow(arg, S.Half)
@@ -122,7 +121,6 @@ def sqrt(arg):
         r = (str(arg),)
     res.set_repr(("sqrt", r))
     return res
-
 
 
 def cbrt(arg):
@@ -464,6 +462,7 @@ class MinMaxBase(Expr, LatticeOp):
     def is_real(self):
         return fuzzy_and(arg.is_real for arg in self.args)
 
+
 class Max(MinMaxBase, Application):
     """
     Return, if possible, the maximum value of the list.
@@ -485,6 +484,10 @@ class Max(MinMaxBase, Application):
 
     Also, only comparable arguments are permitted.
 
+    It is named ``Max`` and not ``max`` to avoid conflicts
+    with the built-in function ``max``.
+
+
     Examples
     ========
 
@@ -495,29 +498,22 @@ class Max(MinMaxBase, Application):
 
     >>> Max(x, -2)                  #doctest: +SKIP
     Max(x, -2)
-
     >>> Max(x, -2).subs(x, 3)
     3
-
     >>> Max(p, -2)
     p
-
     >>> Max(x, y)                   #doctest: +SKIP
     Max(x, y)
-
     >>> Max(x, y) == Max(y, x)
     True
-
     >>> Max(x, Max(y, z))           #doctest: +SKIP
     Max(x, y, z)
-
     >>> Max(n, 8, p, 7, -oo)        #doctest: +SKIP
     Max(8, p)
-
     >>> Max (1, x, oo)
     oo
 
-    Algorithm
+    * Algorithm
 
     The task can be considered as searching of supremums in the
     directed complete partial orders [1]_.
@@ -576,6 +572,8 @@ class Max(MinMaxBase, Application):
 class Min(MinMaxBase, Application):
     """
     Return, if possible, the minimum value of the list.
+    It is named ``Min`` and not ``min`` to avoid conflicts
+    with the built-in function ``min``.
 
     Examples
     ========
@@ -587,16 +585,12 @@ class Min(MinMaxBase, Application):
 
     >>> Min(x, -2)                  #doctest: +SKIP
     Min(x, -2)
-
     >>> Min(x, -2).subs(x, 3)
     -2
-
     >>> Min(p, -3)
     -3
-
     >>> Min(x, y)                   #doctest: +SKIP
     Min(x, y)
-
     >>> Min(n, 8, p, -7, p, oo)     #doctest: +SKIP
     Min(n, -7)
 

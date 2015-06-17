@@ -441,7 +441,7 @@ def _validate_backend_language(backend, language):
     if not langs:
         raise ValueError("Unrecognized backend: " + backend)
     if language.upper() not in langs:
-        raise ValueError(("Backend {0} and language {1} are"
+        raise ValueError(("Backend {0} and language {1} are "
                           "incompatible").format(backend, language))
 
 
@@ -824,7 +824,8 @@ def ufuncify(args, expr, language=None, backend='numpy', tempdir=None,
     [1] http://docs.scipy.org/doc/numpy/reference/ufuncs.html
 
     Examples
-    --------
+    ========
+
     >>> from sympy.utilities.autowrap import ufuncify
     >>> from sympy.abc import x, y
     >>> import numpy as np

@@ -1986,6 +1986,8 @@ class Expr(Basic, EvalfMixin):
 
         """
         c = sympify(c)
+        if self is S.NaN:
+            return None
         if c is S.One:
             return self
         elif c == self:
@@ -2012,8 +2014,6 @@ class Expr(Basic, EvalfMixin):
             elif self is S.ComplexInfinity:
                 if not c.is_zero:
                     return S.ComplexInfinity
-            elif self is S.NaN:
-                return S.NaN
             elif self.is_Integer:
                 if not quotient.is_Integer:
                     return None
@@ -2105,6 +2105,8 @@ class Expr(Basic, EvalfMixin):
         """
 
         c = sympify(c)
+        if self is S.NaN:
+            return None
         if c is S.Zero:
             return self
         elif c == self:
@@ -2416,6 +2418,9 @@ class Expr(Basic, EvalfMixin):
         See also is_algebraic_expr().
 
         """
+        if self in [S.NaN, S.Infinity, -S.Infinity, S.ComplexInfinity]:
+            return False
+
         if syms:
             syms = set(map(sympify, syms))
         else:

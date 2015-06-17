@@ -503,7 +503,7 @@ def test_solve_abs():
 def test_rewrite_trigh():
     # if this import passes then the test below should also pass
     from sympy import sech
-    assert solveset_real(sinh(x) + sech(x)) == FiniteSet(
+    assert solveset_real(sinh(x) + sech(x), x) == FiniteSet(
         2*atanh(-S.Half + sqrt(5)/2 - sqrt(-2*sqrt(5) + 2)/2),
         2*atanh(-S.Half + sqrt(5)/2 + sqrt(-2*sqrt(5) + 2)/2),
         2*atanh(-sqrt(5)/2 - S.Half + sqrt(2 + 2*sqrt(5))/2),
@@ -805,3 +805,12 @@ def test_improve_coverage():
 
     assert _has_rational_power(sin(x)*exp(x) + 1, x) == (False, S.One)
     assert _has_rational_power((sin(x)**2)*(exp(x) + 1)**3, x) == (False, S.One)
+
+
+def test_issue_9522():
+    x = Symbol('x', real=True)
+    expr1 = Eq(1/(x**2 - 4) + x, 1/(x**2 - 4) + 2)
+    expr2 = Eq(1/x + x, 1/x)
+
+    assert solveset(expr1, x) == EmptySet()
+    assert solveset(expr2, x) == EmptySet()
