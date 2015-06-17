@@ -1025,10 +1025,10 @@ def solve(f, *symbols, **flags):
         for a in fi.atoms(Abs):
             if not a.has(*symbols):
                 continue
-            if a.args[0].is_real is None:
-                raise NotImplementedError('solving %s when the argument '
-                    'is not real or imaginary.' % a)
-            reps.append((a, piece(a.args[0]) if a.args[0].is_real else \
+            #if a.args[0].is_real is None:
+            #    raise NotImplementedError('solving %s when the argument '
+            #        'is not real or imaginary.' % a)
+            reps.append((a, piece(a.args[0]) if a.args[0].is_imaginary is None else \
                 piece(a.args[0]*S.ImaginaryUnit)))
         fi = fi.subs(reps)
 

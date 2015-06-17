@@ -1,6 +1,6 @@
 from __future__ import print_function, division
 
-from sympy.core import C, sympify, Pow
+from sympy.core import sympify, Pow
 from sympy.core.add import Add
 from sympy.core.function import Lambda, Function, ArgumentIndexError
 from sympy.core.cache import cacheit
@@ -452,7 +452,7 @@ class log(Function):
         if argindex == 1:
             if len(self.args) == 1:
                 return 1/self.args[0]
-                s = C.Dummy('x')
+                s = Dummy('x')
                 return Lambda(s**(-1), s)
             else:
                 return 1 / self.args[0] / log(self.args[1])
@@ -464,7 +464,7 @@ class log(Function):
         Returns `e^x`, the inverse function of `\log(x)`.
         """
         if len(self.args) == 2:
-            s = C.Dummy('x')
+            s = Dummy('x')
             return Lambda(s, Pow(self.args[1], s))
         else:
             return exp
