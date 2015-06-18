@@ -1589,7 +1589,7 @@ def solveASinX_p_BSin2X_p_ASin3X(f, symbol):
     return result
 
 def to_exp_fixed_base(e, base, symbol, silent=True):
-    if e.args:
+    if e.args and len(e.args) > 1:
         args = tuple([to_exp_fixed_base(a, base, symbol, silent) for a in e.args])
         b = None
         if e.func is exp and e.has(symbol):
@@ -1597,7 +1597,7 @@ def to_exp_fixed_base(e, base, symbol, silent=True):
         if e.func is Pow and e.args[0].is_Number and e.has(symbol):
             b = args[0]
         if not b is None and b != base:
-            if not silent:
+            if not silent and len(args) > 1:
                 add_comment("We know that ")
                 add_eq(Pow(b, args[1]), Pow(base, args[1] * log(b, base))) # c^log_c(a) = a
             e = Pow(base, args[1] * log(b, base))
