@@ -490,12 +490,11 @@ class log(Function):
                 if n:
                     den = base**n
                     if den.is_Integer:
-                        return n + log(arg // den, base)
+                        return n + log(arg // den) / log(base)
                     else:
-                        return n + log(arg / den, base)
+                        return n + log(arg / den) / log(base)
                 else:
-                    if log(base).is_Rational:
-                        return log(arg) / log(base)
+                    return log(arg) / log(base)
             except ValueError:
                 pass
             if base is S.Exp1:
