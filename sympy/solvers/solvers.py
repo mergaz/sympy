@@ -1834,36 +1834,37 @@ def _solve(f, *symbols, **flags):
         result = set()
         for n, (expr, cond) in enumerate(f.args):
             candidates = _solve(expr, *symbols, **flags)
-            for candidate in candidates:
-                if candidate in result:
-                    continue
-                try:
-                    v = (cond == True) or cond.subs(symbol, candidate)
-                except:
-                    v = False
-                if v != False:
-                    # Only include solutions that do not match the condition
-                    # of any previous pieces.
-                    matches_other_piece = False
-                    for other_n, (other_expr, other_cond) in enumerate(f.args):
-                        if other_n == n:
-                            break
-                        if other_cond == False:
-                            continue
-                        try:
-                            if other_cond.subs(symbol, candidate) == True:
-                                matches_other_piece = True
+            if candidates is not None:
+                for candidate in candidates:
+                    if candidate in result:
+                        continue
+                    try:
+                        v = (cond == True) or cond.subs(symbol, candidate)
+                    except:
+                        v = False
+                    if v != False:
+                        # Only include solutions that do not match the condition
+                        # of any previous pieces.
+                        matches_other_piece = False
+                        for other_n, (other_expr, other_cond) in enumerate(f.args):
+                            if other_n == n:
                                 break
-                        except:
-                            pass
-                    if not matches_other_piece:
-                        v = v == True or v.doit()
-                        if isinstance(v, Relational):
-                            v = v.canonical
-                        result.add(Piecewise(
-                            (candidate, v),
-                            (S.NaN, True)
-                        ))
+                            if other_cond == False:
+                                continue
+                            try:
+                                if other_cond.subs(symbol, candidate) == True:
+                                    matches_other_piece = True
+                                    break
+                            except:
+                                pass
+                        if not matches_other_piece:
+                            v = v == True or v.doit()
+                            if isinstance(v, Relational):
+                                v = v.canonical
+                            result.add(Piecewise(
+                                (candidate, v),
+                                (S.NaN, True)
+                            ))
         check = False
     else:
         result = False
@@ -2450,9 +2451,11 @@ def _solve(f, *symbols, **flags):
                                 start_subroutine("Dont Know")
                                 u = Dummy()
                                 inversion = _solve(gen - u, symbol, **flags)
-                                inversion = list(map(simplify, inversion))
-                                soln = list(ordered(set([i.subs(u, s) for i in
-                                            inversion for s in soln])))
+                                if inversion is not None:
+                                    inversion = list(map(simplify, inversion))
+                                    soln = list(ordered(set([i.subs(u, s) for i in inversion for s in soln])))
+                                else:
+                                    soln = None
                                 cancel_subroutine()
                             result = soln
 
@@ -2498,7 +2501,7 @@ def _solve(f, *symbols, **flags):
         #    result = False
         #cancel_subroutine()
 
-    if result is False:
+    if result is False or result is None:
         add_comment("This equation cannot be solved")
         return None
         #raise NotImplementedError(msg + "\nNo algorithms are implemented to solve equation %s" % f)
