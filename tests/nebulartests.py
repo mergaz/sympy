@@ -2,8 +2,11 @@ from nebularmacro import macros, parallelize_asserts
 
 from sympy import solve, simplify
 from sympy import Symbol, sin, cot, pi, E, Abs, tan, S, Rational, log, Eq, sqrt, cos, ln, asin, acos, acot, atan, root, \
-    And, oo, Or, Derivative, exp, dsolve, Dummy, limit, diff, Integral, integrate
-from sympy.derivative.manualderivative import derivative
+    And, oo, Or, Derivative, exp, dsolve, Dummy, limit, Integral, integrate
+try:
+    from sympy.derivative.manualderivative import derivative
+except ImportError:
+    from sympy import diff as derivative
 
 x = Symbol("x", real=True)
 y = Symbol("y")
@@ -439,7 +442,7 @@ def dsolve_(expr):
 
 
 @parallelize_asserts
-def test_dsolve():
+def stest_dsolve():
     assert dsolve_(Derivative(y(x), x) - 3 * y(x) * x) == (y == C1 * exp(3 * x ** 2 / 2))  # separable
     assert dsolve_(y(x).diff(x, 4) + 2 * y(x).diff(x, 3) - 2 * y(x).diff(x, 2) - 6 * y(x).diff(x) + 5 * y(x)) == \
            (y == (C1 + C2 * x) * exp(x) + (C3 * sin(x) + C4 * cos(x)) * exp(-2 * x))
@@ -555,7 +558,7 @@ def stest_diff():
 
 
 @parallelize_asserts
-def test_integrate():
+def stest_integrate():
     assert integrate(x ** 3, (x, 2, 4)) == 60
     assert integrate(x ** 2 + 1, (x, -2, 1)) == 6
     assert integrate(cos(x), (x, -pi / 6, 0)) == 1 / 2
@@ -743,3 +746,10 @@ def stest_originals():
     assert solve(sin(3 * x) * cos(2 * x) * tan(7 * x)) == '???'
     assert solve(cos(x ** 2) + cos(5 * x ** 2)) == '???'
     assert solve(sqrt(3) * sin(x) + cos(x) - sqrt(2)) == '???'
+
+@parallelize_asserts
+def test_gogo():
+    assert solve(root((81 - x), 3) < 3) == '???'
+    assert solve(root((69 - 5 * x), 3) < 5) == '???'
+    assert solve(sqrt(2 * x) <= 2) == And(0 <= x, x <= 2)
+    assert solve(sqrt(3 - x) < 5) == And(-22 < x, x <= 3)
