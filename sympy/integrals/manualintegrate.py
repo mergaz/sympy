@@ -380,7 +380,7 @@ def inverse_trig_rule(integral):
                 substep = ConstantTimesRule(
                     u_constant, current_base ** base_exp, substep,
                     u_constant * current_base ** base_exp, symbol)
-            substep = URule(u_var, u_func, u_constant, substep, factored, symbol)
+            substep = URule(u_var, u_func, u_constant, substep, u_constant * current_base ** base_exp, factored, symbol)
         if constant is not None:
             substep = ConstantTimesRule(constant, factored, substep, integrand, symbol)
         return substep
