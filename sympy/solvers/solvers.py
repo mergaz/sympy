@@ -13,6 +13,8 @@ This module contain solvers for all kinds of equations:
 """
 from __future__ import print_function, division
 
+from igor_trigonometry import *
+
 from sympy.core.compatibility import (iterable, is_sequence, ordered,
     default_sort_key, reduce, xrange)
 from sympy.utilities.exceptions import SymPyDeprecationWarning
@@ -1027,7 +1029,10 @@ def solve(f, *symbols, **flags):
     # try to get a solution
     ###########################################################################
     if bare_f:
-        solution = _solve(f[0], *symbols, **flags)
+#>>>IGOR
+        igor_f=igor_trigonometry_formulas(f[0])
+        solution = _solve(igor_f, *symbols, **flags)
+#        solution = _solve(f[0], *symbols, **flags)
     else:
         solution = _solve_system(f, symbols, **flags)
 
@@ -1824,6 +1829,9 @@ def _solve(f, *symbols, **flags):
                 for g in gens:
                     if not g.func in [sin, cos]:
                         return False
+#>>>Igor
+                    else:
+                        return True
                 return True
 
             # Rewrite equations containg abs(f(x)) to two eqs
@@ -3791,7 +3799,6 @@ def unrad(eq, *syms, **flags):
         eq = neq[0]
 
     return (_canonical(eq), cov, list(dens))
-
 
 from sympy.solvers.bivariate import (
     bivariate_type, _solve_lambert, _filtered_gens)
