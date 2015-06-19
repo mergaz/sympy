@@ -11,7 +11,6 @@ This module contain solvers for all kinds of equations:
       (you will need a good starting point)
 
 """
-
 from __future__ import print_function, division
 
 from sympy.core.compatibility import (iterable, is_sequence, ordered,
@@ -1179,6 +1178,7 @@ def solve(f, *symbols, **flags):
     as_dict = flags.get('dict', False)
     as_set = flags.get('set', False)
 
+
     if not as_set and isinstance(solution, list):
         # Make sure that a list of solutions is ordered in a canonical way.
         solution.sort(key=default_sort_key)
@@ -1746,6 +1746,7 @@ def _solve(f, *symbols, **flags):
                         add_comment("Therefore we get")
                         add_eq(m[B], m[C])
                         result = _solve(m[B] - m[C], symbol, **flags)
+
             if result is False:
                 m = f_num.match(Pow(A, B) + C)
                 if not m is None:
@@ -2181,9 +2182,18 @@ def _solve(f, *symbols, **flags):
                                         result += [(simplify(r[2]) - b) / a]
                                     else:
                                         flags['tsolve'] = False
-                                        #result += _solve(r[1] - simplify(r[2]), symbol, **flags)
-                                        result += _solve(r[1], symbol, **flags)
-
+                                        igor_flag=0
+                                        igor_a=m[A]
+                                        igor_b=m[B]
+                                        igor_c=m[C]
+                                        print (igor_a.count('log'))
+                                        for igor in r:
+                                            if igor.count('log')>0  or igor_a.count('log')>0 or igor_b.count('log')>0 or igor_c.count('log')>0:
+                                                igor_flag=1
+                                        if igor_flag<1:
+                                          result += _solve(r[1] - simplify(r[2]), symbol, **flags)
+                                        else:
+                                          result += _solve(r[1], symbol, **flags)
 
 
                             result = list(map(simplify, result))
@@ -2251,6 +2261,25 @@ def _solve(f, *symbols, **flags):
     result = merge_trig_solutions(result)
     if len(result) == 0:
         add_comment("Therefore there is no solution")
+
+#IGOR
+    print("Igor logarithm analiz")
+
+    #x=result[0]
+    #vv=add_eq(m[C],x)
+    #print (vv)
+
+
+
+
+    if f.count('log')>0:
+        if m[C].has('-x') or m[B].has('-x'):
+            for igor in result:
+                if igor<0:
+                    result.remove(igor);
+
+
+                        #if f.count('log')>0:
 
     return result
 
