@@ -70,6 +70,8 @@ def solve_poly_system(seq, *gens, **args):
     except PolificationFailed as exc:
         raise ComputationFailed('solve_poly_system', len(seq), exc)
 
+    """
+    ! this block leads to infinite recursion
     # Try to sum equations for simplification
     if len(polys) == 2:
         a = polys[0].coeff_monomial(1)
@@ -80,7 +82,7 @@ def solve_poly_system(seq, *gens, **args):
             add_eq(sys[0].as_expr(), 0)
             add_eq(sys[1].as_expr(), 0)
             return solve_poly_system(sys, *gens, **args)
-
+    """
 
     # Try to factor
     for i, p in enumerate(polys):
