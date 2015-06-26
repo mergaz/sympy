@@ -501,7 +501,7 @@ class log(Function):
                 return cls(arg)
             elif arg.is_positive and not base.is_number:
                 return 1 / log(base, arg)
-            elif not base.is_positive:
+            else:
                 return cls(arg)/cls(base)
 
         if arg.is_Number:
