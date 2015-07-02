@@ -2018,8 +2018,10 @@ def _solve(f, *symbols, **flags):
             add_comment("Rewrite the equation as")
             add_eq(poly.as_expr(), 0)
 
-
-        gens = [g for g in poly.gens if g.has(symbol)]
+        if result is False:
+            gens = [g for g in poly.gens if g.has(symbol)]
+        else:
+            gens = []
 
         def is_sin_cos(gens):
             for g in gens:
