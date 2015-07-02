@@ -705,8 +705,6 @@ class log(Function):
             base = S.Exp1
         else:
             base = self.args[1]
-        if arg.is_infinitesimal or base.is_infinitesimal or arg.is_zero:
-            return False
         return arg.is_finite and base.is_finite and base != 1 and base > 0
 
     def _eval_is_positive(self):
