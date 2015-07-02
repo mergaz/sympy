@@ -2042,21 +2042,23 @@ def _solve(f, *symbols, **flags):
             add_exp(abss[0].args[0] < 0)
             result_p = _solve(f_num_p, symbol, **flags)
             result = []
-            for r in result_p:
-                v = abss[0].args[0].subs(symbol, r)
-                if v.is_real and v >= 0:
-                    add_comment('The value {} is a root', str(r))
-                    result.append(r)
-                else:
-                    add_comment('The value {} is an extraneous root', str(r))
+            if result_p is not None:
+                for r in result_p:
+                    v = abss[0].args[0].subs(symbol, r)
+                    if v.is_real and v >= 0:
+                        add_comment('The value {} is a root', str(r))
+                        result.append(r)
+                    else:
+                        add_comment('The value {} is an extraneous root', str(r))
             result_m = _solve(f_num_m, symbol, **flags)
-            for r in result_m:
-                v = abss[0].args[0].subs(symbol, r)
-                if v.is_real and v <= 0:
-                    add_comment('The value {} is a root', str(r))
-                    result.append(r)
-                else:
-                    add_comment('The value {} is an extraneous root', str(r))
+            if result_m is not None:
+                for r in result_m:
+                    v = abss[0].args[0].subs(symbol, r)
+                    if v.is_real and v <= 0:
+                        add_comment('The value {} is a root', str(r))
+                        result.append(r)
+                    else:
+                        add_comment('The value {} is an extraneous root', str(r))
             if len(result) > 0:
                 add_comment("Finally we have")
                 for r in result:
