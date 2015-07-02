@@ -63,7 +63,6 @@ from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, sta
 # An integer parameter for solutions of trig eqs.
 _k = Dummy('k', integer=True)
 
-
 def _ispow(e):
     """Return True if e is a Pow or is exp."""
     return isinstance(e, Expr) and (e.is_Pow or e.func is exp)
@@ -1030,9 +1029,9 @@ def solve(f, *symbols, **flags):
     ###########################################################################
     if bare_f:
 #>>>IGOR
-        igor_f=igor_trigonometry_formulas(f[0])
+        igor_f=igor_trigonometry_formulas(f[0],fi)
         solution = _solve(igor_f, *symbols, **flags)
-#        solution = _solve(f[0], *symbols, **flags)
+        #solution = _solve(f[0], *symbols, **flags)
     else:
         solution = _solve_system(f, symbols, **flags)
 
@@ -1512,13 +1511,17 @@ def simplify_log_eq(f, symbol):
     else:
         return to_log_fixed_base(f, ls[0], False)
 
-
+#>>>IGOR
+igor_flag = type(0)
 def _solve(f, *symbols, **flags):
     """Return a checked solution for f in terms of one or more of the
     symbols."""
     add_comment('Solve the equation')
     add_eq(f, 0)
-    
+#>>>IGOR
+    global igor_flag
+
+
     if len(symbols) != 1:
         soln = None
         free = f.free_symbols
@@ -1829,7 +1832,7 @@ def _solve(f, *symbols, **flags):
                 for g in gens:
                     if not g.func in [sin, cos]:
                         return False
-#>>>Igor
+
                     else:
                         return True
                 return True
@@ -1967,6 +1970,7 @@ def _solve(f, *symbols, **flags):
                         if flc != f_num:
                             add_comment("Rewrite the equation")
                             add_eq(flc, 0)
+                            igor_flag=type(flc)
                             return _solve(flc, symbol, **flags)
 
 
@@ -2190,18 +2194,8 @@ def _solve(f, *symbols, **flags):
                                         result += [(simplify(r[2]) - b) / a]
                                     else:
                                         flags['tsolve'] = False
-                                        igor_flag=0
-                                        igor_a=m[A]
-                                        igor_b=m[B]
-                                        igor_c=m[C]
-                                        print (igor_a.count('log'))
-                                        for igor in r:
-                                            if igor.count('log')>0  or igor_a.count('log')>0 or igor_b.count('log')>0 or igor_c.count('log')>0:
-                                                igor_flag=1
-                                        if igor_flag<1:
-                                          result += _solve(r[1] - simplify(r[2]), symbol, **flags)
-                                        else:
-                                          result += _solve(r[1], symbol, **flags)
+
+                                        result += _solve(r[1] - simplify(r[2]), symbol, **flags)
 
 
                             result = list(map(simplify, result))
@@ -2242,6 +2236,14 @@ def _solve(f, *symbols, **flags):
         #cancel_subroutine()
 
     if result is False:
+        #print("IGOR**************************************")
+        #print (type(f))
+        #print (igor_flag)
+        #print("**************************************")
+#>>>IGOR
+        if igor_flag == log:
+          f =f+1
+          return _solve(f, symbol, **flags)
         add_comment("This equation cannot be solved")
         return None
         #raise NotImplementedError(msg + "\nNo algorithms are implemented to solve equation %s" % f)
