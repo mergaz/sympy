@@ -1971,7 +1971,7 @@ def _solve(f, *symbols, **flags):
                     u = unrad(f, symbol)
                 except ValueError:
                     u = None  # hope for best with original equation
-            if u:
+            if u and len(u[1]) <= 1:
                 flags['unrad'] = False  # don't unrad next time
                 eq, cov = u
                 if cov:
