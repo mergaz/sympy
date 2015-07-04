@@ -1948,11 +1948,11 @@ def _solve(f, *symbols, **flags):
             if result is False:
                 m = f_num.match(Pow(A, B) + C)
                 if not m is None:
-                    if(m[B].q != 1 and m[B].is_Rational and not m[C].has(symbol)):
+                    m[B] = simplify(m[B])
+                    if m[B].is_Rational and m[B].q != 1:
                         m[A] = simplify(m[A])
-                        m[B] = simplify(m[B])
                         m[C] = simplify(m[C])
-                        if not (m[C]).has(symbol) and (m[B]).is_Rational and (m[B]).q != 1:
+                        if not (m[C]).has(symbol):
                             if m[C] != 0:
                                 add_comment("Rewrite the equation as")
                                 add_eq(Pow(m[A], m[B]), -m[C])
