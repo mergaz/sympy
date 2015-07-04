@@ -1948,18 +1948,19 @@ def _solve(f, *symbols, **flags):
             if result is False:
                 m = f_num.match(Pow(A, B) + C)
                 if not m is None:
-                    m[A] = simplify(m[A])
-                    m[B] = simplify(m[B])
-                    m[C] = simplify(m[C])
-                if m is not None and not simplify(m[C]).has(symbol) and simplify(m[B]).is_Rational and simplify(m[B]).q != 1:
-                    if m[C] != 0:
-                        add_comment("Rewrite the equation as")
-                        add_eq(Pow(m[A], m[B]), -m[C])
-                    add_comment("Raise the both sides of the equation to the power")
-                    k = simplify(1 / m[B])
-                    add_exp(k)
-                    add_eq(m[A], Pow(-m[C], k))
-                    result = _solve(m[A] - Pow(-m[C], k), symbol, **flags)
+                    if(m[B].q != 1 and m[B].is_Rational and not m[C].has(symbol)):
+                        m[A] = simplify(m[A])
+                        m[B] = simplify(m[B])
+                        m[C] = simplify(m[C])
+                        if not (m[C]).has(symbol) and (m[B]).is_Rational and (m[B]).q != 1:
+                            if m[C] != 0:
+                                add_comment("Rewrite the equation as")
+                                add_eq(Pow(m[A], m[B]), -m[C])
+                            add_comment("Raise the both sides of the equation to the power")
+                            k = simplify(1 / m[B])
+                            add_exp(k)
+                            add_eq(m[A], Pow(-m[C], k))
+                            result = _solve(m[A] - Pow(-m[C], k), symbol, **flags)
         # but first remove radicals as this will help Polys
         if result is False and flags.pop('unrad', True):
             try:
