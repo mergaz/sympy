@@ -2433,8 +2433,11 @@ def _solve(f, *symbols, **flags):
                                         b = lin.nth(0)
                                         result += [(simplify(r[2]) - b) / a]
                                     else:
-                                        flags['tsolve'] = False
-                                        result += _solve(r[1] - simplify(r[2]), symbol, **flags)
+                                        #flags['tsolve'] = False
+                                        # ^ this can lead to infinite recursion
+                                        res1 = _solve(r[1] - simplify(r[2]), symbol, **flags)
+                                        if res1 is not None:
+                                            result += res1
 
 
 
