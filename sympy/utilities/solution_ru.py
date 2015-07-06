@@ -55,6 +55,7 @@ comment_ru = {
     'Raise the both sides of the equation to the power': u'Возведём обе части уравнения в степень',
     'Remove zeros rows': u'Уберём нулевые строки',
     'Rewrite it as': u'Перепишем уравнение',
+    'Rewrite the equation': 'Перепишем уравнение',
     'Rewrite the equation as': u'Перепишем уравнение',
     'Rewrite the equation as a sum of two terms': u'Перепишем уравнение в виде суммы двух выражений',
     'Rewrite the equation in the form': u'Перепишем уравнение в виде',

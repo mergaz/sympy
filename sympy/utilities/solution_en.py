@@ -53,6 +53,7 @@ comment_en = {
     'Raise the both sides of the equation to the power': 'Raise the both sides of the equation to the power',
     'Remove zeros rows': 'Remove zeros rows',
     'Rewrite it as': 'Rewrite it as',
+    'Rewrite the equation': 'Rewrite the equation',
     'Rewrite the equation as': 'Rewrite the equation as',
     'Rewrite the equation as a sum of two terms': 'Rewrite the equation as a sum of two terms',
     'Rewrite the equation in the form': 'Rewrite the equation in the form',
