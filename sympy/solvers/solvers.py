@@ -1787,7 +1787,8 @@ def _solve(f, *symbols, **flags):
         unckecked_result = set()
         for m in eqs:
             soln = _solve(m, symbol, **flags)
-            unckecked_result |= set(soln)
+            if soln is not None:
+                unckecked_result |= set(soln)
         # Check result
         trig_dens = set()
         for d in dens:
