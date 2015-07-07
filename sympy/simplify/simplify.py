@@ -4053,7 +4053,12 @@ def logcombine(expr, force=False):
                 num, den = k, -k
                 if num.count_ops() > den.count_ops():
                     num, den = den, num
-                other.append(num*log(log1.pop(num).args[0]/log1.pop(den).args[0]))
+                num = log1.pop(num)
+                den = log1.pop(den)
+                if len(num.args) > 0 and len(den.args) > 0:
+                    other.append(num*log(num.args[0]/den.args[0]))
+                else:
+                    other.append(k*num)
             else:
                 other.append(k*log1.pop(k))
 
