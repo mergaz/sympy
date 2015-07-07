@@ -983,6 +983,8 @@ def find_rational_roots(f):
     a = f.nth(0)
     b = f.nth(f.degree())
     result = []
+    if not a.is_integer:
+        return result
     for p in divisors(a):
         for q in divisors(b):
             if igcd(p, q) == 1:
