@@ -36,17 +36,22 @@ def _nsort(roots, separated=False):
     and imaginary parts before evaluation. In addition, the sorting will raise
     an error if any computation cannot be done with precision.
     """
-    if not all(r.is_number for r in roots):
-        raise NotImplementedError
+    nroots = [] # numbers
+    froots = [] # non numbers, we will put them in the end of result
+    for r in roots:
+        if r.is_number:
+            nroots.append(r)
+        else:
+            froots.append(r)
     # see issue 6137:
     # get the real part of the evaluated real and imaginary parts of each root
-    key = [[i.n(2).as_real_imag()[0] for i in r.as_real_imag()] for r in roots]
+    key = [[i.n(2).as_real_imag()[0] for i in r.as_real_imag()] for r in nroots]
     # make sure the parts were computed with precision
     if any(i._prec == 1 for k in key for i in k):
         raise NotImplementedError("could not compute root with precision")
     # insert a key to indicate if the root has an imaginary part
     key = [(1 if i else 0, r, i) for r, i in key]
-    key = sorted(zip(key, roots))
+    key = sorted(zip(key, nroots))
     # return the real and imaginary roots separately if desired
     if separated:
         r = []
@@ -56,9 +61,9 @@ def _nsort(roots, separated=False):
                 i.append(v)
             else:
                 r.append(v)
-        return r, i
-    _, roots = zip(*key)
-    return list(roots)
+        return r+froots, i
+    _, nroots = zip(*key)
+    return list(nroots + froots)
 
 
 def _sort_gens(gens, **args):
