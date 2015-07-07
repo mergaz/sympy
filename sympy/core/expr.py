@@ -37,10 +37,18 @@ def make_repr(v1, op, v2, res):
     else:
         if op == "*":
             if v1 == -1:
-                res.set_repr(v2.__neg__().repr())
+                v2 = v2.__neg__()
+                if isinstance(v2, Expr):
+                    res.set_repr(v2.repr())
+                else:
+                    res.set_repr(repr(v2))
                 return
             elif v2 == -1:
-                res.set_repr(v1.__neg__().repr())
+                v1 = v1.__neg__()
+                if isinstance(v1, Expr):
+                    res.set_repr(v1.repr())
+                else:
+                    res.set_repr(repr(v1))
                 return
         if op == "/":
             if v2 == -1:
