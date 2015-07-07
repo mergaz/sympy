@@ -1740,6 +1740,8 @@ def _solve(f, *symbols, **flags):
         for s in failed:
             try:
                 soln = _solve(f, s, **flags)
+                if soln is None:
+                    continue
                 for sol in soln:
                     if got_s and any([ss in sol.free_symbols for ss in got_s]):
                         # sol depends on previously solved symbols: discard it
@@ -2711,6 +2713,8 @@ def _solve_system(exprs, symbols, **flags):
                     # put each solution in r and append the now-expanded
                     # result in the new result list; use copy since the
                     # solution for s in being added in-place
+                    if soln is None:
+                        continue
                     for sol in soln:
                         if got_s and any([ss in sol.free_symbols for ss in got_s]):
                             # sol depends on previously solved symbols: discard it
