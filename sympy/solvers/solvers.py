@@ -1029,7 +1029,7 @@ def solve(f, *symbols, **flags):
     ###########################################################################
     if bare_f:
 #>>>IGOR
-        igor_f=igor_trigonometry_formulas(f[0],fi)
+        igor_f=igor_trigonometry_formulas(f[0],fi,_k)
         solution = _solve(igor_f, *symbols, **flags)
         #solution = _solve(f[0], *symbols, **flags)
     else:
@@ -1900,6 +1900,10 @@ def _solve(f, *symbols, **flags):
                     return solveAsinFpBsinG(f_num, symbol)
                 if isASinX_p_BSin2X_p_ASin3X(f_num, symbol):
                     return solveASinX_p_BSin2X_p_ASin3X(f_num, symbol)
+
+
+
+
             except DontKnowHowToSolve:
                 pass
 
@@ -2191,6 +2195,7 @@ def _solve(f, *symbols, **flags):
                                         lin = Poly(r[1], symbol)
                                         a = lin.nth(1)
                                         b = lin.nth(0)
+                                        #r[2]=exp((2*log(3)))
                                         result += [(simplify(r[2]) - b) / a]
                                     else:
                                         flags['tsolve'] = False
