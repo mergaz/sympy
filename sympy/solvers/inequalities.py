@@ -17,7 +17,6 @@ from sympy.logic import And
 from sympy.mpmath import inf
 from sympy.polys import Poly, PolynomialError, parallel_poly_from_expr
 from sympy.polys.polyroots import roots
-from sympy.printing.latex import latex
 from sympy.simplify.simplify import simplify
 from sympy.utilities.solution import add_comment, add_eq, add_exp
 
@@ -147,9 +146,9 @@ def solve_poly_inequality(numer, denom, rel):
         add_comment("We have")
         v = numer(p) / denom(p)
         if v > 0:
-            add_exp(latex(v) + " > 0")
+            add_exp(StrictGreaterThan(v, 0))
         elif v < 0:
-            add_exp(latex(v) + " < 0")
+            add_exp(StrictLessThan(v, 0))
         if (v > 0 and (rel == '>' or rel == '>=')) or (v < 0 and (rel == '<' or rel == '<=')):
             add_comment("Thus the interval")
             add_exp(interval)
