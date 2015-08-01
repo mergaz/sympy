@@ -4,6 +4,7 @@ import gc, sys
 from sympy.printing.latex import LatexPrinter
 from sympy.printing.mathml import MathMLPrinter
 from sympy.core import sympify
+from sympy.core.relational import Eq
 from sympy.utilities.solution_en import solution_comment_table_en
 from sympy.utilities.solution_ru import solution_comment_table_ru
 
@@ -52,22 +53,23 @@ def add_step(variable):
     """Add a variable and its value into solution"""
     var = find_name(variable)
     try:
-        r = printer._print(variable)
+        r = printer._print(Eq(var, variable))
     except:
-        r = repr(variable)
-    solution_list.append(var + " = " + r)
+        r =  var + " = " + repr(variable)
+    solution_list.append(r)
 
 def add_eq(l, r):
     """Add an equality into solution"""
+    e = Eq(l, r)
     try:
-        l = printer._print(l)
+        e = printer._print(e)
     except:
-        l = repr(l)
-    try:
-        r = printer._print(r)
-    except:
-        r = repr(r)
-    solution_list.append(l + " = " + r)
+        e = repr(e)
+    #try:
+    #    r = printer._print(r)
+    #except:
+    #    r = repr(r)
+    solution_list.append(e)
 
     
 def add_exp(exp):
