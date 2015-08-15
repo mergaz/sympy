@@ -1,0 +1,5 @@
+#!/bin/sh
+
+export PYTHONPATH=$PYTHONPATH:.:..:
+
+py.test-2.7 --timeout=5 --timeout_method=signal $*
