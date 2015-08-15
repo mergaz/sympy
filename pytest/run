@@ -2,4 +2,4 @@
 
 export PYTHONPATH=$PYTHONPATH:.:..:
 
-py.test-2.7 --timeout=5 --timeout_method=signal $*
+py.test-2.7 --timeout=5 --timeout_method=signal $* | tee ./test_`date "+%Y%m%d_%H%M%S"`.log
