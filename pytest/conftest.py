@@ -1,6 +1,8 @@
 # content of conftest.py
 import pytest
 import sympy
+from sympy.core.basic import Basic
+from sympy.core.relational import StrictGreaterThan, StrictLessThan, GreaterThan, LessThan
 import csv
 from sympy.utilities.solution import last_solution, reset_solution
 from datetime import datetime
@@ -15,6 +17,7 @@ from functools import wraps
 import errno
 import os
 import signal
+from copy import copy
 
 class TimeoutError(Exception):
     pass
@@ -73,6 +76,51 @@ def processor(func, arguments):
     return func(*arguments)
 """
 
+def equal(A, B):
+    A = sympy.simplify(A)
+    B = sympy.simplify(B)
+    if A == B:
+        return True
+    if type(A) is type(B):
+        if isinstance(A, Basic):
+            if A.is_Boolean:
+                # And, Or, Not
+                if len(A.args) == len(B.args):
+                    counter = 0
+                    args2 = list(B.args)
+                    for arg in A.args:
+                        for arg2 in args2:
+                            if equal(arg, arg2):
+                                args2.remove(arg2)
+                                counter += 1
+                                break
+                    if counter == len(A.args):
+                        return True
+            elif A.is_Relational:
+                # Gt, Lt...
+                if len(A.args) == len(B.args):
+                    for ind in range(len(A.args)):
+                        arg1 = A.args[ind]
+                        arg2 = B.args[ind]
+                        if not equal(arg1, arg2):
+                            return False
+                    return True
+                pass
+            elif A.is_Float:
+                return sympy.Abs(A - B) < 0.001
+    else:
+        if isinstance(A, Basic) and isinstance(B, Basic):
+            if A.is_Relational and B.is_Relational and len(A.args)==2 and len(B.args)==2:
+                if isinstance(A, StrictLessThan) and isinstance(B, StrictGreaterThan):
+                    return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
+                elif isinstance(A, StrictGreaterThan) and isinstance(B, StrictLessThan):
+                    return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
+                elif isinstance(A, LessThan) and isinstance(B, GreaterThan):
+                    return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
+                elif isinstance(A, GreaterThan) and isinstance(B, LessThan):
+                    return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
+    return False
+
 @pytest.fixture(scope="session")
 def s(request):
     now = datetime.today()
@@ -111,7 +159,7 @@ def s(request):
                     eq = True
                     status = 'Passed'
                 else:
-                    eq = sympy.simplify(result) == sympy.simplify(answer)
+                    eq = equal(result, answer)
                     if eq:
                         status = 'Passed'
                     else:
