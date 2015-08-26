@@ -1,12 +1,15 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append('.')
+sys.path.append('..')
+
 import sympy
 from sympy.core.basic import Basic
 from sympy.core.relational import StrictGreaterThan, StrictLessThan, GreaterThan, LessThan
 import csv
 from sympy.utilities.solution import last_solution, reset_solution
 from datetime import datetime
-import sys
 import threading
 try:
     import thread
@@ -16,6 +19,7 @@ except ImportError:
 from functools import wraps
 import errno
 import os
+import glob
 import signal
 from copy import copy
 
@@ -145,5 +149,13 @@ class Test:
 
 if __name__ == '__main__':
     test = Test()
-    test.load_file('demo.csv')
+    if len(sys.argv) > 1:
+        for f in sys.argv[1:]:
+            test.load_file(f)
+    else:
+        for f in glob.glob('*.csv'):
+            if f.startswith('test_'):
+                print 'Skip', f
+            else:
+                test.load_file(f)
     test.finish()
