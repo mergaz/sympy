@@ -123,6 +123,11 @@ def equal(A, B):
 
 @pytest.fixture(scope="session")
 def s(request):
+    def infrepr():
+        return 'inf'
+    sympy.S.Infinity.__str__ = infrepr
+    sympy.S.Infinity.__repr__ = infrepr
+    sympy.S.Infinity.__unicode__ = infrepr
     now = datetime.today()
     file = open('test_{0:%Y%m%d}_{0:%H%M%S}.csv'.format(now), 'wb')
     writer = csv.writer(file)

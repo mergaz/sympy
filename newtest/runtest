@@ -111,6 +111,8 @@ class Test:
             with timeout(seconds=5):
                 if isinstance(func, basestring):
                     func = getattr(sympy, func)
+                    if func is None:
+                        return False
                 for a in args:
                     if isinstance(a, basestring):
                         arguments.append(sympy.sympify(a))
@@ -134,13 +136,12 @@ class Test:
                         status = 'Answer'
         except KeyboardInterrupt:
             status = 'Timeout'
-            raise
         except TimeoutError:
             status = 'Timeout'
-            raise
         except Exception as e:
             status = 'Exception'
-            raise
+        except RuntimeError:
+            status = 'Exception'
         finally:
             self.writer.writerows([[func.__name__, arguments, answer, result, len(sol), status]])
             self.file.flush()
@@ -150,7 +151,8 @@ class Test:
         with open(filename, 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=';', quotechar='"')
             for row in reader:
-                self.process(*row)
+                if len(row):
+                    self.process(*row)
 
 if __name__ == '__main__':
     test = Test(sys.argv[1:])
