@@ -1,0 +1,7 @@
+solve; log(x, 10) ** 2 - 1; [10, 0.1]
+solve; log(x, 3) > 2; And(9 < x, x < oo)
+solve; 4 ** x - 2 ** x <= 2; And(-oo < x, x <= 1)
+solve; log(x, 6) >= 2; And(36 <= x, x < oo)
+solve; log(x, 9) <= 1 / 2; And(-oo < x, x <= 3)
+solve; log(x, 1 / 3) < -4; And(81 < x, x < oo)
+solve; 3 * log(x, 1 / 3) < log(9, 1 / 3) + log(3, 1 / 3); And(3 < x, x < oo)
