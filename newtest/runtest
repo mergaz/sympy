@@ -125,7 +125,10 @@ class Test:
                 reset_solution()
                 result = func(*arguments)
                 sol = last_solution()
-                if answer is None:
+                if (isinstance(result, list) and len(result) == 0) or result is None:
+                    eq = False
+                    status = 'Answer'
+                elif answer is None:
                     eq = True
                     status = 'Passed'
                 else:
