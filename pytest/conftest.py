@@ -133,7 +133,6 @@ def equal(A, B):
                             if DEBUG: print 'Pair not equal', arg1, arg2
                             return res
                     return Tristate(True)
-                pass
             elif A.is_Float:
                 if DEBUG: print 'Float:', A, B, A - B, sympy.Abs(A - B) < 0.001
                 return Tristate(sympy.Abs(A - B) < 0.001)
