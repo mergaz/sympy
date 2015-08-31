@@ -2,9 +2,13 @@
 
 import sys
 import os
-sys.path.append(sys.path[0])
-sys.path.append(os.path.join(sys.path[0], '../'))
-os.chdir(sys.path[0])
+if len(sys.path[0]) > 0:
+    sys.path.append(sys.path[0])
+    sys.path.append(os.path.join(sys.path[0], '../'))
+    os.chdir(sys.path[0])
+else:
+    sys.path.append('./')
+    sys.path.append('../')
 
 import sympy
 from sympy.core.basic import Basic

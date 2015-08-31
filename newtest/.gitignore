@@ -1,2 +1,3 @@
 test_*.log
 test_*.csv
+cover/*.cover
