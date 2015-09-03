@@ -29,7 +29,7 @@ import signal
 from copy import copy
 from traceback import print_exc
 
-DEBUG=False
+DEBUG=True
 
 class Tristate(object):
     def __init__(self, value=None):
@@ -132,8 +132,44 @@ def equal(A, B):
                     return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
                 elif isinstance(A, GreaterThan) and isinstance(B, LessThan):
                     return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
-            if A.is_Number and B.is_Number:
+            elif A.is_Number and B.is_Number:
                 return Tristate(A == B)
+            elif A.is_Boolean:
+                # And, Or, Not
+                result = equal(list(A.args), B)
+                if result == True:
+                    result = Tristate(None)
+                return result
+            elif B.is_Boolean:
+                # And, Or, Not
+                result = equal(A, list(B.args))
+                if result == True:
+                    result = Tristate(None)
+                return result
+            elif DEBUG:
+                print 'Unknown pair'
+        elif isinstance(A, list):
+            counter = 0
+            for arg in A:
+                if equal(arg, B):
+                    counter += 1
+            if counter == 0:
+                return Tristate(False)
+            elif counter < len(A):
+                return Tristate(None)
+            else:
+                return Tristate(True)
+        elif isinstance(B, list):
+            counter = 0
+            for arg in B:
+                if equal(A, arg):
+                    counter += 1
+            if counter == 0:
+                return Tristate(False)
+            elif counter < len(A):
+                return Tristate(None)
+            else:
+                return Tristate(True)
     return Tristate(False)
 
 class Test:
@@ -216,9 +252,13 @@ class Test:
     def load_file(self, filename):
         with open(filename, 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+            skip = False
             for row in reader:
                 if len(row):
-                    self.process(*row)
+                    if row[0].startswith('###'):
+                        skip = not skip
+                    elif not skip:
+                        self.process(*row)
 
 if __name__ == '__main__':
     test = Test(sys.argv[1:])
