@@ -38,6 +38,9 @@ except:
     raise
     COLORS=False
 
+def default_state():
+    return {'Exception': 0, 'Missed': 0, 'Answer': 0, 'Passed': 0, 'Timeout': 0}
+
 class Colored:
     def __init__(self, style):
         self.style = style
@@ -244,6 +247,7 @@ class Test:
         if func.startswith('#'): return None
         try:
             with timeout(seconds=5):
+                message('Process:', *args)
                 if isinstance(func, basestring):
                     func = getattr(sympy, func)
                     if func is None:
@@ -303,7 +307,7 @@ class Test:
         return status
 
     def load_file(self, filename):
-        stats = {'Exception': 0, 'Missed': 0, 'Answer': 0, 'Passed': 0}
+        stats = default_state()
         with open(filename, 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=';', quotechar='"')
             skip = False
@@ -313,14 +317,15 @@ class Test:
                         skip = not skip
                     elif not skip:
                         res = self.process(*row)
-                        stats[res] = stats[res] + 1
+                        if res is not None:
+                            stats[res] = stats[res] + 1
             message('Result:', filename)
             message(**stats)
         return stats
 
 if __name__ == '__main__':
     test = Test(sys.argv[1:])
-    stats = {'Exception': 0, 'Missed': 0, 'Answer': 0, 'Passed': 0}
+    stats = default_state()
     if len(sys.argv) > 1:
         for f in sys.argv[1:]:
             res = test.load_file(f)
