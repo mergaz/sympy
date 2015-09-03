@@ -15,7 +15,12 @@ import sympy
 from sympy.core.basic import Basic
 from sympy.core.relational import StrictGreaterThan, StrictLessThan, GreaterThan, LessThan
 import csv
-from sympy.utilities.solution import last_solution, reset_solution
+try:
+    from sympy.utilities.solution import last_solution, reset_solution
+    SOLUTIONS=True
+except:
+    SOLUTIONS=False
+
 from datetime import datetime
 import threading
 try:
@@ -261,9 +266,11 @@ class Test:
                     answer = None
                 if isinstance(answer, basestring):
                     answer = sympy.sympify(answer)
-                reset_solution()
+                if SOLUTIONS:
+                    reset_solution()
                 result = func(*arguments)
-                sol = last_solution()
+                if SOLUTIONS:
+                    sol = last_solution()
                 if (isinstance(result, list) and len(result) == 0) or result is None:
                     eq = False
                     status = 'Answer'
