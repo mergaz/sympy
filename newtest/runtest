@@ -40,7 +40,6 @@ try:
     init()
     COLORS=True
 except:
-    raise
     COLORS=False
 
 def default_state():
