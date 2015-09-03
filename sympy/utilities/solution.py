@@ -8,6 +8,7 @@ from sympy.utilities.solution_en import solution_comment_table_en
 from sympy.utilities.solution_ru import solution_comment_table_ru
 
 solution_list = []
+subroutines = []
 comment_table = solution_comment_table_en()
 printer = LatexPrinter()
 
@@ -46,7 +47,7 @@ def add_comment(cm, *args):
     else:
         c = cm
         print "Not localized:", c
-    solution_list.append('_' + c)
+    append_to_result('_' + c)
     
 def add_step(variable):
     """Add a variable and its value into solution"""
@@ -55,7 +56,7 @@ def add_step(variable):
         r = printer._print(variable)
     except:
         r = repr(variable)
-    solution_list.append(var + " = " + r)
+    append_to_result(var + " = " + r)
 
 def add_eq(l, r):
     """Add an equality into solution"""
@@ -67,7 +68,7 @@ def add_eq(l, r):
         r = printer._print(r)
     except:
         r = repr(r)
-    solution_list.append(l + " = " + r)
+    append_to_result(l + " = " + r)
 
     
 def add_exp(exp):
@@ -77,24 +78,38 @@ def add_exp(exp):
         r = printer._print(exp)
     except:
         r = repr(exp)
-    solution_list.append(r)
+    append_to_result(r)
+
+def append_to_result(v):
+    if len(subroutines) > 0:
+        sr = subroutines[-1]
+        sr['list'].append(v)
+    else:
+        solution_list.append(v)
 
 def reset_solution():
     """Clear previos solution"""
-    print("New solution")
+    #print("New solution")
     del solution_list[:]
+    del subroutines[:]
 
 def start_subroutine(name):
     """Start add soubroutine steps"""
-    print("Start subroutine", name)
+    #print("Start subroutine", name)
+    sr = {'name':name, 'list':[]}
+    subroutines.append(sr)
 
 def cancel_subroutine():
     """Cancel all steps of current subroutine"""
-    print("Cancel subroutine")
+    #print("Cancel subroutine")
+    sr = subroutines.pop()
 
 def commit_subroutine():
     """Finish current subroutine"""
-    print("Finish subroutine")
+    #print("Finish subroutine")
+    sr = subroutines.pop()
+    for line in sr['list']:
+        solution_list.append(line)
 
 def last_solution():
     return solution_list
