@@ -1,6 +1,7 @@
 solve; -log(x)/log(3) < -4; x > 81
+###
 solve; 0.8*x + 2 > 0; x > -2.5
-solve; log(7-x, 0.4)>=log(3*x+6, 0.4); [x>=1/4, x=6] 
+solve; log(7-x, 0.4)>=log(3*x+6, 0.4); Or(x>=1/4, 6)
 
 solve; log(x)**2/log(10)**2 - 1; [10, 0.01]
 solve; log(x, 3) > 2; And(9 < x, x < oo)

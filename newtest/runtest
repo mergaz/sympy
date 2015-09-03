@@ -1,5 +1,6 @@
-#!/usr/bin/python
+#!/opt/local/bin/python
 
+from __future__ import print_function
 import sys
 import os
 if len(sys.path[0]) > 0:
@@ -27,9 +28,53 @@ import errno
 import glob
 import signal
 from copy import copy
-from traceback import print_exc
+from traceback import print_exc, format_exception
 
-DEBUG=True
+try:
+    from colorama import init, Fore, Back, Style
+    init()
+    COLORS=True
+except:
+    raise
+    COLORS=False
+
+class Colored:
+    def __init__(self, style):
+        self.style = style
+    def __enter__(self):
+        if COLORS:
+            print (self.style, end='')
+        return self
+    def __exit__(self, exc_type, exc_value, traceback):
+        if COLORS:
+            print (Fore.RESET+Back.RESET+Style.RESET_ALL, end='')
+
+DEBUG=False
+
+def debug(*args, **kwargs):
+    if DEBUG:
+        with Colored(Style.DIM):
+            for arg in args:
+                print (arg, end=' ')
+            for key, value in kwargs.items():
+                print (key, value, end=' ')
+            print()
+
+def error(*args, **kwargs):
+    with Colored(Style.BRIGHT+Fore.RED):
+        for arg in args:
+            print (arg, end=' ')
+        for key, value in kwargs.items():
+            print (key, value, end=' ')
+        print()
+
+def message(*args, **kwargs):
+    with Colored(Style.BRIGHT):
+        for arg in args:
+            print (arg, end=' ')
+        for key, value in kwargs.items():
+            print (key, value, end=' ')
+        print()
 
 class Tristate(object):
     def __init__(self, value=None):
@@ -66,10 +111,10 @@ class timeout:
 def equal(A, B):
     A = sympy.simplify(A)
     B = sympy.simplify(B)
-    if DEBUG: print A, B 
-    if DEBUG: print type(A), type(B)
+    debug( A, B )
+    debug( type(A), type(B))
     if A == B:
-        if DEBUG: print 'Ok'
+        debug( 'Ok')
         return Tristate(True)
     if type(A) is type(B):
         if isinstance(A, Basic):
@@ -82,13 +127,13 @@ def equal(A, B):
                         for arg2 in args2:
                             if equal(arg, arg2) == True:
                                 args2.remove(arg2)
-                                if DEBUG: print 'Remove equal pair', arg, arg2
+                                debug( 'Remove equal pair', arg, arg2)
                                 counter += 1
                                 break
                     if counter == len(A.args):
                         return Tristate(True)
                     else:
-                        if DEBUG: print '===] ', A.args, args2
+                        debug( '===] ', A.args, args2)
                         return Tristate(False)
             elif A.is_Relational:
                 # Gt, Lt...
@@ -98,11 +143,11 @@ def equal(A, B):
                         arg2 = B.args[ind]
                         res = equal(arg1, arg2)
                         if res is not True:
-                            if DEBUG: print 'Pair not equal', arg1, arg2
+                            debug( 'Pair not equal', arg1, arg2)
                             return res
                     return Tristate(True)
             elif A.is_Float:
-                if DEBUG: print 'Float:', A, B, A - B, sympy.Abs(A - B) < 0.001
+                debug( 'Float:', A, B, A - B, sympy.Abs(A - B) < 0.001)
                 return Tristate(sympy.Abs(A - B) < 0.001)
         elif isinstance(A, list):
             counter = 0
@@ -146,8 +191,8 @@ def equal(A, B):
                 if result == True:
                     result = Tristate(None)
                 return result
-            elif DEBUG:
-                print 'Unknown pair'
+            else:
+                debug( 'Unknown pair')
         elif isinstance(A, list):
             counter = 0
             for arg in A:
@@ -234,12 +279,20 @@ class Test:
         except TimeoutError:
             status = 'Timeout'
         except Exception as e:
-            sys.exc_info()
-            print_exc()
+            with Colored(Fore.RED):
+                #sys.exc_info()
+                #print_exc()
+                res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)
+                for line in res:
+                    print(line)
             status = 'Exception'
         except RuntimeError as e:
-            sys.exc_info()
-            print_exc()
+            with Colored(Fore.RED):
+                #sys.exc_info()
+                #print_exc()
+                res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback, limit, file)
+                for line in res:
+                    print(line)
             status = 'Exception'
         finally:
             funcname = func
@@ -247,9 +300,10 @@ class Test:
                 funcname = func.__name__
             self.writer.writerows([[funcname, arguments, answer, result, len(sol), status]])
             self.file.flush()
-        return eq
+        return status
 
     def load_file(self, filename):
+        stats = {'Exception': 0, 'Missed': 0, 'Answer': 0, 'Passed': 0}
         with open(filename, 'rb') as csvfile:
             reader = csv.reader(csvfile, delimiter=';', quotechar='"')
             skip = False
@@ -258,18 +312,29 @@ class Test:
                     if row[0].startswith('###'):
                         skip = not skip
                     elif not skip:
-                        self.process(*row)
+                        res = self.process(*row)
+                        stats[res] = stats[res] + 1
+            message('Result:', filename)
+            message(**stats)
+        return stats
 
 if __name__ == '__main__':
     test = Test(sys.argv[1:])
+    stats = {'Exception': 0, 'Missed': 0, 'Answer': 0, 'Passed': 0}
     if len(sys.argv) > 1:
         for f in sys.argv[1:]:
-            test.load_file(f)
+            res = test.load_file(f)
+            for key, value in res.items():
+                stats[key] += value
     else:
         for f in glob.glob('*.csv'):
             if f.startswith('test_'):
-                print 'Skip', f
+                print ('Skip', f)
             else:
-                test.load_file(f)
+                res = test.load_file(f)
+                for key, value in res.items():
+                    stats[key] += value
+    message('Total:')
+    message(**stats)
     test.finish()
 
