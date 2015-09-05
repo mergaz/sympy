@@ -176,6 +176,14 @@ def equal(A, B):
             elif A.is_Float:
                 debug( 'Float:', A, B, A - B, sympy.Abs(A - B) < 0.001)
                 return Tristate(sympy.Abs(A - B) < 0.001)
+            elif isinstance(A, sympy.Expr):
+                # expressions
+                if A.is_commutative:
+                    # Add or Mul
+                    res = equal(list(A.args), list(B.args))
+                    if res != True:
+                        res = Tristate(False)
+                    return res
         elif isinstance(A, list):
             counter = 0
             args2 = list(B)
@@ -218,6 +226,11 @@ def equal(A, B):
                 if result == True:
                     result = Tristate(None)
                 return result
+            elif A.is_Symbol and B.is_Symbol:
+                n1 = A.name.replace('_', '')
+                n2 = B.name.replace('_', '')
+                debug(n1, n2)
+                return Tristate(n1 == n2)
             else:
                 debug( 'Unknown pair')
         elif isinstance(A, list):
@@ -356,6 +369,9 @@ if __name__ == '__main__':
     files = {}
     if len(sys.argv) > 1:
         for f in sys.argv[1:]:
+            if f == '-d':
+                DEBUG = True
+                continue
             res = test.load_file(f)
             files[f] = res
             for key, value in res.items():
