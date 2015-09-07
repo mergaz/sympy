@@ -251,7 +251,7 @@ def equal(A, B):
                     counter += 1
             if counter == 0:
                 return Tristate(False)
-            elif counter < len(A):
+            elif counter < len(B):
                 return Tristate(None)
             else:
                 return Tristate(True)
