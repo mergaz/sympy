@@ -135,6 +135,18 @@ class timeout:
     def __exit__(self, type, value, traceback):
         signal.alarm(0)
 
+def tostring(A):
+    if isinstance(A, list):
+        s = '['
+        for index, it in enumerate(A):
+            if index > 0:
+                s += ', '
+            s += tostring(it)
+        s += ']'
+        return s
+    else:
+        return A.__str__()
+
 def equal(A, B):
     A = sympy.simplify(A)
     B = sympy.simplify(B)
@@ -323,16 +335,12 @@ class Test:
             status = 'Timeout'
         except Exception as e:
             with Colored(Fore.RED):
-                #sys.exc_info()
-                #print_exc()
                 res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)
                 for line in res:
                     print(line)
             status = 'Exception'
         except RuntimeError as e:
             with Colored(Fore.RED):
-                #sys.exc_info()
-                #print_exc()
                 res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback, limit, file)
                 for line in res:
                     print(line)
@@ -341,7 +349,7 @@ class Test:
             funcname = func
             if not isinstance(funcname, basestring):
                 funcname = func.__name__
-            self.writer.writerows([[funcname, arguments, answer, result, len(sol), status]])
+            self.writer.writerows([[funcname, arguments, tostring(answer), result, len(sol), status]])
             self.file.flush()
         return status
 
