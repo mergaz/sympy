@@ -349,7 +349,7 @@ class Test:
             funcname = func
             if not isinstance(funcname, basestring):
                 funcname = func.__name__
-            self.writer.writerows([[funcname, arguments, tostring(answer), result, len(sol), status]])
+            self.writer.writerows([[funcname, arguments, tostring(answer), tostring(result), len(sol), status]])
             self.file.flush()
         return status
 
