@@ -43,6 +43,8 @@ try:
 except:
     COLORS=False
 
+TIMEOUT=5
+
 def default_state():
     return {'Exception': 0, 'Missed': 0, 'Answer': 0, 'Passed': 0, 'Timeout': 0}
 
@@ -295,7 +297,7 @@ class Test:
         eq = False
         if func.startswith('#'): return None
         try:
-            with timeout(seconds=5):
+            with timeout(seconds=TIMEOUT):
                 message('Process:', *args)
                 if isinstance(func, basestring):
                     func = getattr(sympy, func)
@@ -379,6 +381,11 @@ if __name__ == '__main__':
         for f in sys.argv[1:]:
             if f == '-d':
                 DEBUG = True
+                continue
+            elif f.startswith('-t'):
+                time = int(f[3:])
+                if time > 0:
+                    TIMEOUT = time
                 continue
             res = test.load_file(f)
             files[f] = res

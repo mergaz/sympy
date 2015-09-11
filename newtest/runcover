@@ -3,4 +3,4 @@
 DIR=`dirname $0`
 cd $DIR
 
-python -m trace --count -C ./cover -m runtest
+python -m trace --count -C ./cover -m runtest -t=30 $*
