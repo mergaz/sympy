@@ -11,8 +11,9 @@ This module contain solvers for all kinds of equations:
       (you will need a good starting point)
 
 """
-
 from __future__ import print_function, division
+
+from igor_trigonometry import *
 
 from sympy.core.compatibility import (iterable, is_sequence, ordered,
     default_sort_key, range)
@@ -60,7 +61,6 @@ from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, sta
 
 # An integer parameter for solutions of trig eqs.
 _k = Dummy('k', integer=True)
-
 
 def _ispow(e):
     """Return True if e is a Pow or is exp."""
@@ -1182,7 +1182,10 @@ def solve(f, *symbols, **flags):
     # try to get a solution
     ###########################################################################
     if bare_f:
-        solution = _solve(f[0], *symbols, **flags)
+#>>>IGOR
+        igor_f=igor_trigonometry_formulas(f[0],fi,_k)
+        solution = _solve(igor_f, *symbols, **flags)
+        #solution = _solve(f[0], *symbols, **flags)
     else:
         solution = _solve_system(f, symbols, **flags)
 
@@ -1337,6 +1340,7 @@ def solve(f, *symbols, **flags):
 
     as_dict = flags.get('dict', False)
     as_set = flags.get('set', False)
+
 
     if not as_set and isinstance(solution, list):
         # Make sure that a list of solutions is ordered in a canonical way.
@@ -1667,7 +1671,6 @@ def simplify_log_eq(f, symbol):
     else:
         return to_log_fixed_base(f, ls[0], False)
 
-
 def _solve(f, *symbols, **flags):
     """Return a checked solution for f in terms of one or more of the
     symbols. A list should be returned except for the case when a linear
@@ -1682,7 +1685,7 @@ def _solve(f, *symbols, **flags):
 
     add_comment('Solve the equation')
     add_eq(f, 0)
-    
+
     if len(symbols) != 1:
         soln = None
         free = f.free_symbols
@@ -1948,6 +1951,7 @@ def _solve(f, *symbols, **flags):
                         add_comment("Therefore we get")
                         add_eq(m[B], m[C])
                         result = _solve(m[B] - m[C], symbol, **flags)
+
             if result is False:
                 m = f_num.match(Pow(A, B) + C)
                 if not m is None:
@@ -2434,6 +2438,7 @@ def _solve(f, *symbols, **flags):
                                         lin = Poly(r[1], symbol)
                                         a = lin.nth(1)
                                         b = lin.nth(0)
+                                        #r[2]=exp((2*log(3)))
                                         result += [(simplify(r[2]) - b) / a]
                                     else:
                                         #flags['tsolve'] = False
@@ -2442,6 +2447,7 @@ def _solve(f, *symbols, **flags):
                                         if res1 is not None:
                                             result += res1
 
+                                        result += _solve(r[1] - simplify(r[2]), symbol, **flags)
 
 
                             result = list(map(simplify, result))
@@ -2542,6 +2548,15 @@ def _solve(f, *symbols, **flags):
     result = merge_trig_solutions(result)
     if len(result) == 0:
         add_comment("Therefore there is no solution")
+
+
+    if f.count('log')>0:
+        if m[C].has('-x') or m[B].has('-x'):
+            for igor in result:
+                if igor<0:
+                    result.remove(igor);
+
+                        #if f.count('log')>0:
 
     return result
 
