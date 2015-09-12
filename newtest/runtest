@@ -280,7 +280,7 @@ class Test:
             self.file = open('test_{0:%Y%m%d}_{0:%H%M%S}_{1}.csv'.format(now, fname[:-4]), 'wb')
         else:
             self.file = open('test_{0:%Y%m%d}_{0:%H%M%S}.csv'.format(now), 'wb')
-        self.writer = csv.writer(self.file)
+        self.writer = csv.writer(self.file, delimiter=";")
         self.writer.writerows([['Function', 'Input', 'Expected', 'Result', 'Solution steps', 'Status']])
         
     def finish(self):
