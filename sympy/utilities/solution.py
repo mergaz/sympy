@@ -56,8 +56,8 @@ def add_step(variable):
     try:
         r = printer._print(Eq(var, variable))
     except:
-        r = repr(variable)
-    append_to_result(var + " = " + r)
+        r = var + " = " + repr(variable)
+    append_to_result(r)
 
 def add_eq(l, r):
     """Add an equality into solution"""
@@ -65,8 +65,8 @@ def add_eq(l, r):
     try:
         e = printer._print(e)
     except:
-        r = repr(r)
-    append_to_result(l + " = " + r)
+        e = repr(e)
+    append_to_result(e)
 
     
 def add_exp(exp):
