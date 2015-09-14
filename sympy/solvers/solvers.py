@@ -13,8 +13,6 @@ This module contain solvers for all kinds of equations:
 """
 from __future__ import print_function, division
 
-from igor_trigonometry import *
-
 from sympy.core.compatibility import (iterable, is_sequence, ordered,
     default_sort_key, range)
 from sympy.core.sympify import sympify
@@ -1182,10 +1180,7 @@ def solve(f, *symbols, **flags):
     # try to get a solution
     ###########################################################################
     if bare_f:
-#>>>IGOR
-        igor_f=igor_trigonometry_formulas(f[0],fi,_k)
-        solution = _solve(igor_f, *symbols, **flags)
-        #solution = _solve(f[0], *symbols, **flags)
+        solution = _solve(f[0], *symbols, **flags)
     else:
         solution = _solve_system(f, symbols, **flags)
 
@@ -2446,8 +2441,9 @@ def _solve(f, *symbols, **flags):
                                         res1 = _solve(r[1] - simplify(r[2]), symbol, **flags)
                                         if res1 is not None:
                                             result += res1
-
-                                        result += _solve(r[1] - simplify(r[2]), symbol, **flags)
+                                        res2 = _solve(r[1] - simplify(r[2]), symbol, **flags)
+                                        if res2 is not None:
+                                            result += res2
 
 
                             result = list(map(simplify, result))
@@ -2548,16 +2544,6 @@ def _solve(f, *symbols, **flags):
     result = merge_trig_solutions(result)
     if len(result) == 0:
         add_comment("Therefore there is no solution")
-
-
-    if f.count('log')>0:
-        if m[C].has('-x') or m[B].has('-x'):
-            for igor in result:
-                if igor<0:
-                    result.remove(igor);
-
-                        #if f.count('log')>0:
-
     return result
 
 
