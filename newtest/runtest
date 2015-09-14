@@ -252,6 +252,12 @@ def equal(A, B):
                 n2 = B.name.replace('_', '')
                 debug(n1, n2)
                 return Tristate(n1 == n2)
+            elif A.is_Number and isinstance(B, sympy.Expr):
+                debug('Test number and function', A, sympy.N(B))
+                return Tristate(A == sympy.N(B))
+            elif isinstance(A, sympy.Expr) and B.is_Number:
+                debug('Test number and function', sympy.N(A), B)
+                return Tristate(sympy.N(A) == B)
             else:
                 debug( 'Unknown pair')
         elif isinstance(A, list):
