@@ -1,0 +1,117 @@
+#!/opt/local/bin/python
+from __future__ import print_function
+import sys
+import csv
+import subprocess
+try:
+    from colorama import init, Fore, Back, Style
+    init()
+    COLORS=True
+except:
+    COLORS=False
+
+class Colored:
+    def __init__(self, style):
+        self.style = style
+    def __enter__(self):
+        if COLORS:
+            print (self.style, end='')
+        return self
+    def __exit__(self, exc_type, exc_value, traceback):
+        if COLORS:
+            print (Fore.RESET+Back.RESET+Style.RESET_ALL, end='')
+
+def debug(*args, **kwargs):
+    if DEBUG:
+        with Colored(Style.DIM):
+            for arg in args:
+                print (arg, end=' ')
+            for key, value in kwargs.items():
+                print (key, value, end=' ')
+            print()
+
+def error(*args, **kwargs):
+    with Colored(Style.BRIGHT+Fore.RED):
+        for arg in args:
+            print (arg, end=' ')
+        for key, value in kwargs.items():
+            print (key, value, end=' ')
+        print()
+
+def message(*args, **kwargs):
+    with Colored(Style.BRIGHT):
+        for arg in args:
+            print (arg, end=' ')
+        for key, value in kwargs.items():
+            print (key, value, end=' ')
+        print()
+
+def separator(*args, **kwargs):
+    rows, columns = subprocess.check_output(['stty', 'size']).split()
+    rows = int(rows)
+    columns = int(columns)
+    with Colored(Style.BRIGHT+Fore.GREEN):
+        if len(args) > 1:
+            str = ' '.join(*args)
+        elif len(args) == 1:
+            str = args[0]
+        else:
+            str = ''
+        for key, value in kwargs.items():
+            str += key + ' ' + value + ' '
+        l = len(str)
+        sl = (columns-l-2)/2
+        print('='*sl, end=' ')
+        print(str, end=' ')
+        print('='*(columns-sl-l-2))
+
+if __name__ == '__main__':
+    if len(sys.argv) == 3:
+        data1 = []
+        data2 = []
+        with open(sys.argv[1], 'rb') as csv1:
+            f1 = csv.reader(csv1, delimiter=';', quotechar='"')
+            for row in f1:
+                if len(row):
+                    data1.append(row)
+        with open(sys.argv[2], 'rb') as csv2:
+            f2 = csv.reader(csv2, delimiter=';', quotechar='"')
+            for row in f2:
+                if len(row):
+                    data2.append(row)
+        values = {'Passed': 0, 'Missed': 1, 'Answer': 2, 'Timeout': 3, 'Exception': 4}
+        good = []
+        bad = []
+        notfound = []
+        for ind1, row1 in enumerate(data1):
+            if ind1 == 0:
+                continue
+            for ind2, row2 in enumerate(data2):
+                if ind2 == 0:
+                    continue
+                if row1[0] == row2[0] and row1[1] == row2[1]:
+                    st1 = values[row1[-1]]
+                    st2 = values[row2[-1]]
+                    row1.insert(0, ind1-1)
+                    if st1 > st2:
+                        good.append(row2)
+                    elif st1 < st2:
+                        bad.append(row1)
+                    break
+                # not found
+                notfound.append(row1)
+        if len(good) > 0:
+            separator('Progress')
+            for row in good:
+                message(*row)
+        if len(bad) > 0:
+            separator('Regress')
+            for row in bad:
+                error(*row)
+        separator('Total')
+        message('Progress:', len(good))
+        message('Regress:', len(bad))
+        message('Not found:', len(notfound))
+    else:
+        error('Usage: compare <first file> <second file>')
+

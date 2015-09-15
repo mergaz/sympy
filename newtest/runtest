@@ -46,7 +46,7 @@ except:
 TIMEOUT=5
 
 def default_state():
-    return {'Exception': 0, 'Missed': 0, 'Answer': 0, 'Passed': 0, 'Timeout': 0}
+    return {'Passed': 0, 'Missed': 0, 'Answer': 0, 'Timeout': 0, 'Exception': 0}
 
 class Colored:
     def __init__(self, style):
