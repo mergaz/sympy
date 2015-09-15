@@ -3,6 +3,7 @@ from __future__ import print_function
 import sys
 import csv
 import subprocess
+import glob
 try:
     from colorama import init, Fore, Back, Style
     init()
@@ -65,16 +66,15 @@ def separator(*args, **kwargs):
         print(str, end=' ')
         print('='*(columns-sl-l-2))
 
-if __name__ == '__main__':
-    if len(sys.argv) == 3:
+def compare(filename1, filename2):
         data1 = []
         data2 = []
-        with open(sys.argv[1], 'rb') as csv1:
+        with open(filename1, 'rb') as csv1:
             f1 = csv.reader(csv1, delimiter=';', quotechar='"')
             for row in f1:
                 if len(row):
                     data1.append(row)
-        with open(sys.argv[2], 'rb') as csv2:
+        with open(filename2, 'rb') as csv2:
             f2 = csv.reader(csv2, delimiter=';', quotechar='"')
             for row in f2:
                 if len(row):
@@ -84,21 +84,28 @@ if __name__ == '__main__':
         bad = []
         notfound = []
         for ind1, row1 in enumerate(data1):
-            if ind1 == 0:
+            if ind1 == 0 or len(row1) < 3:
                 continue
+            found = False
             for ind2, row2 in enumerate(data2):
-                if ind2 == 0:
+                if ind2 == 0 or len(row2) < 3:
                     continue
                 if row1[0] == row2[0] and row1[1] == row2[1]:
                     st1 = values[row1[-1]]
                     st2 = values[row2[-1]]
                     row1.insert(0, ind1-1)
+                    row2.insert(0, ind1-1)
                     if st1 > st2:
+                        row2.append('<-')
+                        row2.append(row1[-1])
                         good.append(row2)
                     elif st1 < st2:
+                        row1.append('->')
+                        row1.append(row2[-1])
                         bad.append(row1)
+                    found = True
                     break
-                # not found
+            if not found:
                 notfound.append(row1)
         if len(good) > 0:
             separator('Progress')
@@ -112,6 +119,22 @@ if __name__ == '__main__':
         message('Progress:', len(good))
         message('Regress:', len(bad))
         message('Not found:', len(notfound))
+        message('Processed:', len(data1), '+', len(data2), 'results')
+
+if __name__ == '__main__':
+    if len(sys.argv) == 3:
+        compare(sys.argv[1], sys.argv[2])
+    elif len(sys.argv) == 1:
+        files = []
+        for f in glob.glob('*.csv'):
+            if f.startswith('test_'):
+                files.append(f)
+        if len(files) > 1:
+            message('Compare', files[0], 'and', files[-1])
+            compare(files[0], files[1])
+        else:
+            message('Test files not found')
+            error('Usage: compare <first file> <second file>')
     else:
         error('Usage: compare <first file> <second file>')
 
