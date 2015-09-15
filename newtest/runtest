@@ -87,9 +87,16 @@ def message(*args, **kwargs):
         print()
 
 def separator(*args, **kwargs):
-    rows, columns = subprocess.check_output(['stty', 'size']).split()
-    rows = int(rows)
-    columns = int(columns)
+    try:
+        # Unix/MacOS
+        rows, columns = subprocess.check_output(['stty', 'size']).split()
+        rows = int(rows)
+        columns = int(columns)
+    except:
+        # Windows
+        rows, columns = (
+            int(os.environ.get('LINES', 25)),
+            int(os.environ.get('COLUMNS', 80)))
     with Colored(Style.BRIGHT+Fore.GREEN):
         if len(args) > 1:
             str = ' '.join(*args)
@@ -132,10 +139,13 @@ class timeout:
     def handle_timeout(self, signum, frame):
         raise TimeoutError(self.error_message)
     def __enter__(self):
-        signal.signal(signal.SIGALRM, self.handle_timeout)
-        signal.alarm(self.seconds)
+        if hasattr(signal, "SIGALRM"):
+            signal.signal(signal.SIGALRM, self.handle_timeout)
+        if hasattr(signal, "alarm"):
+            signal.alarm(self.seconds)
     def __exit__(self, type, value, traceback):
-        signal.alarm(0)
+        if hasattr(signal, "alarm"):
+            signal.alarm(0)
 
 def tostring(A):
     if isinstance(A, list):
@@ -418,4 +428,3 @@ if __name__ == '__main__':
         message(key, ':', **value)
     message('Total:', **stats)
     test.finish()
-
