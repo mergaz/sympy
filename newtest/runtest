@@ -329,8 +329,8 @@ class Test:
             with timeout(seconds=TIMEOUT):
                 message('Process('
                     + str(self.tests_count) + '/'
-                    + str(self.tests_total) + '):'
-                    + str(*args))
+                    + str(self.tests_total) + '):',
+                    *args)
                 if isinstance(func, basestring):
                     func = getattr(sympy, func)
                     if func is None:
