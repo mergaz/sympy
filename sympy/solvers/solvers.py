@@ -1941,90 +1941,11 @@ def _solve_abss(f, *symbols, **flags):
             return False
     return False
 
-def _solve(f, *symbols, **flags):
-    """Return a checked solution for f in terms of one or more of the
-    symbols. A list should be returned except for the case when a linear
-    undetermined-coefficients equation is encountered (in which case
-    a dictionary is returned).
-
-    If no method is implemented to solve the equation, a NotImplementedError
-    will be raised. In the case that conversion of an expression to a Poly
-    gives None a ValueError will be raised."""
-
-    def _expand(p):
-        b, e = p.as_base_exp()
-        e = expand_mul(e)
-        return expand_power_exp(b**e)
-
-    def is_sin_cos(gens):
-        for g in gens:
-            if not g.func in [sin, cos]:
-                return False
-        return True
-
-    def _as_base_q(x):
-        """Return (b**e, q) for x = b**(p*e/q) where p/q is the leading
-        Rational of the exponent of x, e.g. exp(-2*x/3) -> (exp(x), 3)
-        """
-        b, e = x.as_base_exp()
-        if e.is_Rational:
-            return b, e.q
-        if not e.is_Mul:
-            return x, 1
-        c, ee = e.as_coeff_Mul()
-        if c.is_Rational and c is not S.One:  # c could be a Float
-            return b**ee, c.q
-        return x, 1
-
-    add_comment('Solve the equation')
-    add_eq(f, 0)
-
-    # /!\ capture this flag then set it to False so that no checking in
-    # recursive calls will be done; only the final answer is checked
-    checkdens = check = flags.pop('check', True)
-    flags['check'] = False
-
-    msg = ''  # there is no failure message
-    symbol = symbols[0]
-    result = False
-
-    if len(symbols) != 1:
-        result =  _solve_multi_symbols(f, *symbols, **flags)
-        return _after_solve(result, check, checkdens, f, *symbols, **flags)
-
-    # build up solutions if f is a Mul
-    if f.is_Mul:
-        result =  _solve_mul(f, *symbols, **flags)
-        return _after_solve(result, check, checkdens, f, *symbols, **flags)
-    elif f.is_Piecewise:
-        result = _solve_piecewise(f, *symbols, **flags)
-        return _after_solve(result, check, checkdens, f, *symbols, **flags)
-
-    try:
-        if isAcosFpBsinGpC(f, symbol):
-            result = solveAcosFpBsinGpC(f, symbol)
-        elif isAcosFpBcosG(f, symbol):
-            result = solveAcosFpBcosG(f, symbol)
-        elif isAsinFpBsinG(f, symbol):
-            result = solveAsinFpBsinG(f, symbol)
-        elif isASinX_p_BSin2X_p_ASin3X(f, symbol):
-            result = solveASinX_p_BSin2X_p_ASin3X(f, symbol)
-        return _after_solve(result, check, checkdens, f, *symbols, **flags)
-    except DontKnowHowToSolve:
-        pass
-
-    f_num = simplify_log_eq(f, symbol)
-    if f_num != f:
-        result = _solve(f_num, symbol, **flags)
-        return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
-
-    f_num = simplify_exp_eq(f, symbol, False)
-    if f_num != f:
-        result = _solve(f_num, symbol, **flags)
-        return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
-
+def _solve_linear(f, *symbols, **flags):
     # first see if it really depends on symbol and whether there
     # is a linear solution
+    symbol = symbols[0]
+    result = False
     A = Wild("A")
     B = Wild("B")
     r = f.match(sqrt(A) - B)
@@ -2042,7 +1963,7 @@ def _solve(f, *symbols, **flags):
         add_comment("This equation is linear")
         add_comment("The solution to this equation is")
         add_eq(symbol, sol)
-        return _after_solve([sol], check, checkdens, f_num, *symbols, **flags)
+        result = [sol]
 
     if f_num - f != 0:
         add_comment("Rewrite the equation as")
@@ -2051,13 +1972,12 @@ def _solve(f, *symbols, **flags):
             add_comment("Solve the equation")
             add_eq(f_num, 0)
 
-    # Poly is generally robust enough to convert anything to
-    # a polynomial and tell us the different generators that it
-    # contains, so we will inspect the generators identified by
-    # polys to figure out what to do.
+    return result
 
+def _solve_pow1(f, *symbols, **flags):
     A, B, C = Wild("A"), Wild("B"), Wild("C")
-    rf_num = simplify_exp_eq(powsimp(f_num), symbol, True)
+    symbol = symbols[0]
+    rf_num = simplify_exp_eq(powsimp(f), symbol, True)
     m = rf_num.match(Pow(A, B) - Pow(A, C))
     if not m is None:
         m[A] = simplify(m[A])
@@ -2068,16 +1988,17 @@ def _solve(f, *symbols, **flags):
         add_eq(Pow(m[A], m[B]), Pow(m[A], m[C]))
         add_comment("Therefore we get")
         add_eq(m[B], m[C])
-        result = _solve(m[B] - m[C], symbol, **flags)
-        if result is not False: 
-            return _after_solve(result, check, checkdens, m[B] - m[C], *symbols, **flags)
+        return _solve(m[B] - m[C], symbol, **flags)
+    return False
 
-    bs = get_log_bases(f_num, symbol)
+def _solve_log(f, *symbols, **flags):
+    symbol = symbols[0]
+    bs = get_log_bases(f, symbol)
     if len(bs) == 1:
         b = list(bs)[0]
-        m = f_num.match(log(B, b) - log(C, b))
+        m = f.match(log(B, b) - log(C, b))
         if m is None:
-            m = f_num.match(log(B) - log(C))
+            m = f.match(log(B) - log(C))
             if not m is None:
                 b = S.Exp1
         if not m is None:
@@ -2088,11 +2009,13 @@ def _solve(f, *symbols, **flags):
             add_eq(log(m[B], b), log(m[C], b))
             add_comment("Therefore we get")
             add_eq(m[B], m[C])
-            result = _solve(m[B] - m[C], symbol, **flags)
-            if result is not False: 
-                return _after_solve(result, check, checkdens, m[B] - m[C], *symbols, **flags)
+            return _solve(m[B] - m[C], symbol, **flags)
+    return False
 
-    m = f_num.match(Pow(A, B) + C)
+def _solve_pow2(f, *symbols, **flags):
+    A, B, C = Wild("A"), Wild("B"), Wild("C")
+    symbol = symbols[0]
+    m = f.match(Pow(A, B) + C)
     if not m is None:
         m[B] = simplify(m[B])
         if m[B].is_Rational and m[B].q != 1:
@@ -2106,35 +2029,48 @@ def _solve(f, *symbols, **flags):
                 k = simplify(1 / m[B])
                 add_exp(k)
                 add_eq(m[A], Pow(-m[C], k))
-                result = _solve(m[A] - Pow(-m[C], k), symbol, **flags)
-                if result is not False: 
-                    return _after_solve(result, check, checkdens, m[A] - Pow(-m[C], k), *symbols, **flags)
+                return _solve(m[A] - Pow(-m[C], k), symbol, **flags)
+    return False
 
-    result = _solve_abss(f_num, *symbols, **flags)
-    if result is not False:
-        return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
-
-    # but first remove radicals as this will help Polys
-    if flags.pop('unrad', True):
-        result = _solve_unrad(f_num, *symbols, **flags)
-        if result is not False: 
-            return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
-
+def _solve_poly(f, *symbols, **flags):
     # try to identify a single generator that will allow us to solve this
     # as a polynomial, followed (perhaps) by a change of variables if the
     # generator is not a symbol
 
+    def _as_base_q(x):
+        """Return (b**e, q) for x = b**(p*e/q) where p/q is the leading
+        Rational of the exponent of x, e.g. exp(-2*x/3) -> (exp(x), 3)
+        """
+        b, e = x.as_base_exp()
+        if e.is_Rational:
+            return b, e.q
+        if not e.is_Mul:
+            return x, 1
+        c, ee = e.as_coeff_Mul()
+        if c.is_Rational and c is not S.One:  # c could be a Float
+            return b**ee, c.q
+        return x, 1
+
+    def is_sin_cos(gens):
+        for g in gens:
+            if not g.func in [sin, cos]:
+                return False
+        return True
+
+    symbol = symbols[0]
+    result = False
+
     try:
-        poly = Poly(f_num)
+        poly = Poly(f)
         if poly is None:
-            raise ValueError('could not convert %s to Poly' % f_num)
+            raise ValueError('could not convert %s to Poly' % f)
     except GeneratorsNeeded:
-        simplified_f = simplify(f_num)
-        if simplified_f != f_num:
+        simplified_f = simplify(f)
+        if simplified_f != f:
             return _solve(simplified_f, symbol, **flags)
         raise ValueError('expression appears to be a constant')
 
-    if f_num - poly.as_expr() != 0:
+    if f - poly.as_expr() != 0:
         add_comment("Rewrite the equation as")
         add_eq(poly.as_expr(), 0)
 
@@ -2181,8 +2117,8 @@ def _solve(f, *symbols, **flags):
                 pass
             other = funcs - trig
             if not other and len(funcs.intersection(trig)) > 1:
-                newf = TR1(f_num).rewrite(tan)
-                if newf != f_num:
+                newf = TR1(f).rewrite(tan)
+                if newf != f:
                     add_comment("Using the tangent half-angle substitution we get")
                     add_eq(newf, 0)
                     result = _solve(newf, symbol, **flags)
@@ -2197,20 +2133,21 @@ def _solve(f, *symbols, **flags):
                 f1 = funcs[0]
                 t = Dummy('t')
                 # perform the substitution
-                ftry = f_num.subs(f1, t)
+                ftry = f.subs(f1, t)
 
                 # if no Functions left, we can proceed with usual solve
                 if not ftry.has(symbol):
                     cv_sols = _solve(ftry, t, **flags)
                     cv_inv = _solve(t - f1, symbol, **flags)[0]
-                    sols = list()
-                    for sol in cv_sols:
-                        sols.append(cv_inv.subs(t, sol))
-                    result = list(ordered(sols))
+                    if cv_sols != False and cv_inv != False:
+                        sols = list()
+                        for sol in cv_sols:
+                            sols.append(cv_inv.subs(t, sol))
+                        result = list(ordered(sols))
 
-            if len(get_log_bases(f_num, symbol)) > 0:
-                flc = logcombine(f_num, True)
-                if flc != f_num:
+            if len(get_log_bases(f, symbol)) > 0:
+                flc = logcombine(f, True)
+                if flc != f:
                     add_comment("Rewrite the equation")
                     add_eq(flc, 0)
                     return _solve(flc, symbol, **flags)
@@ -2235,7 +2172,7 @@ def _solve(f, *symbols, **flags):
                 # exp(I*(-x - 2)) + exp(I*(x + 2))
                 # >>> eq.expand().subs(exp(x),y)  # works
                 # y**I*exp(2*I) + y**(-I)*exp(-2*I)
-                ftry = f_num.replace(
+                ftry = f.replace(
                     lambda w: w.is_Pow or isinstance(w, exp),
                     _expand).subs(u, t)
                 if not ftry.has(symbol):
@@ -2252,10 +2189,10 @@ def _solve(f, *symbols, **flags):
         # there may have been more than one generator identified by
         # polys (e.g. for symbols other than the one we are interested
         # in) so recast the poly in terms of our generator of interest.
-        # Also use composite=True with f_num since Poly won't update
+        # Also use composite=True with f since Poly won't update
         # poly as documented in issue 8810.
 
-        poly = Poly(f_num, gens[0], composite=True)
+        poly = Poly(f, gens[0], composite=True)
 
         # if we aren't on the tsolve-pass, use roots
         if not flags.pop('tsolve', False):
@@ -2294,10 +2231,10 @@ for univariate expressions, use nroots.
                     try:
                         t = Dummy('t')
                         iv = _solve(u - t, symbol, **flags)
-                        if iv is not None:
+                        if iv is not None and iv is not False:
                             soln = list(ordered(set([i.subs(t, s) for i in iv for s in soln])))
                     except NotImplementedError:
-                        # perhaps _tsolve can handle f_num
+                        # perhaps _tsolve can handle f
                         soln = None
                 else:
                     check = False  # only dens need to be checked
@@ -2508,34 +2445,134 @@ for univariate expressions, use nroots.
                                 soln = None
                             cancel_subroutine()
                         result = soln
+    return result
+
+def _solve(f, *symbols, **flags):
+    """Return a checked solution for f in terms of one or more of the
+    symbols. A list should be returned except for the case when a linear
+    undetermined-coefficients equation is encountered (in which case
+    a dictionary is returned).
+
+    If no method is implemented to solve the equation, a NotImplementedError
+    will be raised. In the case that conversion of an expression to a Poly
+    gives None a ValueError will be raised."""
+
+    def _expand(p):
+        b, e = p.as_base_exp()
+        e = expand_mul(e)
+        return expand_power_exp(b**e)
+
+    add_comment('Solve the equation')
+    add_eq(f, 0)
+
+    # /!\ capture this flag then set it to False so that no checking in
+    # recursive calls will be done; only the final answer is checked
+    checkdens = check = flags.pop('check', True)
+    flags['check'] = False
+
+    msg = ''  # there is no failure message
+    symbol = symbols[0]
+    result = False
+
+    if len(symbols) != 1:
+        result =  _solve_multi_symbols(f, *symbols, **flags)
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    # build up solutions if f is a Mul
+    if f.is_Mul:
+        result =  _solve_mul(f, *symbols, **flags)
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+    elif f.is_Piecewise:
+        result = _solve_piecewise(f, *symbols, **flags)
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    try:
+        if isAcosFpBsinGpC(f, symbol):
+            result = solveAcosFpBsinGpC(f, symbol)
+        elif isAcosFpBcosG(f, symbol):
+            result = solveAcosFpBcosG(f, symbol)
+        elif isAsinFpBsinG(f, symbol):
+            result = solveAsinFpBsinG(f, symbol)
+        elif isASinX_p_BSin2X_p_ASin3X(f, symbol):
+            result = solveASinX_p_BSin2X_p_ASin3X(f, symbol)
+        if result != False:
+            return _after_solve(result, check, checkdens, f, *symbols, **flags)
+    except DontKnowHowToSolve:
+        pass
+
+    f_num = simplify_log_eq(f, symbol)
+    if f_num != f:
+        result = _solve(f_num, symbol, **flags)
+        return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
+
+    f_num = simplify_exp_eq(f, symbol, False)
+    if f_num != f:
+        result = _solve(f_num, symbol, **flags)
+        return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
+
+    # first see if it really depends on symbol and whether there
+    # is a linear solution
+    result = _solve_linear(f, *symbols, **flags)
+    if result != False:
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    # Poly is generally robust enough to convert anything to
+    # a polynomial and tell us the different generators that it
+    # contains, so we will inspect the generators identified by
+    # polys to figure out what to do.
+
+    result = _solve_pow1(f, *symbols, **flags)
+    if result != False:
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    result = _solve_log(f, *symbols, **flags)
+    if result != False:
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    result = _solve_pow2(f, *symbols, **flags)
+    if result is not False: 
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    result = _solve_abss(f, *symbols, **flags)
+    if result is not False:
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    # but first remove radicals as this will help Polys
+    if flags.pop('unrad', True):
+        result = _solve_unrad(f, *symbols, **flags)
+        if result is not False: 
+            return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    result = _solve_poly(f, *symbols, **flags)
+    if result != False:
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     # fallback if above fails
     # -----------------------
-    if result is False:
-        # try unrad
-        if flags.pop('_unrad', True):
-            try:
-                u = unrad(f_num, symbol)
-            except (ValueError, NotImplementedError):
-                u = False
-            if u:
-                eq, cov = u
-                if cov:
-                    isym, ieq = cov
-                    inv = _solve(ieq, symbol, **flags)[0]
-                    rv = set([inv.subs(isym, xi) for xi in _solve(eq, isym, **flags)])
-                else:
-                    try:
-                        rv = set(_solve(eq, symbol, **flags))
-                    except NotImplementedError:
-                        rv = None
-                if rv is not None:
-                    result = list(ordered(rv))
-                    # if the flag wasn't set then unset it since unrad results
-                    # can be quite long or of very high order
-                    flags['simplify'] = flags.get('simplify', False)
+    # try unrad
+    if flags.pop('_unrad', True):
+        try:
+            u = unrad(f_num, symbol)
+        except (ValueError, NotImplementedError):
+            u = False
+        if u:
+            eq, cov = u
+            if cov:
+                isym, ieq = cov
+                inv = _solve(ieq, symbol, **flags)[0]
+                rv = set([inv.subs(isym, xi) for xi in _solve(eq, isym, **flags)])
             else:
-                pass  # for coverage
+                try:
+                    rv = set(_solve(eq, symbol, **flags))
+                except NotImplementedError:
+                    rv = None
+            if rv is not None:
+                result = list(ordered(rv))
+                # if the flag wasn't set then unset it since unrad results
+                # can be quite long or of very high order
+                flags['simplify'] = flags.get('simplify', False)
+        else:
+            pass  # for coverage
 
     # fallback if above fails
     # if result is False:
@@ -2553,7 +2590,7 @@ for univariate expressions, use nroots.
 
     if result is False or result is None:
         add_comment("This equation cannot be solved")
-        return None
+        return False
         #raise NotImplementedError(msg + "\nNo algorithms are implemented to solve equation %s" % f)
 
     #if flags.get('simplify', True):
