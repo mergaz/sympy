@@ -1626,6 +1626,38 @@ def solve_sinFcosGpC(f, symbol):
         return result
     raise DontKnowHowToSolve()
 
+def is_AsinFcosGpBsinGcosFpC(f, symbol):
+    '''Returns true if the equation has the form A*sin(F(x))*cos(G(x))+B*sin(G(x))*cos(F(x))+C=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)*cos(G)+B*sin(G)*cos(F)+C)
+    result = not m is None and \
+           not m[C].has(symbol) and \
+           m[A] != 0 and not m[A].has(symbol) and \
+           m[B] != 0 and not m[B].has(symbol) and \
+           m[F].has(symbol) and \
+           m[G].has(symbol)
+    return result
+
+def solve_AsinFcosGpBsinGcosFpC(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F(x))*cos(G(x))+B*sin(G(x))*cos(F(x))+C=0
+    """
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)*cos(G)+B*sin(G)*cos(F)+C)
+    g1 = sin(m[F])*cos(m[G])
+    g2 = sin(m[G])*cos(m[F])
+    add_comment("Using an identity for product of sine and cosine, we get:")
+    f1 = TRx10(g1)
+    f2 = TRx10(g2)
+    add_eq(g1, f1)
+    add_eq(g2, f2)
+    add_comment("Therefore our equation is now")
+    f3 = m[A]*f1 + m[B]*f2 + m[C]
+    add_exp(f3)
+    result=solve(f3)
+    return result
+
 def to_exp_fixed_base(e, base, symbol, silent=True):
     if e.args and len(e.args) > 1:
         args = tuple([to_exp_fixed_base(a, base, symbol, silent) for a in e.args])
@@ -2536,6 +2568,8 @@ def _solve(f, *symbols, **flags):
             result = solveASinX_p_BSin2X_p_ASin3X(f, symbol)
         elif is_sinFcosGpC(f, symbol):
             result = solve_sinFcosGpC(f, symbol)
+        elif is_AsinFcosGpBsinGcosFpC(f, symbol):
+            result = solve_AsinFcosGpBsinGcosFpC(f, symbol)
         if result != False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
     except DontKnowHowToSolve:
