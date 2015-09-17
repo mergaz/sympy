@@ -4,6 +4,7 @@ import sys
 import csv
 import subprocess
 import glob
+from datetime import datetime
 try:
     from colorama import init, Fore, Back, Style
     init()
@@ -131,6 +132,23 @@ def compare(filename1, filename2):
         message('Regress:', len(bad))
         message('Not found:', len(notfound))
         message('Processed:', len(data1), '+', len(data2), 'results')
+        if len(data1) == len(data2) and len(notfound) == 0:
+            # output to file
+            now = datetime.today()
+            fname = 'compare_{0:%Y%m%d}_{0:%H%M%S}.csv'.format(now)
+            with open(fname, 'wb') as file:
+                writer = csv.writer(file, delimiter=";")
+                writer.writerows([['#', 'Function', 'Input', 'Expected', 'Result', 'Solution steps', 'Status before', '', 'Status after']])
+                for row in good:
+                    row[-2] = 'Progress'
+                    st1 = row[-1]
+                    row[-1] = row[-3]
+                    row[-3] = st1
+                    writer.writerows([row])
+                for row in bad:
+                    row[-2] = 'Regress'
+                    writer.writerows([row])
+            message('Log was saved to', fname)
 
 if __name__ == '__main__':
     if len(sys.argv) == 3:
