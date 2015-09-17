@@ -31,10 +31,12 @@ from sympy.functions import (log, exp, LambertW, cos, sin, tan, cot, acot, acos,
                              Abs, re, im, arg, sqrt, atan2)
 from sympy.functions.elementary.trigonometric import (TrigonometricFunction,
                                                       HyperbolicFunction)
+from sympy.simplify.simplify import bottom_up
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine, trigsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth
 from sympy.simplify.fu import TR1, TR5, TR6
+from sympy.simplify.fu_ext import TRx10
 from sympy.matrices import Matrix, zeros
 from sympy.polys import roots, cancel, factor, Poly, together, degree
 from sympy.polys.polyerrors import GeneratorsNeeded, PolynomialError
@@ -1539,24 +1541,24 @@ def isASinX_p_BSin2X_p_ASin3X(f, symbol):
     """
     A, B, X = Wild('A'), Wild('B'), Wild('X')
     m = f.match(A*sin(X) + B*sin(2*X) + A*sin(3*X))
-    
+
     return not m is None and \
            m[A] != 0 and not m[A].has(symbol) and \
            m[B] != 0 and not m[B].has(symbol)
-    
+
 def solveASinX_p_BSin2X_p_ASin3X(f, symbol):
     """ Solve the equation in the form of
         $ a \sin(x) + b \sin(2x) + a \sin(3x) $
-    """    
+    """
     A, B, X = Wild('A'), Wild('B'), Wild('X')
     m = f.match(A*sin(X) + B*sin(2*X) + A*sin(3*X))
-    
+
     add_comment('Rewrite the equation as a sum of two terms')
     eq1 = m[B] * sin(2*m[X])
     add_exp(eq1)
     eq2 = m[A] * sin(m[X]) + m[A] * sin(3*m[X])
-    add_exp(eq2)   
- 
+    add_exp(eq2)
+
     add_comment('Rewrite the second term as')
     add_exp(eq2)
     eq2 = m[A]*sin(m[X]) + expand(m[A]*sin(3*m[X]), trig=True)
@@ -1571,11 +1573,11 @@ def solveASinX_p_BSin2X_p_ASin3X(f, symbol):
     add_comment('Finally the given equation write as')
     eq = eq1 + eq2
     add_eq(eq1 + eq2, 0)
-    
+
     eq = factor(eq1 + eq2)
     add_eq(eq, 0)
-    
-    add_comment('The solution to this equation is the union of the solutions of the following equations')   
+
+    add_comment('The solution to this equation is the union of the solutions of the following equations')
     for expr in eq.args:
         if (expr.has(symbol)):
             add_eq(expr, 0)
@@ -1586,6 +1588,43 @@ def solveASinX_p_BSin2X_p_ASin3X(f, symbol):
             r = solve(expr, symbol)
             result.append(r)
     return result
+
+def is_sinFcosGpC(f, symbol):
+    '''Returns true if the equation has the form A*sin(F(x))*cos(G(x))+C= 0
+    '''
+    # @Note: For some reason, match() does not always work if we want
+    # to represent A*x+C=0 as X+C2=0. Therefore, we use both A and C
+    # and deal with it afterwards.
+    A, C, F, G = Wild("A"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)*cos(G)+C)
+    result = not m is None and \
+           not m[C].has(symbol) and \
+           m[A] != 0 and not m[A].has(symbol) and \
+           m[F].has(symbol) and \
+           m[G].has(symbol)
+    return result
+
+def solve_sinFcosGpC(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F(x))*cos(G(x))+C= 0
+    """
+    A, C, F, G = Wild("A"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)*cos(G)+C)
+    if m[F]==m[G]:
+        f1=f
+        if not m[A] == 1:
+            add_comment("Multiply both sides of equation by:")
+            add_exp(1/m[A])
+            f1=f/m[A] # m[A] can not be zero at this point, see is_sinFcosGpC()
+            add_exp(f1)
+        add_comment("Since we have a product of sine and cosine with same arguments")
+        add_exp(sin(m[F])*cos(m[G]))
+        add_comment("It's handy to use an identity for product of sine and cosine")
+        f2=bottom_up(f1,TRx10)
+        add_exp(f2)
+        result = solve(f2)
+        return result
+    raise DontKnowHowToSolve()
 
 def to_exp_fixed_base(e, base, symbol, silent=True):
     if e.args and len(e.args) > 1:
@@ -2278,7 +2317,7 @@ for univariate expressions, use nroots.
                             rts_number += rts[r]
                         soln = list(rts.keys())
                         # Here is some magic. I believe that we don't go to
-                        # this 'if' in case of "school" equations. 
+                        # this 'if' in case of "school" equations.
                         if rts_number < deg:
                             try:
                                 # get all_roots if possible
@@ -2495,6 +2534,8 @@ def _solve(f, *symbols, **flags):
             result = solveAsinFpBsinG(f, symbol)
         elif isASinX_p_BSin2X_p_ASin3X(f, symbol):
             result = solveASinX_p_BSin2X_p_ASin3X(f, symbol)
+        elif is_sinFcosGpC(f, symbol):
+            result = solve_sinFcosGpC(f, symbol)
         if result != False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
     except DontKnowHowToSolve:
@@ -2530,7 +2571,7 @@ def _solve(f, *symbols, **flags):
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_pow2(f, *symbols, **flags)
-    if result is not False: 
+    if result is not False:
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_abss(f, *symbols, **flags)
@@ -2540,7 +2581,7 @@ def _solve(f, *symbols, **flags):
     # but first remove radicals as this will help Polys
     if flags.pop('unrad', True):
         result = _solve_unrad(f, *symbols, **flags)
-        if result is not False: 
+        if result is not False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_poly(f, *symbols, **flags)
@@ -3125,7 +3166,7 @@ def solve_linear_system(system, *symbols, **flags):
             pass
 
     matrix = system[:, :]
-    
+
     syms = list(symbols)
 
     i, m = 0, matrix.cols - 1  # don't count augmentation
