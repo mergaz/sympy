@@ -312,8 +312,17 @@ class Test:
         self.tests_total = 0
         self.tests_count = 0
         
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.file is not None:
+            self.finish()
+
     def finish(self):
         self.file.close()
+        self.file = None
+        self.writer = None
 
     def process(self, *arg):
         func = arg[0] if len(arg) > 0 else None
@@ -384,7 +393,7 @@ class Test:
             if not isinstance(funcname, basestring):
                 funcname = func.__name__
             self.writer.writerows([[funcname, arguments, tostring(answer), tostring(result), len(sol), status]])
-            self.file.flush()
+            #self.file.flush()
         return status
 
     def load_file(self, filename):
@@ -410,34 +419,33 @@ class Test:
         return stats
 
 if __name__ == '__main__':
-    test = Test(sys.argv[1:])
     stats = default_state()
     files = {}
-    if len(sys.argv) > 1:
-        for f in sys.argv[1:]:
-            if f == '-d':
-                DEBUG = True
-                continue
-            elif f.startswith('-t'):
-                time = int(f[3:])
-                if time > 0:
-                    TIMEOUT = time
-                continue
-            res = test.load_file(f)
-            files[f] = res
-            for key, value in res.items():
-                stats[key] += value
-    else:
-        for f in glob.glob('*.csv'):
-            if f.startswith('test_'):
-                print ('Skip', f)
-            else:
+    with Test(sys.argv[1:]) as test:
+        if len(sys.argv) > 1:
+            for f in sys.argv[1:]:
+                if f == '-d':
+                    DEBUG = True
+                    continue
+                elif f.startswith('-t'):
+                    time = int(f[3:])
+                    if time > 0:
+                        TIMEOUT = time
+                    continue
                 res = test.load_file(f)
                 files[f] = res
                 for key, value in res.items():
                     stats[key] += value
+        else:
+            for f in glob.glob('*.csv'):
+                if f.startswith('test_'):
+                    print ('Skip', f)
+                else:
+                    res = test.load_file(f)
+                    files[f] = res
+                    for key, value in res.items():
+                        stats[key] += value
     separator('Statistics')
     for key, value in files.items():
         message(key, ':', **value)
     message('Total:', **stats)
-    test.finish()
