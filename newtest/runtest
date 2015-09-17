@@ -63,7 +63,8 @@ DEBUG=False
 
 def debug(*args, **kwargs):
     if DEBUG:
-        with Colored(Style.DIM):
+        style = Style.DIM if COLORS else 0
+        with Colored(style):
             for arg in args:
                 print (arg, end=' ')
             for key, value in kwargs.items():
@@ -71,7 +72,8 @@ def debug(*args, **kwargs):
             print()
 
 def error(*args, **kwargs):
-    with Colored(Style.BRIGHT+Fore.RED):
+    style = Style.BRIGHT+Fore.RED if COLORS else 0
+    with Colored(style):
         for arg in args:
             print (arg, end=' ')
         for key, value in kwargs.items():
@@ -79,7 +81,8 @@ def error(*args, **kwargs):
         print()
 
 def message(*args, **kwargs):
-    with Colored(Style.BRIGHT):
+    style = Style.BRIGHT if COLORS else 0
+    with Colored(style):
         for arg in args:
             print (arg, end=' ')
         for key, value in kwargs.items():
@@ -90,7 +93,8 @@ def separator(*args, **kwargs):
     rows, columns = subprocess.check_output(['stty', 'size']).split()
     rows = int(rows)
     columns = int(columns)
-    with Colored(Style.BRIGHT+Fore.GREEN):
+    style = Style.BRIGHT+Fore.GREEN if COLORS else 0
+    with Colored(style):
         if len(args) > 1:
             str = ' '.join(*args)
         elif len(args) == 1:
