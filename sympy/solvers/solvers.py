@@ -36,7 +36,7 @@ from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine, trigsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth
 from sympy.simplify.fu import TR1, TR5, TR6
-from sympy.simplify.fu_ext import TRx10
+from sympy.simplify.fu_ext import TRx10, TRx11i
 from sympy.matrices import Matrix, zeros
 from sympy.polys import roots, cancel, factor, Poly, together, degree
 from sympy.polys.polyerrors import GeneratorsNeeded, PolynomialError
@@ -1658,6 +1658,60 @@ def solve_AsinFcosGpBsinGcosFpC(f, symbol):
     result=solve(f3)
     return result
 
+
+def is_AsinF2pBcosF2pC(f, symbol):
+    '''Returns true if the equation has the form A*sin(F(x))**2+B*cos(G(x))**2+C=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**2 + B*cos(G)**2 + C)
+    result = not m is None and \
+           not m[C].has(symbol) and \
+           m[A] != 0 and not m[A].has(symbol) and \
+           m[B] != 0 and not m[B].has(symbol) and \
+           m[F].has(symbol) and \
+           m[G].has(symbol)
+    return result
+
+def solve_AsinF2pBcosF2pC(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F(x))**2+B*cos(G(x))**2+C=0
+    """
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    t = Symbol("t")
+    m = f.match(A*sin(F)**2 + B*cos(G)**2 + C)
+    if m[A] == -m[B] and m[F] == m[G]:
+        arg1 = m[F]
+        g1 = m[A]*sin(m[F])**2 + m[B]*cos(m[G])**2
+        g2 = m[C]
+        add_comment("Using reverse formula for cosine of double argument, we get")
+        g3 = TRx11i(g1)
+        arg2 = arg1*2
+        add_eq(g1, g3)
+        add_comment("Therefore our equation is now")
+        f1 = g3 + g2
+        add_exp(f1)
+        if arg2 != symbol:
+            add_comment("Using the substitution")
+            add_eq(t, arg2)
+            add_comment("We get")
+            f2 = f1.subs(arg2,t)
+            add_exp(f2)
+            add_comment("Intermediate solution")
+            f3 = solve(f2)
+            if f3 is not None:
+                # TODO: implement better solution for substitution cases
+                #f4 = [arg2-i for i in f3]
+                add_comment("Reversing the substitution")
+                f4 = arg2 - f3[0]
+                add_exp(f4)
+                result = solve(f4, symbol)
+            else:
+                result = None
+                start_subroutine("Dont Know")
+        else:
+            result = solve(f1)
+    return result
+
 def to_exp_fixed_base(e, base, symbol, silent=True):
     if e.args and len(e.args) > 1:
         args = tuple([to_exp_fixed_base(a, base, symbol, silent) for a in e.args])
@@ -2570,6 +2624,8 @@ def _solve(f, *symbols, **flags):
             result = solve_sinFcosGpC(f, symbol)
         elif is_AsinFcosGpBsinGcosFpC(f, symbol):
             result = solve_AsinFcosGpBsinGcosFpC(f, symbol)
+        elif is_AsinF2pBcosF2pC(f, symbol):
+            result = solve_AsinF2pBcosF2pC(f, symbol)
         if result != False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
     except DontKnowHowToSolve:
