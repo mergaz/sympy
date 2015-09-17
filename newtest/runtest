@@ -90,9 +90,16 @@ def message(*args, **kwargs):
         print()
 
 def separator(*args, **kwargs):
-    rows, columns = subprocess.check_output(['stty', 'size']).split()
-    rows = int(rows)
-    columns = int(columns)
+    try:
+        # Unix/MacOS
+        rows, columns = subprocess.check_output(['stty', 'size']).split()
+        rows = int(rows)
+        columns = int(columns)
+    except:
+        # Windows
+        rows, columns = (
+            int(os.environ.get('LINES', 25)),
+            int(os.environ.get('COLUMNS', 80)))
     style = Style.BRIGHT+Fore.GREEN if COLORS else 0
     with Colored(style):
         if len(args) > 1:
@@ -136,10 +143,13 @@ class timeout:
     def handle_timeout(self, signum, frame):
         raise TimeoutError(self.error_message)
     def __enter__(self):
-        signal.signal(signal.SIGALRM, self.handle_timeout)
-        signal.alarm(self.seconds)
+        if hasattr(signal, "SIGALRM"):
+            signal.signal(signal.SIGALRM, self.handle_timeout)
+        if hasattr(signal, "alarm"):
+            signal.alarm(self.seconds)
     def __exit__(self, type, value, traceback):
-        signal.alarm(0)
+        if hasattr(signal, "alarm"):
+            signal.alarm(0)
 
 def tostring(A):
     if isinstance(A, list):
@@ -299,6 +309,8 @@ class Test:
             self.file = open('test_{0:%Y%m%d}_{0:%H%M%S}.csv'.format(now), 'wb')
         self.writer = csv.writer(self.file, delimiter=";")
         self.writer.writerows([['Function', 'Input', 'Expected', 'Result', 'Solution steps', 'Status']])
+        self.tests_total = 0
+        self.tests_count = 0
         
     def finish(self):
         self.file.close()
@@ -315,7 +327,10 @@ class Test:
         if func.startswith('#'): return None
         try:
             with timeout(seconds=TIMEOUT):
-                message('Process:', *args)
+                message('Process('
+                    + str(self.tests_count) + '/'
+                    + str(self.tests_total) + '):'
+                    + str(*args))
                 if isinstance(func, basestring):
                     func = getattr(sympy, func)
                     if func is None:
@@ -375,6 +390,9 @@ class Test:
     def load_file(self, filename):
         stats = default_state()
         with open(filename, 'rb') as csvfile:
+            # Count number of lines first - memory-friendly way
+            self.tests_total = sum(1 for line in csvfile)
+            csvfile.seek(0)
             separator(filename)
             reader = csv.reader(csvfile, delimiter=';', quotechar='"')
             skip = False
@@ -383,6 +401,7 @@ class Test:
                     if row[0].startswith('###'):
                         skip = not skip
                     elif not skip:
+                        self.tests_count += 1
                         res = self.process(*row)
                         if res is not None:
                             stats[res] = stats[res] + 1
@@ -422,4 +441,3 @@ if __name__ == '__main__':
         message(key, ':', **value)
     message('Total:', **stats)
     test.finish()
-
