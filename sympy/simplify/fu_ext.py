@@ -16,6 +16,7 @@ from sympy.simplify.simplify import bottom_up
 from sympy.functions.elementary.trigonometric import cos, sin, sqrt
 from sympy.core.mul import Mul
 from sympy.core.power import Pow
+from sympy.core import Wild
 
 def TRx1(rv):
     '''
@@ -139,3 +140,26 @@ def TRx10(rv):
                 return (sin(a+b)+sin(a-b))/2
         return rv
     return f(rv)
+
+def TRx11(rv):
+    '''
+    cos(x) -> cos(x/2)**2-sin(x/2)**2
+    '''
+    def f(rv):
+        if rv.func is cos:
+            a=rv.args[0]
+            return cos(a/2)**2-sin(a/2)**2
+        return rv
+    return bottom_up(rv, f)
+
+def TRx11i(rv):
+    '''
+    cos(x)**2-sin(x)**2 -> cos(2*x)
+    '''
+    def f(rv):
+        A, C, F, G = Wild("A"), Wild("C"), Wild("F"), Wild("G")
+        m = rv.match(A*cos(F)**2 - A*sin(F)**2)
+        if m:
+            return m[A]*cos(2*m[F])
+        return rv
+    return bottom_up(rv, f)
