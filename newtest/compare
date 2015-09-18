@@ -137,7 +137,7 @@ def compare(filename1, filename2):
             now = datetime.today()
             fname = 'compare_{0:%Y%m%d}_{0:%H%M%S}.csv'.format(now)
             with open(fname, 'wb') as file:
-                writer = csv.writer(file, delimiter=";")
+                writer = csv.writer(file, delimiter=",")
                 writer.writerows([['#', 'Function', 'Input', 'Expected', 'Result', 'Solution steps', 'Status before', '', 'Status after']])
                 for row in good:
                     row[-2] = 'Progress'
