@@ -71,7 +71,7 @@ def add_eq(l, r):
     
 def add_exp(exp):
     """Add an expression into solution"""
-    print "-> " + str(exp)
+    #print "-> " + str(exp)
     try:
         r = printer._print(exp)
     except:

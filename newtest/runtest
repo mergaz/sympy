@@ -43,7 +43,7 @@ try:
 except:
     COLORS=False
 
-TIMEOUT=5
+TIMEOUT=10
 
 def default_state():
     return {'Passed': 0, 'Missed': 0, 'Answer': 0, 'Timeout': 0, 'Exception': 0}
@@ -87,7 +87,7 @@ def message(*args, **kwargs):
             print (arg, end=' ')
         for key, value in kwargs.items():
             print (key, value, end=' ')
-        print()
+        #print()
 
 def separator(*args, **kwargs):
     try:
@@ -378,12 +378,14 @@ class Test:
             status = 'Timeout'
         except Exception as e:
             with Colored(Fore.RED):
+                print()
                 res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)
                 for line in res:
                     print(line)
             status = 'Exception'
         except RuntimeError as e:
             with Colored(Fore.RED):
+                print()
                 res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback, limit, file)
                 for line in res:
                     print(line)
@@ -394,6 +396,8 @@ class Test:
                 funcname = func.__name__
             self.writer.writerows([[funcname, arguments, tostring(answer), tostring(result), len(sol), status]])
             #self.file.flush()
+            message('\t\t', status)
+            print()
         return status
 
     def load_file(self, filename):
@@ -415,7 +419,9 @@ class Test:
                         if res is not None:
                             stats[res] = stats[res] + 1
             message('Result:', filename)
+            print()
             message(**stats)
+            print()
         return stats
 
 if __name__ == '__main__':
@@ -448,4 +454,5 @@ if __name__ == '__main__':
     separator('Statistics')
     for key, value in files.items():
         message(key, ':', **value)
-    message('Total:', **stats)
+    message('\nTotal:', **stats)
+    print()
