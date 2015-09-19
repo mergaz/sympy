@@ -1993,6 +1993,7 @@ def _solve_pow1(f, *symbols, **flags):
 
 def _solve_log(f, *symbols, **flags):
     symbol = symbols[0]
+    A, B, C = Wild("A"), Wild("B"), Wild("C")
     bs = get_log_bases(f, symbol)
     if len(bs) == 1:
         b = list(bs)[0]
