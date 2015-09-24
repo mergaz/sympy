@@ -662,12 +662,22 @@ def solve_log_log_ineq(log_log_ineq_params):
 def is_trig_ineq(ineq, symbol):
     ineq = simplify(ineq)
     if ineq.func in [StrictGreaterThan, StrictLessThan, GreaterThan, LessThan]:
-        a, b, f = Wild("a"), Wild("b"), Wild("f")
+        a, b, c, f = Wild("a"), Wild("b"), Wild("c"), Wild("f")
         for trig in [sin, cos, tan, cot]:
             rel = ineq.func
+            # TODO: Add support for trig. function on the right side, with flipping of relation
+            # Trig. function is on the left side, constant is on the right side
             m = ineq.match(rel(a*trig(f), b))
             if not m is None and m[a] != 0 and not m[a].has(symbol) and not m[b].has(symbol) and m[f].has(symbol):
                 return m[a], m[b], m[f], rel, trig, symbol
+            # Trig. function is on the left side, constants are on both sides
+            m = ineq.match(rel(a*trig(f)+b, c))
+            if not m is None and \
+                m[a] != 0 and not m[a].has(symbol) and \
+                not m[b].has(symbol) and \
+                not m[c].has(symbol) and \
+                m[f].has(symbol):
+                return m[a], m[c]-m[b], m[f], rel, trig, symbol
     return None
 
 
@@ -734,7 +744,7 @@ def solve_trig_ineq(trig_ineq_params):
     k = Dummy("k")
     add_comment("Solve the inequality")
     add_exp(rel(a * trig(f), b))
-    add_comment("This inequality is triginometric")
+    add_comment("This inequality is trigonometric")
     if a < 0:
         rel = corel(rel)
     if trig in [sin, cos] and (
@@ -795,7 +805,7 @@ def _reduce_inequalities(inequalities, symbols):
 
     poly_part, abs_part = {}, {}
     other = []
-    
+
     for inequality in inequalities:
 
         expr, rel = inequality.lhs, inequality.rel_op  # rhs is 0

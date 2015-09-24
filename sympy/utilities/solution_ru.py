@@ -162,7 +162,7 @@ comment_ru = {
     'This equation is bi-quadratic': u'Уравнение является биквадратным',
     'This equation is linear': u'Уравнение является линейным',
     'This equation is quartic': u'Уравнение является квадратным',
-    'This inequality is triginometric': u'Это неравенство является тригонометрическим',
+    'This inequality is trigonometric': u'Это неравенство является тригонометрическим',
     'This integral is definite': u'Интеграл является определённым',
     'This is 1st order linear differential equation': u'Это линейное уравнение первого порядка',
     'This is a linear differential equation with constant coefficients': u'Это линейное уравнение с постоянными коэффициентами',

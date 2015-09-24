@@ -160,7 +160,7 @@ comment_en = {
     'This equation is bi-quadratic': 'This equation is bi-quadratic',
     'This equation is linear': 'This equation is linear',
     'This equation is quartic': 'This equation is quartic',
-    'This inequality is triginometric': 'This inequality is triginometric',
+    'This inequality is trigonometric': 'This inequality is trigonometric',
     'This integral is definite': 'This integral is definite',
     'This is 1st order linear differential equation': 'This is 1st order linear differential equation',
     'This is a linear differential equation with constant coefficients': 'This is a linear differential equation with constant coefficients',
