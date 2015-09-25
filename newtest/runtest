@@ -325,15 +325,19 @@ class Test:
         self.writer = None
 
     def process(self, *arg):
-        func = arg[0] if len(arg) > 0 else None
-        args = arg[1:-1] if len(arg) > 1 else None
-        answer = arg[-1] if len(arg) > 2 else None
+        if len(arg) < 2: return None
+        if arg[0].startswith('#'): return None
+        comments = [a.strip()[1:] for a in arg if a.strip().startswith('#')]
+        params = [a.strip() for a in arg if not a.strip().startswith('#')]
+
+        func = params[0] if len(params) > 0 else None
+        args = params[1:-1] if len(params) > 1 else None
+        answer = params[-1] if len(params) > 2 else None
         arguments = []
         sol = []
         status = 'Unknown'
         result = None
         eq = False
-        if func.startswith('#'): return None
         try:
             with timeout(seconds=TIMEOUT):
                 message('Process('
@@ -394,7 +398,7 @@ class Test:
             funcname = func
             if not isinstance(funcname, basestring):
                 funcname = func.__name__
-            self.writer.writerows([[funcname, arguments, tostring(answer), tostring(result), len(sol), status]])
+            self.writer.writerows([[funcname, arguments, tostring(answer), tostring(result), len(sol), status] + comments])
             #self.file.flush()
             message('\t\t', status)
             print()
