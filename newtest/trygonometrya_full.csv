@@ -314,5 +314,3 @@ solve; ((cos(-3*pi/2)-sin(3*pi/2))**2)/(2*sin(pi/6)*tan(pi/4)+cos(-pi)-sin(pi/4)
 solve; sin(rad(-300))*cos(rad(-135))*tan(rad(-210))*ctan(rad(-120))+sin(rad(225))*cos(rad(120))*tan(rad(330))*ctan(rad(240)); (sqrt(2)*(sqrt(3)-1))/12
 solve; tan(rad(88))*tan(rad(86))*tan(rad(2))*tan(rad(4))+tan(rad(20))*tan(rad(30))*tan(rad(70)); (3+sqrt(3))/3
 solve; tan(rad(30))+tan(rad(40))+tan(rad(50))+tan(rad(60)); (8*sqrt(3))/3*cos(rad(20))
-
-
