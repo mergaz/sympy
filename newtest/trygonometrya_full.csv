@@ -1,0 +1,318 @@
+solve; sin(x)+1;	[-pi/2+2*pi*_k]
+solve; cos(x)+1;	[pi+2*pi*_k]
+solve; sin(3*x);	[pi/3*_k]
+solve; cos(0.5*x);	[pi+2*pi*_k]
+solve; sin(x/2+(2*pi)/3)-1;	[-11*pi+4*pi*_k]
+solve; (1+tan(a)**2)*(cos(a)**2)-1;	0
+solve; 1-(sin(a)**2)*(1+ctan(a)**2);	0
+solve; 1+tan(a)**2+1/(sin(a)**2);	1/((sin(a)**2)*(cos(a)**2))
+solve; (1+tan(a)**2)/(1+ctan(a)**2);	tan(a)**2
+solve; 2*sin(x)+sin(x)**2+cos(x)**2-1;	[pi*_k]
+solve; 3*(cos(x)**2)-2*sin(x)-3+3*(sin(x)**2);	[pi*_k]
+solve; cos(x)**2-sin(x)**2-2*sin(x)+1+2*sin(x)**2;	[pi/2+2*pi*_k]
+solve; (sin(-a)**3+cos(-a)**3)/(1-sin(-a)*cos(-a));	cos(a)-sin(a)
+solve; (1-(sin(a)+cos(-a))**2)/(-sin(-a));	-cos(a)
+solve; sin(-x)-1;	[-pi/2+2*pi*_k]
+solve; cos(-2*x)-0;	[pi/4+(pi/2)*_k]
+solve; sin(-2*x)-0;	[(pi/2)*_k]
+solve; cos(-x)**2+sin(-x)-2+sin(x)**2;	[-pi/2+2*pi*_k]
+solve; 1-sin(-x)**2+cos(4*pi-x)-cos(x-2*pi);	[pi/2+2*pi*_k]
+solve; [sin(a+pi/6), a+3/5];	-(4*sqrt(3)+3)/10
+solve; [sin(pi/4-a), a+sqrt(2)/3];	-(sqrt(14)-2)/6
+solve; sin(a)*cos(2*a)+sin(2*a)*cos(a);	sin(3*a)
+solve; sin(5*b)*cos(3*b)-sin(3*b)*cos(5*b);	sin(2*b)
+solve; cos(6*x)*cos(5*x)+sin(6*x)*sin(5*x)+1;	[pi+2*pi*_k]
+solve; sin(3*x)*cos(5*x)-sin(5*x)*cos(3*x)+1;	[pi/4+pi*_k]
+solve; sqrt(2)*sin(pi/4-x/2)+sin(x/2)-1;	[4*pi*_k]
+solve; 2*cos(rad(40))*cos(rad(50));	sin(rad(80))
+solve; 2*sin(rad(25))*sin(rad(65));	sin(rad(50))
+solve; sin(2*a)+(sin(a)-cos(a))**2;	1
+solve; cos(4*a)+sin(2*a)**2;	cos(2*a)**2
+solve; sin(2*x)-2*cos(x)-0;	[pi/2+pi*_k]
+solve; cos(2*x)+sin(x)**2-1;	[2*pi*_k]
+solve; 4*cos(x)-sin(2*x);	[pi/2+pi*_k]
+solve; sin(x/2)*cos(x/2)+1/2-0;	[-pi/2+2*pi*_k]
+solve; cos(x/2)**2-sin(x/2)**2;	[pi/2+pi*_k]
+solve; 1+cos(x)-2*cos(x/2);	[pi+2*pi*_k, 4*pi*_k]
+solve; 1+cos(x/2)-2*sin(x/4-(3*pi)/2);	[8*pi+8*pi*_k]
+solve; 1+cos(8*x)-2*cos(4*x);	[pi/4+(pi/2)*_k]
+solve; 2*(sin(x/2)**2)+1/2*sin(2*x)-1;	[pi/2+pi*_k]
+solve; 2*(cos(x)**2)-1/2*sin(4*x)-1;	[pi/4+(pi/2)*_k]
+solve; cos((23*pi)/4)-sin((15*pi)/4)-ctan((-11*pi)/2);	sqrt(2)
+solve; sin((25*pi)/3)-cos((-17*pi)/2)-tan((10*pi)/3);	-sqrt(3)/2
+solve; sin(-7*pi)-2*cos((31*pi)/3)-tan((7*pi)/4);	0
+solve; cos(-9*pi)+2*sin((-49*pi)/6)-ctan((-21*pi)/4);	-1
+solve; [(sin(a)**2/cos(a))-(cos(a)**2)/sin(a), sin(a)-cos(a)-1/2];	11/6
+solve; [(4*sin(2*a)+5*cos(2*a))/(2*sin(2*a)-3*cos(2*a)), ctan(a)-1/3];	-4/9
+solve; sin(5*pi+x)-1;	[-(9*pi)/2+2*pi*_k]
+solve; cos(x+3*pi)-0;	[-(5*pi)/2+pi*_k]
+solve; sin(9/2*pi+x)+1;	[-5*pi+2*pi*_k]
+solve; [(ctan(a)+tan(a))/(ctan(a)-tan(a)), tan(a)-2];	-5/3
+solve; [(sin(a)-cos(a))/(sin(a)+cos(a)), tan(a)-2]; 	1/3
+solve; [(2*sin(a)+3*cos(a))/(3*sin(a)-5*cos(a)), tan(a)-2]; 	7
+solve; [(sin(a)**2+2*cos(a)**2)/(sin(a)**2-cos(a)**2), tan(a)-2];	2
+solve; cos(pi/2-x)-1;	pi/2+2*pi*_k
+solve; sin((3*pi)/2+x)-1;	pi+2*pi*_k
+solve; sin(x-pi/2)-1;	pi+2*pi*_k
+solve; sin(2*x+3*pi)*sin(3*x+(3*pi)/2)-sin(3*x)*cos(2*x)+1; 	pi*_k
+solve; sin(5*x-(3*pi)/2)*cos(2*x+4*pi)-sin(5*x+pi)*sin(2*x)-0; 	pi/6+(pi/3)*_k
+solve; cos(rad(105))+cos(rad(75));	0
+solve; sin(rad(105))-sin(rad(75));	0
+solve; (1-cos(a)+cos(2*a))/(sin(2*a)-sin(a))-ctan(a);	ctan(a)
+solve; (sin(a)+sin(a/2))/(1+cos(a)+cos(a/2))-tan(a/2);	tan(a/2)
+solve; [(sin(a)**2)/cos(a)-(cos(a)**2)/sin(a), sin(a)-cos(a)-1/2];	(11/6)
+solve; [(4*sin(2*a)+5*cos(2*a))/(2*sin(2*a)-3*cos(2*a)), ctan(a)-1/3];	(-4/9)
+solve; 2*cos(x)**2-1-2*sin(x)**2;	[_k*pi+pi/6, _k*pi-pi/6]
+solve; (1+cos(x))*(3-2*cos(x))-0;	[pi+_k*pi*2]
+solve; (1-cos(x))*(4+3*(cos(2*x)))-0;	[_k*pi*2]
+solve; (1+2*cos(x))*(1-3*cos(x))-0;	[_k*pi*2+(pi*2)/3,_k*pi*2-(pi*2)/3, _k*pi*2+arccos(1/3), _k*pi*2-arccos(1/3) ]
+solve; (1-2*cos(x))*(2+3*cos(x))-0;	[_k*pi*2+pi/3, _k*pi*2-pi/3]
+solve; arccos(2*x-3)-pi/3;	(7/4)
+solve; arccos((x+1)/3)-(2*pi)/3;	(-5/2)
+solve; sin(arccos(1/3)+arccos((2*sqrt(2))/3));	1
+solve; cos(arccos(4/5)-arccos(3/5));	(24/25)
+solve; 1-4*sin(x)*cos(x)-0;	[((-1)**_k)*pi/12+_k*(pi/2)]
+solve; 1+6*sin(x/4)*cos(x/4)-0;	[((-1)**(_k+1)*arcsin(1/3))+_k*2*pi]
+solve; 1-8*sin(x/3)*cos(x/3)-0;	[(-1)**_k*(3/2)*arcsin(1/4)+_k*pi*(3/2)]
+solve; 1+cos(5*x)*sin(4*x);	[_k*pi*2+pi/2]
+solve; (4*sin(x)-3)*(2*sin(x)+1)-0;	[(-1)**_k*arcsin(3/4)+_k*pi, (-1)**(_k+1)*(pi/6)+pi*_k]
+solve; (4*sin(3*x)-1)*(2*sin(x)+3)-0;	[(-1)**_k*(1/3)*arcsin(1/4)+_k*pi/3]
+solve; cos(x)**2-1/2;	[_k*(pi/2)+pi/4]
+solve; 2*(sin(x)**2)+sin(x)-1-0;	[(-1)**_k*(pi/6)+_k*pi]
+solve; 2*(cos(x)**2)+cos(x)-6-0;	Net_reshenyy
+solve; 2*(cos(x)**2)-sin(x)+1-0;	[_k*pi*2+pi/2]
+solve; 3*(cos(x)**2)-sin(x)-1-0;	[(-1)**_k*arcsin(2/3)+_k*pi]
+solve; 4*(sin(x)**2)-cos(x)-1-0;	[_k*pi*2, arccos(3/4)+_k*pi*2, -arccos(3/4)+_k*pi*2]
+solve; tan(x)**2-2;	[_k*pi+arctan(2), _k*pi-arctan(2)]
+solve; tan(x)**2-3*tan(x)-4-0;	[_k*pi+arctan(4)]
+solve; tan(x)**2-tan(x)+1-0; []; #Reshenyy_net
+solve; 1+7*(cos(x)**2)-3*sin(2*x);	[_k*pi+arctan(2), _k*pi+arctan(4)]
+solve; 3+sin(2*x)-4*(sin(x)**2);	[_k*pi-pi/4, _k*pi+arctan(3)]
+solve; 3*cos(2*x)+sin(x)**2+5*sin(x)*cos(x)-0;	[_k*pi-arctan(1/2), _k*pi+arctan(3)]
+solve; sqrt(3)*cos(x)+sin(x)-0;	[_k*pi-pi/3]
+solve; cos(x)-sin(x);	[_k*pi+pi/4]
+solve; sin(x)-2*cos(x);	[_k*pi+arctan(2)]
+solve; 2*sin(x)+cos(x)-0;	[_k*pi-arctan(1/2)]
+solve; sin(x)-cos(x)-1;	[((-1)**_k)*(pi/4)+_k*pi+pi/4]
+solve; sin(x)+cos(x)-1;	[((-1)**_k)*(pi/4)+_k*pi-pi/4]
+solve; sqrt(3)*sin(x)+cos(x)-2;	[_k*pi*2+pi/3]
+solve; sin(3*x)+cos(3*x)-sqrt(2);	[_k*((2*pi)/3)+pi/12]
+solve; cos(x)-cos(3*x);	[_k*(pi/2)]
+solve; sin(5*x)-sin(x);	[_k*(pi/2), _k*(pi/3)+pi/6]
+solve; sin(x)+cos(3*x);	[_k*pi+pi/4, _k*(pi/2)+(3*pi)/2]
+solve; cos(3*x)-cos(5*x)-sin(4*x);	[_k*(pi/4), (-1)*_k*(pi/6)+_k*pi]
+solve; sin(7*x)-sin(x)-cos(4*x);	[_k*(pi/2)+pi/4, (-1)**_k*(pi/18)+_k*(pi/3)]
+solve; sin(x)**2-cos(x)**2-cos(4*x);	[_k*pi+pi/2, _k*pi+pi/6, _k*pi-pi/6]
+solve; (1-sqrt(2)*cos(x/4))*(1+sqrt(3)*tan(x))-0;	[_k*pi*8+pi, _k*pi*8-pi, _k*pi-arctan(1/2)]
+solve; (2*sin(x+pi/6)-1)*(2*tan(x)+1)-0;	[(-1)**_k*(pi/6)-pi/6+_k*pi, _k*pi-arctan(1/2)]
+solve; (1+sqrt(2)*cos(x+pi/4))*(tan(x)-3)-0;	[_k*pi*2-pi, _k*pi+arctan(3)]
+solve; 2*sin(x)*cos(x)-cos(x);	[_k*pi+pi/2, (-1)**_k*(pi/6)+_k*pi]
+solve; sin(4*x)+sin(2*x)**2-0;	[_k*(pi/2), _k*(pi/2)-(1/2)*arctan(2)]
+solve; sin(2*x)+2*cos(x)**2-0;	[_k*pi+pi/2, _k*pi-pi/4]
+solve; 2*(cos(2*x)**2)-1-sin(4*x);	[_k*(pi/4)+pi/16]
+solve; 2*(cos(2*x)**2)+3*(cos(x)**2)-2;	[_k*pi+pi/2, _k*pi+(1/2)*arccos(1/4), _k*pi-(1/2)*arccos(1/4)]
+solve; (sin(x)+cos(x))**2-1-cos(x);	[_k*pi+pi/2, _k*pi+(-1)**_k*(pi/6)]
+solve; 2*(sin(2*x))-3*(sin(x)+cos(x))+2-0;	[_k*pi-pi/4]
+solve; sin(2*x)+4*(sin(x)+cos(x))+4-0;	[(-1)**(_k+1)*pi/4-pi/4+pi*_k]
+solve; sin(2*x)+5*(cos(x)+sin(x)+1)-0;	[_k*pi+(-1)**(_k+1)*(pi/4)]
+solve; 1-cos(pi-x)+sin(pi/2+x/2)-0;	[_k*pi*2+(2*pi)/3, _k*pi*2-(2*pi)/3]
+solve; 4*sin(x)*cos(x)*cos(2*x)-sin(4*x)**2;	[(-1)**_k*(pi/24)+(pi/4)*_k]
+solve; 1+cos(x)**2-sin(x)**4;	[_k*pi+pi/2]
+solve; 2*(cos(2*x)**2)+3*sin(4*x)+4*sin(2*x)**2-0;	[_k*(pi/2)-pi/8, _k*(pi/2)-(1/2)*arctan(1/2)]
+solve; 1-sin(x)*cos(x)+2*(cos(x)**2)-0;	Reshenyy_net
+solve; 2*(sin(x)**2)+(1/4)*(cos(2*x)**3)-1;	[_k*(pi/2)+(pi/4)]
+solve; cos(x)*cos(2*x)-sin(x)*sin(2*x);	[_k*pi+pi/2, _k*pi+pi/6, _k*pi-pi/6]
+solve; sin(2*x)*cos(x)-cos(2*x)*sin(x);	[_k*pi]
+solve; sin(3*x)-sin(2*x)*cos(x);	[_k*pi, _k*(pi/2)+pi/4]
+solve; cos(5*x)*cos(x)-cos(4*x);	[_k*(pi/5)]
+solve; 4*(sin(x**2))-5*sin(x)*cos(x)-6*(cos(x)**2)-0;	[_k*pi-arctan(3/4), _k*pi+arctan(2)]
+solve; 3*(sin(x)**2)-7*sin(x)*cos(x)+2*(cos(x)**2)-0;	[_k*pi+arctan(1/3), _k*pi+arctan(1/2)]
+solve; 1-4*sin(x)*cos(x)+4*(cos(x)**2)-0;	Reshenyy_net
+solve; 1+sin(x)**2-2*sin(x)*cos(x);	Reshenyy_net
+solve; 6*cos(2*x)*sin(x)+7*sin(2*x)-0;	[_k*pi, (1/2)*arccos(1/3)+2*pi*_k, (1/2)*arccos(1/3)+_k*pi*2]
+solve; sin(x)**2+sin(2*x)**2-sin(3*x)**2;	[_k*(pi/2), _k*pi+pi/6, _k*pi-pi/6]
+solve; sin(x)*(1-cos(x))**2+cos(x)*((1-sin(x))**2)-2;	[_k*pi-pi/4, _k*pi+(-pi/4)+((-1)**_k)*arcsin((2-sqrt(3))/sqrt(2))]
+solve; sin(x)*sin(2*x)*sin(3*x)-1/4*(sin(4*x));	[pi*_k, pi/2+pi*_k, pi/8+_k*(pi/4)]
+solve; sin(x)**4+cos(x)**4-1/2*(sin(2*x)**2);	[_k*pi+pi/2, _k*(pi/2)+pi/4]
+solve; cos(x)**2+cos(2*x)**2-cos(3*x)**2+cos(4*x)**2;	[_k*(pi/2), _k*(pi/5)]
+solve; cos(2*x)/cos(x)+cos(x)/cos(2*x)-1;	Reshenyy_net
+solve; sin(x)+1/sin(x)-sin(x)**2+1/sin(x)**2;	[_k*pi*2+pi/2]
+solve; sin(x)*sin(5*x)-1;	[_k*pi*2-pi/2, _k*pi+pi/2]
+solve; sqrt(cos(x)+cos(3*x))+sqrt(2)*cos(x);	[_k*pi+pi/2, _k*pi*2+(2*pi)/3, _k*pi*2-(2*pi)/3]
+solve; 4*abs(cos(x))+3-4*(sin(x)**2);	[_k*pi*2+(pi-arccos((sqrt(2)-1)/2)), _k*pi*2-(pi-arccos((sqrt(2)-1)/2)) ]
+solve; abs(tan(x))+1-1/cos(x)**2;	[_k*pi]
+solve; [sin(x)-sin(y)-1, sin(x)**2+cos(y)**2-1]; {x:_k*pi*2+pi/2, y:pi*n}
+solve; cos(x)-1;	[2*pi*_k]
+solve; cos(5*x+4*pi);	[((-4*pi)/5)+((2*pi)/5)*_k]
+solve; cos((5*pi)/2+x)+1;	[(-3*pi)/2+2*pi*_k]
+solve; 2*(sin(x)**2)+3*(cos(x)**2)-2;	[pi/2+pi*_k]
+solve; cos((-2)*x)-1;	[pi*_k]
+solve; sqrt(2)*cos((pi/4)+x)-cos(x)-1;	[-pi/2+2*pi*_k]
+solve; sin(x)**2+cos(2*x);	[pi/2+pi*_k]
+solve; 1-cos(x)-2*sin(x/2);	[pi+4*pi*_k]
+solve; cos(x-pi); [pi/2+pi*_k]
+solve; cos(x)+(sqrt(3))/2;	[+-(5*pi)/6+2*pi*_k]
+solve; 2*cos(x/3)-sqrt(3);	[+-(pi/2)+(6*pi*_k)]
+solve; cos(x)*cos(3* x)-sin(3*x)*sin(x);	[pi/8+(pi/4)*_k]
+solve; 4*(cos(x)**2)-3;	[+-(pi/6)+pi*_k]
+solve; 2*sqrt(2)*(cos(x)**2)-1-sqrt(2);	[(pi/8)+pi*_k, -(pi/8)+pi*_k]
+solve; cos(4*x)-sqrt(2)/2;	[-pi/16, pi/16]
+solve; cos(x)+0.27;	[+-(pi-acos(0.27))+2*pi*_k]
+solve; sin(x)-sqrt(2)/2;	[((-1)**_k)*asin(sqrt(2)/2)+pi*_k]
+solve; sin(2*x)+1;	[-pi/4+pi*_k]
+solve; sin(x+(3*pi)/4)-0;	[-(3*pi)/4+pi*_k]
+solve; sqrt(3)+4*sin(x)*cos(x)-0;	[((-1)**(_k+1))*(pi/6)+(pi/2)*_k]
+solve; 1-sin(x)*cos(2*x)-(cos(2*x))*(sin(x));	[(pi/6)+((2*pi)/3)*_k]
+solve; asin(3-2*x)+pi/4;	[(6+sqrt(2))/4]
+solve; tan(x)+1;	[-pi/4+pi*_k]
+solve; 1+tan(x/3)-0;	[-(3*pi)/4+3*pi*_k]
+solve; (sqrt(3)*tan(x)+1)*(tan(x)-sqrt(3))-0;	[-pi/6+pi*_k, pi/3+pi*_k]
+solve; atan(3-5*x)+(pi/3);	[(3+sqrt(3))/5]
+solve; tan(x)+7.8;	[-atan(7.8)+pi*_k]
+solve; sin(x)**2-1/4;	[+-pi/6+pi*_k]
+solve; 2*(sin(x)**2)+3*cos(x)-0;	[+-(2*pi)/3+2*pi*_k]
+solve; tan(x)-ctan(x);	[+-pi/4+pi*_k]
+solve; 3+sin(2*x)-4*(sin(x)**2);	[-pi/4+pi*_k, atan(3)+pi*_k]
+solve; sin(2*x)-cos(3*x);	[-pi/2+2*pi*_k, pi/10+((2*pi)/5)*_k]
+solve; cos(x)+cos(3*x)-4*(cos(2*x));	[pi/4+(pi/2)*_k]
+solve; (tan(x)-sqrt(3))*(2*sin(x/12)+1)-0;	[pi/3+pi*_k, ((-1)**(_k+1))*2*pi+12*pi*_k]
+solve; sqrt(3)*sin(x)*cos(x)-sin(x)**2;	[pi*_k, pi/3+pi*_k]
+solve; 2*(sin(x)**2)-1-(1/3)*(sin(4*x));	[pi/4+(pi/2)*_k]
+solve; sin(2*x)+3-3*sin(x)-3*cos(x);	[(-1)*(pi/4)-(pi/4)+pi*_k]
+solve; sqrt(2)*cos(x-pi/4)-(sin(x)+cos(x))**2;	[-pi/4+pi*_k, ((-1)**_k)*(pi/4)-(pi/4)+pi*_k]
+solve; sin(2*x)**2+cos(3*x)**2-1-4*sin(x);	[pi*_k]
+solve; 4*sin(3*x)+sin(5*x)-2*sin(x)*cos(2*x)-0;	[(pi/3)*_k]
+solve; sin(x)**6+cos(x)**6-1/4;	[pi/4+(pi/2)*_k]
+solve; sin(x)*cos(4*x)+1;	[-pi/2+2*pi*_k]
+solve; sqrt(5*cos(x)-cos(2*x))+2*(sin(x));	[-acos((sqrt(65)-5)/4)+2*pi*_k]
+solve; [cos(x+y), cos(x-y)-1];	{x:pi/4+(pi/2)*_k+pi*n, y:pi/4+(pi/2)*_k}
+solve; 2*cos(pi/3-3*x)-sqrt(3)-0;	[pi/6+(2*pi/3)*_k, pi/2+((2*pi)/3)*_k]
+solve; 1-sin(x/2+pi/3)-0;	[pi/3+4*pi*_k]
+solve; (1-sqrt(2)*cos(x))*(1+2*sin(2*x)*cos(2*x))-0;	[-pi/4+2*pi*_k, pi/4+2*pi*_k, -pi/8+(pi/2)*_k]
+solve; sqrt(3)-tan(x-pi/5)-0;	[(8*pi)/15+pi*_k]
+solve; cos(x)**2-2*cos(x)-0;	[pi/2+pi*_k]
+solve; cos(x)-cos(3*x);	[(pi/2)*_k]
+solve; cos(2*x)+3*sin(2*x)-3;	[pi/4+pi*_k, atan(1/2)+pi*_k]
+solve; 1+3*cos(x)-sin(2*x)-3*sin(x);	[pi/4+pi*_k]
+solve; sin(x)+sin(2*x)+sin(3*x)-0;	[(pi/2)*_k, -(2*pi)/3+2*pi*_k, (2*pi)/3+2*pi*_k]
+solve; (cos(3*x))/(cos(x))-0;	[pi/6+pi*_k, (5*pi)/6+pi*_k]
+solve; cos(x)**2+cos(2*x)**2+cos(3*x)**2-3/2;	[pi/8+(pi/4)*_k, -pi/3+pi*_k, pi/3+pi*_k]
+solve; [sin(y)*cos(y)-(1/2), sin(2*x)+sin(2*y)];	{x:pi/6+2*pi*_k+2*pi*n, y:(5*pi)/6+2*pi*n}
+solve; cos(rad(15))*cos(rad(5)); 1/2*cos(rad(10)+rad(20))
+solve; 2*cos(pi/8)*cos(pi/5); cos(3*pi/40)+cos(13*pi/40)
+solve; cos(a-pi/6)*cos(a/2+pi/6); 1/2*(cos(a/2-pi/3)+cos(3*a/2))
+solve; sin(rad(10))*cos(rad(8))*cos(rad(6)); 1/4*(sin(rad(24))+sin(rad(12))+sin(rad(8))-sin(rad(4)))
+solve; 4*cos(rad(25))*cos(rad(35))*cos(rad(15)); cos(rad(25))+cos(rad(15))+cos(rad(5))
+solve; 4*sin(A)*sin(2*A)*sin(3*A)*sin(4**A); 1/2-1/2*cos(6*A)-1/2*cos(8*A)+1/2*cos(10*A)
+solve; sin(rad(1))+sin(rad(91))+2*sin(rad(203))*(sin(rad(112))+sin(rad(158))); 0
+solve; cos(rad(35))+cos(rad(125))+2*sin(rad(185))*(sin(rad(130))+sin(rad(140))); 0 
+solve; sin(rad(10))*sin(rad(50))*sin(rad(70)); (1/8)
+solve; 2*cos(rad(20))*cos(rad(40))-cos(rad(20)); (1/2)
+solve; cos(2*a)+2*sin(a+pi/6)*sin(a-pi/6); (1/2)
+solve; cos(2*a)*cos(a)**2-(1/4)*cos(4*a)-(1/2)*cos(2*a); (1/4)
+solve; sin(2*a)+2*sin((5*pi)/12-a)*cos((5*pi)/12+a); (1/2)
+solve; cos(rad(40))-sin(rad(45)); 2*sin(rad(42.5))*sin(rad(2.5))
+solve; sin(pi/10)+sin(pi/12); 0.56783604
+solve; tan((4*pi)/5)-tan((3*pi)/5); 2.35114101
+solve; sin(pi/8)-sin(pi/12); -2*(sin(11*pi/48)*sin(7*pi/48))
+solve; sin(rad(24))+sin(rad(16))+sin(rad(40)); 4*sin(rad(20))*cos(rad(12))*cos(rad(8))
+solve; sin(pi/18+a)+sin(pi/18-a)-cos(a); -4*cos(a)*cos(pi/9)*sin(pi/18)
+solve; (sin(9*a)-sin(3*a))/(sin(9*a)+sin(3*a)); tan(3*a)*ctan(6*a)
+solve; cos(a)+cos(2*a)+cos(3*a)+cos(4*a); 4*cos(a/2)*cos(a)*cos(5*a/2)
+solve; sin(a)+sin(2*a)+sin(3*a)+sin(4*a); 4*cos(a/2)*cos(a)*sin(5*a/2)
+solve; cos(7*a-pi/6)+cos(3*a-pi/6)+sin(4*a); 4*cos(2*a)*sin(pi/3-7*a/2)
+solve; (4*cos(rad(45)))*ctan(rad(60))*tan(rad(60))+(6*sin(rad(30))*cos(rad(30))/(cos(rad(30))**2-sin(rad(30))**2)+sqrt(1-2*cos(rad(45))**2)); 3*sqrt(3)+3*sqrt(2)-1
+solve; ((cos(-3*pi/2)-sin(3*pi/2))**2)/(2*sin(pi/6)*tan(pi/4)+cos(-pi)-sin(pi/4)+(ctan(pi/6)*cos(pi/3)*sin(-pi/4))**(-2)); 8-3*sqrt(2)/3
+solve; sin(rad(-300))*cos(rad(-135))*tan(rad(-210))*ctan(rad(-120))+sin(rad(225))*cos(rad(120))*tan(rad(330))*ctan(rad(240)); (sqrt(2)*(sqrt(3)-1))/12
+solve; tan(rad(88))*tan(rad(86))*tan(rad(2))*tan(rad(4))+tan(rad(20))*tan(rad(30))*tan(rad(70)); (3+sqrt(3))/3
+solve; tan(rad(30))+tan(rad(40))+tan(rad(50))+tan(rad(60)); (8*sqrt(3))/3*cos(rad(20))
+solve; cos(x)-sqrt(2)/2; [_k*2*pi+pi/4, -_k*2*pi+pi/4]
+solve; cos(x)+1/2; [_k*2*pi+2*pi/3, -_k*2*pi+2*pi/3]
+solve; cos(x)-sqrt(3)/2; [_k*2*pi+pi/6, -_k*2*pi+pi/6]
+solve; cos(x)+1; [_k*2*pi+pi, -_k*2*pi+pi]
+solve; 2*cos(x)+sqrt(3); [_k*2*pi+5*pi/6, -_k*2*pi+5*pi/6]
+solve; sqrt(2)*cos(x)-1; [_k*2*pi+pi/4, -_k*2*pi+pi/4]
+solve; 2*cos(x)+sqrt(2); [_k*2*pi+3*pi/4, -_k*2*pi+3*pi/4]
+solve; 2*cos(x)-1; [_k*2*pi+pi/3, -_k*2*pi+pi/3]
+solve; sin(x)-1/2; [_k*pi+((-1)**_k)*pi/6]
+solve; sin(x)+sqrt(3)/2; [_k*pi+((-1)**(_k-1))*pi/3]
+solve; sin(x)+1/2; [_k*pi+((-1)**(_k-1))*pi/6]
+solve; sin(x)+1; [2*_k*pi-pi/2]
+solve; sqrt(2)*sin(x)+1; [_k*pi+((-1)**(_k+1))*pi/4]
+solve; 2*sin(x)+sqrt(3); [_k*pi+((-1)**(_k-1))*pi/3]
+solve; 2*sin(x)-1; [_k*pi+((-1)**_k)*pi/6]
+solve; 2*sin(x)+1; [_k*pi+((-1)**(_k-1))*pi/4]
+solve; tan(x)+1/sqrt(3); [_k*pi-pi/6]
+solve; ctan(x)-sqrt(3); [_k*pi+pi/6]
+solve; 2*sin(x)-1; [_k*pi+pi/4]
+solve; 2*sin(x)+sqrt(2); [_k*pi]
+solve; tan(x)+sqrt(3); [_k*pi-pi/3]
+solve; ctan(x)+1; [_k*pi-pi/4]
+solve; sqrt(3)*tan(x)-1; [_k*pi+pi/6]
+solve; sqrt(3)*ctan(x)-1; [_k*pi+pi/3]
+solve; sin(2*x)-sqrt(2)/2; [(_k*pi)/2+((-1)**_k)*pi/8]
+solve; cos(x/3)+1/2; [6*_k*pi+2*pi, 6*_k*pi-2*pi]
+solve; sin(x/4)-1/2; [_k*4*pi+((-1)**_k)*((2*pi)/3)]
+solve; cos(4*x); [(_k*pi)/4+pi/8]
+solve; sin(x)+0.6; [_k*pi+((-1)**(_k-1))*arcsin(0.6)]
+solve; ctan(x)-2.5; [_k*pi+arctan(2/5)]
+solve; cos(x)-0.3; [_k*2*pi+arccos(0.3), _k*2*pi-arccos(0.3)]
+solve; tan(x)+3.5; [_k*pi+arctan(3.5), _k*pi-arctan(3.5)]
+solve; sin(-x/3)-sqrt(2)/2; [_k*4*pi+((-1)**(_k+1))*((3*pi)/4)]
+solve; tan(-4*x)-1/sqrt(3); [(_k*pi)/4-pi/24]
+solve; cos(-2*x)+sqrt(3)/2; [-_k*pi+(5*pi)/12]
+solve; ctan(-x/2)-1; [_k*2*pi-pi/2]
+solve; 2*cos(x/2-pi/6)-sqrt(3); [_k*4*pi, _k*4*pi+pi/3]
+solve; 2*sin(3*x)-pi/4+sqrt(2); [(_k*pi)/3-pi/12*(1+(-1)**(_k-1))]
+solve; sqrt(3)*tan(x/3+pi/3)-3; [_k*pi-pi/3]
+solve; sin(x/2-pi/6)+1; [_k*4*pi-(2*pi)*3]
+solve; cos(pi/6-2*x)+1; [_k*pi-pi/12]
+solve; 2*sin(pi/3-x/4)-sqrt(3); [_k*4*pi-((4*pi)/3)*((-1)**_k-1)]
+solve; tan(pi/4-x/2)+1; [_k*2*pi+pi]
+solve; 2*cos(pi/4-3*x)-sqrt(2); [((_k*2*pi)/3)+pi/6, (2*_k*pi)/3]
+solve; sin(3*x)*cos(x)-cos(3*x)*sin(x)-sqrt(3)/2; [_k*2*pi-pi/6*((-1)**_k)]
+solve; sin(x/4)**2-cos(x/4)**2-1; [_k*4*pi+2*pi]
+solve; sin(2*x)*cos(2*x)+1/4; [(_k*pi)/4+(pi/24)*((-1)**(_k+1))]
+solve; sin(x/3)*cos(pi/5)-cos(x/3)*sin(pi/5)-sqrt(2)/2; [_k*3*pi+(3*pi)/5+(3*pi)/4*((-1)**_k)]
+solve; sin(x)*cos(pi/6)-cos(x)*sin(pi/6)<=1/2; And(_k*pi*2-pi<=x, x<=2*_k*pi)
+solve; sin(pi/4)*cos(x)+cos(pi/4)*sin(x)<-sqrt(2)/2; And(_k*pi*2-pi<x, x<2*_k*pi-pi/2)
+solve; 4*sin(2*x)*cos(2*x)>=sqrt(2); And((_k*pi)/2+pi/16<=x, x<=(_k*pi)/2+(3*pi)/16)
+solve; cos(pi/8)*cos(x)-sin(x)*sin(pi/8)<-sqrt(3)/2; And(_k*2*pi+(27*pi)/24<x, x<_k*2*pi+(25*pi)/24)
+solve; ctan(x)>=sqrt(3); And(_k*2*pi-pi/2<x, x<_k*2*pi+pi/6)
+solve; sqrt(3)*ctan(pi/4-2*x)>1; And((_k*pi)/2-pi/24<x, x<(_k*pi)/2+(3*pi)/8)
+solve; ctan(3*x)<=1/sqrt(3); And((_k*pi)/3+pi/6<=x, x<(_k*pi)/3+pi/6)
+solve; 3*ctan(pi/6+x/2)>-sqrt(3); And(_k*2*pi-(4*pi)/3<x, x<(_k*pi)/2-pi)
+solve; 3*sin(x/4)>=2; And(_k*8*pi+4*arcsin(2/3)<=x, x<=_k*8*pi+4*(pi-arcsin(2/3)))
+solve; 4*cos(x/3)<-3; And(_k*6*pi+3*(x-arccos(3/4))<x, x<_k*6*pi+3*(pi+arccos(3/4))) 
+solve; 5*tan(2*x)<=3; And((_k*pi)/2+pi/4<x, x<(_k*pi)/2+1/2*(arctan(3/5)))
+solve; 0.5*sin(4*x)<-0.2; And((_k*pi)/2+1/4*(-pi+arcsin(0.4))<x, x<(_k*pi)/2+1/4*(arcsin(0.4)))
+solve; cos(rad(15))*cos(rad(5)); 1/2*cos(rad(10)+rad(20))
+solve; 2*cos(pi/8)*cos(pi/5); cos(3*pi/40)+cos(13*pi/40)
+solve; cos(a-pi/6)*cos(a/2+pi/6);  1/2*(cos(a/2-pi/3)+cos(3*a/2))
+solve; sin(rad(10))*cos(rad(8))*cos(rad(6)); 1/4*(sin(rad(24))+sin(rad(12))+sin(rad(8))-sin(rad(4)))
+solve; 4*cos(rad(25))*cos(rad(35))*cos(rad(15)); cos(rad(25))+cos(rad(15))+cos(rad(5))
+solve; 4*sin(A)*sin(2*A)*sin(3*A)*sin(4**A); 1/2-1/2*cos(6*A)-1/2*cos(8*A)+1/2*cos(10*A)
+solve; sin(rad(1))+sin(rad(91))+2*sin(rad(203))*(sin(rad(112))+sin(rad(158))); 0
+solve; cos(rad(35))+cos(rad(125))+2*sin(rad(185))*(sin(rad(130))+sin(rad(140))); 0
+solve; sin(rad(10))*sin(rad(50))*sin(rad(70)); (1/8)
+solve; 2*cos(rad(20))*cos(rad(40))-cos(rad(20)); (1/2)
+solve; cos(2*a)+2*sin(a+pi/6)*sin(a-pi/6); (1/2)
+solve; cos(2*a)*cos(a)**2-(1/4)*cos(4*a)-(1/2)*cos(2*a); (1/4)
+solve; sin(2*a)+2*sin((5*pi)/12-a)*cos((5*pi)/12+a); (1/2)
+solve; cos(rad(40))-sin(rad(45)); 2*sin(rad(42.5))*sin(rad(2.5))
+solve; sin(pi/10)+sin(pi/12); 0.56783604
+solve; tan((4*pi)/5)-tan((3*pi)/5); 2.35114101
+solve; sin(pi/8)-sin(pi/12); -2*(sin(11*pi/48)*sin(7*pi/48))
+solve; sin(rad(24))+sin(rad(16))+sin(rad(40)); 4*sin(rad(20))*cos(rad(12))*cos(rad(8))
+solve; sin(pi/18+a)+sin(pi/18-a)-cos(a); -4*cos(a)*cos(pi/9)*sin(pi/18)
+solve; (sin(9*a)-sin(3*a))/(sin(9*a)+sin(3*a)); tan(3*a)*ctan(6*a)
+solve; cos(a)+cos(2*a)+cos(3*a)+cos(4*a); 4*cos(a/2)*cos(a)*cos(5*a/2)
+solve; sin(a)+sin(2*a)+sin(3*a)+sin(4*a); 4*cos(a/2)*cos(a)*sin(5*a/2)
+solve; cos(7*a-pi/6)+cos(3*a-pi/6)+sin(4*a); 4*cos(2*a)*sin(pi/3-7*a/2)
+solve; (4*cos(rad(45)))*ctan(rad(60))*tan(rad(60))+(6*sin(rad(30))*cos(rad(30))/(cos(rad(30))**2-sin(rad(30))**2)+sqrt(1-2*cos(rad(45))**2)); 3*sqrt(3)+3*sqrt(2)-1
+solve; ((cos(-3*pi/2)-sin(3*pi/2))**2)/(2*sin(pi/6)*tan(pi/4)+cos(-pi)-sin(pi/4)+(ctan(pi/6)*cos(pi/3)*sin(-pi/4))**(-2)); 8-3*sqrt(2)/3
+solve; sin(rad(-300))*cos(rad(-135))*tan(rad(-210))*ctan(rad(-120))+sin(rad(225))*cos(rad(120))*tan(rad(330))*ctan(rad(240)); (sqrt(2)*(sqrt(3)-1))/12
+solve; tan(rad(88))*tan(rad(86))*tan(rad(2))*tan(rad(4))+tan(rad(20))*tan(rad(30))*tan(rad(70)); (3+sqrt(3))/3
+solve; tan(rad(30))+tan(rad(40))+tan(rad(50))+tan(rad(60)); (8*sqrt(3))/3*cos(rad(20))
+
+

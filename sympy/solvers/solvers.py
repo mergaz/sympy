@@ -363,7 +363,7 @@ def is_trig_linear(solution):
     """
     Retruns true if the solution has the form a*k + b
     """
-    if not solution.is_polynomial(_k):
+    if isinstance(solution, Expr) and not solution.is_polynomial(_k):
         return False
     p = Poly(solution, _k)
     return p.is_linear and p.nth(1) != 0
@@ -399,7 +399,11 @@ def merge_trig_solutions(solutions):
         return s1[0] == s2[0] and (s1[1] / s2[1]).is_integer
 
     linear_solutions, merged_solutions = extract_linear_trig_solutions(solutions)
-    linear_solutions = sorted(linear_solutions, reverse=True)
+    try:
+        linear_solutions = sorted(linear_solutions, reverse=True)
+    except:
+        # FIXME linear_solutions can contain relational functions
+        return solutions
 
     for i in range(len(linear_solutions)):
         for j in range(i + 1, len(linear_solutions)):
@@ -1820,7 +1824,7 @@ def _solve_piecewise(f, *symbols, **flags):
     result = set()
     for n, (expr, cond) in enumerate(f.args):
         candidates = _solve(expr, *symbols, **flags)
-        if candidates is not None:
+        if candidates is not None and candidates is not False:
             for candidate in candidates:
                 if candidate in result:
                     continue
@@ -1914,7 +1918,7 @@ def _solve_abss(f, *symbols, **flags):
         add_exp(abss[0].args[0] < 0)
         result_p = _solve(f_p, symbol, **flags)
         result = []
-        if result_p is not None:
+        if result_p is not None and result_p is not False:
             for r in result_p:
                 v = abss[0].args[0].subs(symbol, r)
                 if v.is_real and v >= 0:
@@ -1923,7 +1927,7 @@ def _solve_abss(f, *symbols, **flags):
                 else:
                     add_comment('The value {} is an extraneous root', str(r))
         result_m = _solve(f_m, symbol, **flags)
-        if result_m is not None:
+        if result_m is not None and result_m is not False:
             for r in result_m:
                 v = abss[0].args[0].subs(symbol, r)
                 if v.is_real and v <= 0:
@@ -2069,7 +2073,8 @@ def _solve_poly(f, *symbols, **flags):
         simplified_f = simplify(f)
         if simplified_f != f:
             return _solve(simplified_f, symbol, **flags)
-        raise ValueError('expression appears to be a constant')
+        #raise ValueError('expression appears to be a constant')
+        return False
 
     if f - poly.as_expr() != 0:
         add_comment("Rewrite the equation as")
@@ -2162,7 +2167,7 @@ def _solve_poly(f, *symbols, **flags):
             u = bases.pop()
             t = Dummy('t')
             inv = _solve(u - t, symbol, **flags)
-            if isinstance(u, (Pow, exp)):
+            if inv is not None and inv is not False and isinstance(u, (Pow, exp)):
                 # this will be resolved by factor in _tsolve but we might
                 # as well try a simple expansion here to get things in
                 # order so something like the following will work now without
@@ -2178,11 +2183,12 @@ def _solve_poly(f, *symbols, **flags):
                     _expand).subs(u, t)
                 if not ftry.has(symbol):
                     soln = _solve(ftry, t, **flags)
-                    sols = list()
-                    for sol in soln:
-                        for i in inv:
-                            sols.append(i.subs(t, sol))
-                    result = list(ordered(sols))
+                    if soln is not None and soln is not False:
+                        sols = list()
+                        for sol in soln:
+                            for i in inv:
+                                sols.append(i.subs(t, sol))
+                        result = list(ordered(sols))
 
     elif len(gens) == 1:
 
@@ -2415,10 +2421,10 @@ for univariate expressions, use nroots.
                                     #flags['tsolve'] = False
                                     # ^ this can lead to infinite recursion
                                     res1 = _solve(r[1] - simplify(r[2]), symbol, **flags)
-                                    if res1 is not None:
+                                    if res1 is not None and res1 is not False:
                                         result += res1
                                     res2 = _solve(r[1] - simplify(r[2]), symbol, **flags)
-                                    if res2 is not None:
+                                    if res2 is not None and res2 is not False:
                                         result += res2
 
 
@@ -2439,7 +2445,7 @@ for univariate expressions, use nroots.
                             start_subroutine("Dont Know")
                             u = Dummy()
                             inversion = _solve(gen - u, symbol, **flags)
-                            if inversion is not None:
+                            if inversion is not None and inversion is not False:
                                 inversion = list(map(simplify, inversion))
                                 soln = list(ordered(set([i.subs(u, s) for i in inversion for s in soln])))
                             else:
@@ -2561,13 +2567,17 @@ def _solve(f, *symbols, **flags):
             if cov:
                 isym, ieq = cov
                 inv = _solve(ieq, symbol, **flags)[0]
-                rv = set([inv.subs(isym, xi) for xi in _solve(eq, isym, **flags)])
+                rv = _solve(eq, isym, **flags)
+                if rv != False and rv is not None:
+                    rv = set([inv.subs(isym, xi) for xi in rv])
             else:
                 try:
-                    rv = set(_solve(eq, symbol, **flags))
+                    rv = _solve(eq, symbol, **flags)
+                    if rv != False and rv is not None:
+                        rv = set(rv)
                 except NotImplementedError:
                     rv = None
-            if rv is not None:
+            if rv is not None and rv != False:
                 result = list(ordered(rv))
                 # if the flag wasn't set then unset it since unrad results
                 # can be quite long or of very high order
@@ -2603,8 +2613,8 @@ def _solve(f, *symbols, **flags):
     return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
 def _after_solve(result, check_flag, checkdens_flag, f, *symbols, **flags):
-    if result is False:
-        return result
+    if result is False or result is None:
+        return False
     result = [r for r in result if r != []]
     symbol = symbols[0]
     checked_result = result

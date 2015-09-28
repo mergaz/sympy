@@ -43,7 +43,7 @@ try:
 except:
     COLORS=False
 
-TIMEOUT=10
+TIMEOUT=15
 
 def default_state():
     return {'Passed': 0, 'Missed': 0, 'Answer': 0, 'Timeout': 0, 'Exception': 0}
@@ -339,56 +339,64 @@ class Test:
         result = None
         eq = False
         try:
-            with timeout(seconds=TIMEOUT):
-                message('Process('
-                    + str(self.tests_count) + '/'
-                    + str(self.tests_total) + '):',
-                    *args)
-                if isinstance(func, basestring):
-                    func = getattr(sympy, func)
-                    if func is None:
-                        return False
-                for a in args:
-                    if isinstance(a, basestring):
-                        arguments.append(sympy.sympify(a))
-                    else:
-                        arguments.append(a)
-                if answer == '???':
-                    answer = None
-                if isinstance(answer, basestring):
-                    answer = sympy.sympify(answer)
-                if SOLUTIONS:
-                    reset_solution()
-                result = func(*arguments)
-                if SOLUTIONS:
-                    sol = last_solution()
-                if (isinstance(result, list) and len(result) == 0) or result is None:
-                    eq = False
-                    status = 'Answer'
-                elif answer is None:
-                    eq = True
-                    status = 'Passed'
+            message('Process('
+                + str(self.tests_count) + '/'
+                + str(self.tests_total) + '):',
+                *args)
+            if isinstance(func, basestring):
+                func = getattr(sympy, func)
+                if func is None:
+                    return False
+            for a in args:
+                if isinstance(a, basestring):
+                    arguments.append(sympy.sympify(a))
                 else:
-                    eq = equal(result, answer)
-                    if eq == True:
-                        status = 'Passed'
-                    elif eq == False:
-                        status = 'Answer'
-                    else:
-                        status = 'Missed'
+                    arguments.append(a)
+            if answer == '???':
+                answer = None
+            if isinstance(answer, basestring):
+                answer = sympy.sympify(answer)
+            if SOLUTIONS:
+                reset_solution()
+            with timeout(seconds=TIMEOUT):
+                result = func(*arguments)
+            if SOLUTIONS:
+                sol = last_solution()
+            if (isinstance(result, list) and len(result) == 0) or result is None:
+                eq = False
+                status = 'Answer'
+            elif answer is None:
+                eq = True
+                status = 'Passed'
+            else:
+                eq = equal(result, answer)
+                if eq == True:
+                    status = 'Passed'
+                elif eq == False:
+                    status = 'Answer'
+                else:
+                    status = 'Missed'
         except KeyboardInterrupt:
             status = 'Timeout'
         except TimeoutError:
+            style = Fore.BLUE if COLORS else 0
+            with Colored(style):
+                print()
+                res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)
+                for line in res:
+                    print(line)
             status = 'Timeout'
         except Exception as e:
-            with Colored(Fore.RED):
+            style = Fore.RED if COLORS else 0
+            with Colored(style):
                 print()
                 res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)
                 for line in res:
                     print(line)
             status = 'Exception'
         except RuntimeError as e:
-            with Colored(Fore.RED):
+            style = Fore.RED if COLORS else 0
+            with Colored(style):
                 print()
                 res = format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback, limit, file)
                 for line in res:
