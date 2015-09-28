@@ -7,6 +7,7 @@ from sympy.core import sympify
 from sympy.core.relational import Eq
 from sympy.utilities.solution_en import solution_comment_table_en
 from sympy.utilities.solution_ru import solution_comment_table_ru
+from traceback import print_stack
 
 solution_list = []
 subroutines = []
@@ -42,12 +43,15 @@ def set_comment_table(ct):
 
 def add_comment(cm, *args):
     c = None
-    if cm in comment_table.keys():
+    if len(cm) <= 0:
+        return
+    elif cm in comment_table.keys():
         c = comment_table[cm]
         c = c.format(*args)
     else:
         c = cm
         print "Not localized:", c
+        #print_stack()
     append_to_result('_' + c)
     
 def add_step(variable):
@@ -61,6 +65,10 @@ def add_step(variable):
 
 def add_eq(l, r):
     """Add an equality into solution"""
+    if isinstance(l, basestring):
+        l = sympify(l)
+    if isinstance(r, basestring):
+        r = sympify(r)
     e = Eq(l, r)
     try:
         e = printer._print(e)
