@@ -272,8 +272,17 @@ def equal(A, B):
             elif isinstance(A, sympy.Expr) and B.is_Number:
                 debug('Test number and function', sympy.N(A), B)
                 return Tristate(sympy.N(A) == B)
+            elif isinstance(A, sympy.Expr) and isinstance(B, sympy.Expr):
+                debug('Test two expressions', A, B)
+                A1 = sympy.N(A)
+                B1 = sympy.N(B)
+                if A1 != A or B1 != B:
+                    return equal(A1, B1)
+                else:
+                    # the numerical result not differ
+                    debug('Can\'t compare expressions')
             else:
-                debug( 'Unknown pair')
+                debug('Unknown pair')
         elif isinstance(A, list):
             counter = 0
             for arg in A:
@@ -369,7 +378,8 @@ class Test:
                 eq = True
                 status = 'Passed'
             else:
-                eq = equal(result, answer)
+                with timeout(seconds=15):
+                    eq = equal(result, answer)
                 if eq == True:
                     status = 'Passed'
                 elif eq == False:
