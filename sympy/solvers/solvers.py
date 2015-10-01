@@ -1904,8 +1904,11 @@ def _solve_unrad(f, *symbols, **flags):
 def _solve_abss(f, *symbols, **flags):
     symbol = symbols[0]
     # Rewrite equations containg abs(f(x)) to two eqs
-    A = sympify('abs(x)')
-    abss = [a for a in f.atoms(Function) if a.has(*symbols) and isinstance(a, type(A))]
+    abss = [a for a in f.atoms(Abs) if a.has(*symbols)]
+    if len(abss) == 0:
+        # try to find built-in abs function
+        A = sympify('abs(x)')
+        abss = [a for a in f.atoms(Function) if a.has(*symbols) and isinstance(a, type(A))]
     if len(abss) > 0:
         f_p = f.xreplace({abss[0]: abss[0].args[0]})
         add_comment('Solve the following two equations')
