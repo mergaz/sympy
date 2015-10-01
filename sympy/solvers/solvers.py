@@ -1379,7 +1379,7 @@ class DontKnowHowToSolve(Exception):
 def isAcosFpBsinGpC(f, symbol):
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*cos(F) + B*sin(G) + C)
-    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and not m[C].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
+    return not m is None and A in m and m[A] != 0 and not m[A].has(symbol) and B in m and m[B] != 0 and not m[B].has(symbol) and C in m and not m[C].has(symbol) and F in m and m[F].has(symbol) and G in m and m[G].has(symbol)
 
 
 # Solve the equation in the form Asin(F(x)) + Bsin(G(x)) + C = 0

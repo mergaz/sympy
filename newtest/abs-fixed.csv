@@ -8,7 +8,7 @@ solve; x**2-4*abs(x)+3>0; Or(And(-oo>x, x<-3), And(-1<x, x<1) )
 solve; 2*(x**2)-5*abs(x)+3>=0; Or(And(-oo>x, x<=-1.5), And(-1<=x, x<=1), And(1.5<=x, x<oo) )
 solve; abs(x)-5; Or(And(-2>x, x<2) )
 solve; abs(x)<5; Or(And(-5>x, x<5) )
-solve; abs(x)>=5; Or(And(-oo>x, x<=-5), And(5=>x, x<oo) )
+solve; abs(x)>=5; Or(And(-oo>x, x<=-5), And(5>=x, x<oo) )
 solve; abs(x-10)-4; [6]
 solve; abs(x-10)<=4; Or(And(6>=x, x<=14) )
 solve; abs(x-10)>4; Or(And(-oo>x, x<6), And(14<x, x<oo) )
