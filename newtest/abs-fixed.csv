@@ -2,7 +2,7 @@ solve; abs(2*x-5)-abs(7-2*x); [3]
 solve; abs(x-2)-2*abs(3-x); [2+2/3, 4]
 solve; x**2+abs(x)-2; Or(And(-2>x, x<2))
 solve; x**2-3*abs(x)+2; [-1, 1, -2, 2]
-solve; abs(3*x-2.5)>=2; Or(And(-oo>x, x<=1/6), And(1.5<=x, x<oo) )
+solve; abs(3*x-2.5)>=2; Or(And(-oo<x, x<=1/6), And(1.5<=x, x<oo) )
 solve; abs(5-2*x)<1; Or(And(2>x, x<3) )
 solve; x**2-4*abs(x)+3>0; Or(And(-oo>x, x<-3), And(-1<x, x<1) )
 solve; 2*(x**2)-5*abs(x)+3>=0; Or(And(-oo>x, x<=-1.5), And(-1<=x, x<=1), And(1.5<=x, x<oo) )

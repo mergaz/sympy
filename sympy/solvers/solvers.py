@@ -1027,10 +1027,12 @@ def solve(f, *symbols, **flags):
         for a in fi.atoms(Abs):
             if not a.has(*symbols):
                 continue
-            #if a.args[0].is_real is None:
-            #    raise NotImplementedError('solving %s when the argument '
-            #        'is not real or imaginary.' % a)
-            reps.append((a, piece(a.args[0]) if a.args[0].is_imaginary is None else \
+            if a.args[0].is_real is None:
+                pass
+                #raise NotImplementedError('solving %s when the argument '
+                #    'is not real or imaginary.' % a)
+            else:
+                reps.append((a, piece(a.args[0]) if a.args[0].is_imaginary is None else \
                 piece(a.args[0]*S.ImaginaryUnit)))
         fi = fi.subs(reps)
 
@@ -1856,7 +1858,10 @@ def _solve_piecewise(f, *symbols, **flags):
                             (S.NaN, True)
                         ))
     check = False
-    return result
+    if len(result) > 0:
+        return result
+    else:
+        return False
 
 def _solve_unrad(f, *symbols, **flags):
     result = False
@@ -2493,9 +2498,10 @@ def _solve(f, *symbols, **flags):
     if f.is_Mul:
         result =  _solve_mul(f, *symbols, **flags)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
-    elif f.is_Piecewise:
+    if f.is_Piecewise:
         result = _solve_piecewise(f, *symbols, **flags)
-        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+        if result != False:
+            return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     try:
         if isAcosFpBsinGpC(f, symbol):

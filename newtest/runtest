@@ -359,7 +359,7 @@ class Test:
             for a in args:
                 if isinstance(a, basestring):
                     # HACK
-                    a.replace('abs', 'Abs')
+                    a = a.replace('abs', 'Abs')
                     arguments.append(sympy.sympify(a))
                 else:
                     arguments.append(a)
@@ -381,6 +381,8 @@ class Test:
                 status = 'Passed'
             else:
                 with timeout(seconds=15):
+                    debug ('Result', result)
+                    debug ('Answer', answer)
                     eq = equal(result, answer)
                 if eq == True:
                     status = 'Passed'
