@@ -1029,10 +1029,12 @@ def solve(f, *symbols, **flags):
         for a in fi.atoms(Abs):
             if not a.has(*symbols):
                 continue
-            #if a.args[0].is_real is None:
-            #    raise NotImplementedError('solving %s when the argument '
-            #        'is not real or imaginary.' % a)
-            reps.append((a, piece(a.args[0]) if a.args[0].is_imaginary is None else \
+            if a.args[0].is_real is None:
+                pass
+                #raise NotImplementedError('solving %s when the argument '
+                #    'is not real or imaginary.' % a)
+            else:
+                reps.append((a, piece(a.args[0]) if a.args[0].is_imaginary is None else \
                 piece(a.args[0]*S.ImaginaryUnit)))
         fi = fi.subs(reps)
 
@@ -1381,7 +1383,7 @@ class DontKnowHowToSolve(Exception):
 def isAcosFpBsinGpC(f, symbol):
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*cos(F) + B*sin(G) + C)
-    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and not m[C].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
+    return not m is None and A in m and m[A] != 0 and not m[A].has(symbol) and B in m and m[B] != 0 and not m[B].has(symbol) and C in m and not m[C].has(symbol) and F in m and m[F].has(symbol) and G in m and m[G].has(symbol)
 
 
 # Solve the equation in the form Asin(F(x)) + Bsin(G(x)) + C = 0
@@ -1981,7 +1983,10 @@ def _solve_piecewise(f, *symbols, **flags):
                             (S.NaN, True)
                         ))
     check = False
-    return result
+    if len(result) > 0:
+        return result
+    else:
+        return False
 
 def _solve_unrad(f, *symbols, **flags):
     result = False
@@ -2030,6 +2035,10 @@ def _solve_abss(f, *symbols, **flags):
     symbol = symbols[0]
     # Rewrite equations containg abs(f(x)) to two eqs
     abss = [a for a in f.atoms(Abs) if a.has(*symbols)]
+    if len(abss) == 0:
+        # try to find built-in abs function
+        A = sympify('abs(x)')
+        abss = [a for a in f.atoms(Function) if a.has(*symbols) and isinstance(a, type(A))]
     if len(abss) > 0:
         f_p = f.xreplace({abss[0]: abss[0].args[0]})
         add_comment('Solve the following two equations')
@@ -2614,9 +2623,10 @@ def _solve(f, *symbols, **flags):
     if f.is_Mul:
         result =  _solve_mul(f, *symbols, **flags)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
-    elif f.is_Piecewise:
+    if f.is_Piecewise:
         result = _solve_piecewise(f, *symbols, **flags)
-        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+        if result != False:
+            return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     try:
         if isAcosFpBsinGpC(f, symbol):
