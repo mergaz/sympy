@@ -491,9 +491,9 @@ def roots_quartic(f):
             # Ferrari method, see [1, 2]
             add_comment("Use Ferrari method")
             p = -e**2/12 - g
-            add_eq("P", p)
+            add_eq(Symbol('P'), p)
             q = -e**3/108 + e*g/3 - f_**2/8
-            add_eq("Q", q)
+            add_eq(Symbol('Q'), q)
             TH = Rational(1, 3)
 
             def _ans(y):
