@@ -2631,10 +2631,13 @@ def _after_solve(result, check_flag, checkdens_flag, f, *symbols, **flags):
     if checkdens_flag:
         # reject any result that makes any denom. affirmatively 0;
         # if in doubt, keep it
-        dens = _simple_dens(f, symbols)
-        result = [s for s in result if
-                  all(not checksol(d, {symbol: s}, **flags)
-                    for d in dens)]
+        try:
+            dens = _simple_dens(f, symbols)
+            result = [s for s in result if
+                      all(not checksol(d, {symbol: s}, **flags)
+                          for d in dens)]
+        except:
+            pass
     if check_flag:
         # keep only results if the check is not False
         try:
