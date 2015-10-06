@@ -4,6 +4,7 @@ import sys
 import csv
 import subprocess
 import glob
+import os
 from datetime import datetime
 try:
     from colorama import init, Fore, Back, Style
