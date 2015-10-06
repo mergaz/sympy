@@ -1686,6 +1686,7 @@ def solve_AsinF2pBcosF2pC(f, symbol):
     t = Symbol("t")
     m = f.match(A*sin(F)**2 + B*cos(G)**2 + C)
     if m[A] == -m[B] and m[F] == m[G]:
+        # Handling sin(x)**2 - cos(x)**2
         arg1 = m[F]
         g1 = m[A]*sin(m[F])**2 + m[B]*cos(m[G])**2
         g2 = m[C]
@@ -1716,6 +1717,20 @@ def solve_AsinF2pBcosF2pC(f, symbol):
                 start_subroutine("Dont Know")
         else:
             result = solve(f1)
+    elif m[F] == m[G]:
+        # Isolating sin(x)**2 + cos(x)**2 parts
+        m = f.match(A*sin(F)**2+A*cos(F)**2+G)
+        if (not m[A] == 0) and (not m[A].has(symbol)) and m[G].has(symbol):
+            add_comment("Isolating sin(p)**2 + cos(p)**2")
+            add_comment("Using Pythagorean identity")
+            f1 = m[A]*(sin(m[F])**2+cos(m[F])**2)
+            add_eq(f1, m[A])
+            add_comment("We get")
+            f2 = m[A]+m[G]
+            add_exp(f2)
+            result = solve(f2, symbol)
+    else:
+        return False
     return result
 
 def to_exp_fixed_base(e, base, symbol, silent=True):
