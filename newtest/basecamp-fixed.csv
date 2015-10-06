@@ -22,7 +22,7 @@ diff; (x**3); x; Or(And(-2<x, x<2))
 diff; (1/(cos(x)**2)); x; [(0.2*pi)]
 diff; (1/sqrt(25-x**2)); x; Or(And(-5<x, x<5))
 solve; (1/4)**x<1/16; Or(And(2<x, x<oo))
-solve; log(1/2)*(4*x-14)<=-1;  x>=−134log(2), −10.796
+solve; log(1/2)*(4*x-14)<=-1; Or(x>=-134*log(2), Eq(x, -10.796))
 solve; x**(sqrt(x))-x**(x/2); Or(And(0<=x, x<oo))
 diff; (e**(-3*x)); x; Or(And(-2<x, x<2))
 diff; (-9*y); y; Or(And(0<x, x<oo))

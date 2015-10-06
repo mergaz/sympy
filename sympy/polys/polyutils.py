@@ -48,7 +48,8 @@ def _nsort(roots, separated=False):
     key = [[i.n(2).as_real_imag()[0] for i in r.as_real_imag()] for r in nroots]
     # make sure the parts were computed with precision
     if any(i._prec == 1 for k in key for i in k):
-        raise NotImplementedError("could not compute root with precision")
+        pass
+        #raise NotImplementedError("could not compute root with precision")
     # insert a key to indicate if the root has an imaginary part
     key = [(1 if i else 0, r, i) for r, i in key]
     key = sorted(zip(key, nroots))
