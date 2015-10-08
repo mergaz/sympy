@@ -19,7 +19,7 @@ solve; sqrt(x-1)-x+3; [5]
 solve; sqrt(6+x-x**2)-1+x; [-1]
 solve; sqrt(5-x)-sqrt(5+x)-2; [-4]
 solve; sqrt(12+x)-sqrt(1-x)-1; [-8]
-solve; sqrt(x-2)+sqrt(x+6); Net_koreney
+solve; sqrt(x-2)+sqrt(x+6); []; #Net_koreney
 solve; sqrt(x+7)+sqrt(x-2)-9; [18]
 solve; abs(x-2)-x+2; x>=2
 solve; abs(3-x)-x+3; x>=3
@@ -29,10 +29,10 @@ solve; (x**2+3*x)/2-(x+7)/4; [1, -3.5]
 solve; (x**2-3*x)/7+x-11; [-11, 7]
 solve; (2*(x**2))/3-(2-3*x)/4-(x**2-6)/6; [-1.5, -2/3]
 solve; (x**2+x)/4-(3-7*x)/20-0.3; [3/5, -3]
-solve; (x-1)**4-5*((x-1)**2)+4-0; Net_koreney
-solve; (x+5)**4+8*((x+5)**2)-9-0; Net_koreney
+solve; (x-1)**4-5*((x-1)**2)+4-0; []; #Net_koreney
+solve; (x+5)**4+8*((x+5)**2)-9-0; []; #Net_koreney
 solve; (4*(x**2))/(x-2)-(4*x)/(x+3)-(9*x+2)/(x**2+x-6); [-2, -1/2, 1/2]
-solve; (x**2)/(x+3)+x/(x-2)-(11*x-12)/(x**2+x-6); Net_koreney
+solve; (x**2)/(x+3)+x/(x-2)-(11*x-12)/(x**2+x-6); []; #Net_koreney
 solve; 6**(2*x)-6**1/5; [1/10]
 solve; 3**x-27; [3]
 solve; 7**(1-3*x)-7**10; [-3]
@@ -81,7 +81,7 @@ solve; x**(1/3)*root(x, 2);	x**(5/6)
 simplify;  2**(2-3*root(5, 2))*8**root(5, 2);	4
 simplify;  5**(1/4)/2**(3/4)-2**(1/4)/5**(3/4)*root(1000, 4);	3
 solve; x**(1/12)*root(x*root(x, 4), 3);	root(x, 2)
-solve; (3*x*y-y**2)/(x-y)-(y*root(y, 2))/(root(x, 2)-root(y, 2))-(y*root(x, 2))/(root(x, 2)+root(y, 2));	2y
+solve; (3*x*y-y**2)/(x-y)-(y*root(y, 2))/(root(x, 2)-root(y, 2))-(y*root(x, 2))/(root(x, 2)+root(y, 2)); 2*y
 simplify;  root(7+root(10, 5), 3);	2.04
 solve; 2**(2*x+1)-32;  [2]
 solve; 1/9**(2*x-5)-3**(5*x-8);	[2]
@@ -95,16 +95,16 @@ solve; (x**(4/3)-x**(-2/3))/(x**(1/3)-x**(-2/3));	x+1
 solve; x**(-1/4)-2; [1/16]
 solve; root(x-2, 2)-root(3*x-6, 2);	 [2]
 solve; root(64*(x**3)*(z**6), 3);	4*x*(z**2)
-solve; root((x*y)/z, 4)*root(((x**3)*z)/y);	x
+solve; root((x*y)/z, 4)*root(((x**3)*z)/y, 2);	x
 solve; ((sqrt(root((x**2), 3)))**3)+2*((root(sqrt(x), 4))**8);	3*x
 solve; ((x-y)/(root(x, 3) - root(y, 3))) - ((x+y)/(root(x, 3) + root(y, 3)));	2*(root(x*y, 3))
 solve; (y**(1/12))*root((y*root(y, 4)), 3);	y**(1/2)
 solve; (root(2, 2))**x;	[3]
 solve; (x**(2.5))*(root(x, 2.5));	x**(5/7)
-solve; (1/(3*x+1))-(2/(3*x-1))-((5*x)/(9*(x**2)-1)-(3*(x**2))/(1-9*(x**2));	[3]
+solve; (1/(3*x+1))-(2/(3*x-1))-((5*x)/(9*(x**2)-1)-(3*(x**2))/(1-9*(x**2)));	[3]
 solve; sqrt(x+3)-sqrt(5-x);	[1]
 solve; sqrt(1-2*x)-sqrt(13+x)-sqrt(x+4);	[-4]
-solve; 3-x-sqrt(9-sqrt(36*(x**2)-5*(x**4)))	[0, 2]
+solve; 3-x-sqrt(9-sqrt(36*(x**2)-5*(x**4)));	[0, 2]
 solve; (sqrt(3-x)+sqrt(3+x))/(sqrt(3-x)-sqrt(3+x))-2;	[-2.4]
 solve; (3**x)-5**(2*x);	[0]
 solve; 16**x-17*(4**x)+16-0;	[2]
@@ -118,10 +118,10 @@ solve; (2**(x+4))+(2**(x+2))-(5**(x+1))-3*(5**x);	[1]
 solve; x/(x+1)+(2*x)/(x-1)-(4*x)/(x**2-1);	[0]
 solve; (x-1)/(x-2)-2/x-1/(x-2); 	[2]
 solve; (x-3)*(x-5)-3*(x-5);	[6, 5]
-solve; (x-2)*(x**2+1)-2*(x**2+1);	Net_koreney
-solve; (x+3)/(2+x**2)<3;	x ∈ R
+solve; (x-2)*(x**2+1)-2*(x**2+1);	[]; #Net_koreney
+solve; (x+3)/(2+x**2)<3; True;	#x ∈ R
 solve; 1/(3*x+1)-2/(3*x-1)-(5*x)/(9*(x**2)-1)-(3*(x**2))/(1-9*(x**2));	[3]
-solve; 3/(x-1)-(4*x-1)/(x+1)-(x**2+5)/(x**2-1)-5;	Net_koreney
+solve; 3/(x-1)-(4*x-1)/(x+1)-(x**2+5)/(x**2-1)-5;	[]; #Net_koreney
 solve; (x+2)/(x-2)-(x*(x-4))/(x**2-4)-(x-2)/(x+2)-(4*(3+x))/(4-x**2);	[6]
 solve; x**3-3*(x**2)+2*x-6>2*(x**3)-x**2+4*x-2; 	x<-2
 solve; x**3-3*(x**2)-4*x+12>-3*(x**3)+x**2+12*x-4; 	x>2
@@ -130,7 +130,7 @@ solve; root(x**2+12, 4)-x;	[2]
 solve; root(x**3-19, 3)-x+1;	[3, -2]
 solve; sqrt(x)-1+x**2;	[0.5]
 solve; sqrt(5-x)<4; 	And(-11<x, x<=5)
-solve; sqrt(x**2-3*x)<2;	Or(And(-1<x, x<=0), And()3<=x, x<4)
+solve; sqrt(x**2-3*x)<2;	Or(And(-1<x, x<=0), And(3<=x, x<4))
 solve; sqrt(10+x-x**2)>=2;	And(-2<=x, x<=3)
 solve; sqrt(3*x-4)<-5;	Reshenyy_net
 solve; sqrt(2*(x**2)+5*x-3)<=0;	[-3, 1/2]
