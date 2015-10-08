@@ -738,7 +738,7 @@ def solve_sqrt_ineq(trig_ineq_params):
     add_comment("This step is correct if")
     add_exp(dom1)
     add_exp(dom2)
-    return reduce_inequalities([ineq, dom1, dom2], True, [symbol])
+    return reduce_inequalities([ineq, dom1, dom2], [symbol])
 
 
 def solve_trig_ineq(trig_ineq_params):
