@@ -487,7 +487,10 @@ def solve_univariate_inequality(expr, gen, relational=True):
                 break
 
         if valid((start + end)/2 if start != S.NegativeInfinity else end - 1):
-            sol_sets.append(Interval(start, end, True, True))
+            if (end < start) == True:
+                sol_sets.append(Interval(end, start, True, True))
+            else:
+                sol_sets.append(Interval(start, end, True, True))
 
         if x in singularities:
             singularities.remove(x)
