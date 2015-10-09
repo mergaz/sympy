@@ -163,3 +163,60 @@ def TRx11i(rv):
             return m[A]*cos(2*m[F])
         return rv
     return bottom_up(rv, f)
+
+
+def TRx12(rv):
+    '''
+    cos(x/2) -> sqrt((1+cos(x))/2)
+    '''
+    def f(rv):
+        if rv.func is cos:
+            a=rv.args[0]
+            return sqrt((1-cos(2*a))/2)
+        return rv
+    return bottom_up(rv, f)
+
+def TRx12i(rv):
+    '''
+    cos(x) -> 2*cos(x/2)**2-1
+    '''
+    def f(rv):
+        if rv.func is cos:
+            a=rv.args[0]
+            return 2*cos(a/2)**2-1
+        return rv
+    return bottom_up(rv, f)
+
+def TRx13(rv):
+    '''
+    sin(x/2) -> sqrt((1-cos(x))/2)
+    '''
+    def f(rv):
+        if rv.func is sin:
+            a=rv.args[0]
+            return sqrt((1-cos(a))/2)
+        return rv
+    return bottom_up(rv, f)
+
+def TRx13i(rv):
+    '''
+    cos(x) -> 1-2*sin(x/2)**2
+    '''
+    def f(rv):
+        if rv.func is cos:
+            a=rv.args[0]
+            return 1-2*sin(a/2)**2
+        return rv
+    return bottom_up(rv, f) 
+
+def TRx14(rv):
+    '''
+    tan(x/2) -> sin(x)/(1+cos(x))
+    (NB: cos(x/2) should not be zero!)
+    '''
+    def f(rv):
+        if rv.func is tan:
+            a=rv.args[0]
+            return sin(a)/(1+cos(a))
+        return rv
+    return bottom_up(rv, f)

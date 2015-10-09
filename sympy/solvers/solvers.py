@@ -35,8 +35,8 @@ from sympy.simplify.simplify import bottom_up
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine, trigsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth
-from sympy.simplify.fu import TR1, TR5, TR6
-from sympy.simplify.fu_ext import TRx10, TRx11i
+from sympy.simplify.fu import TR1, TR5, TR6, TR8, TR11
+from sympy.simplify.fu_ext import TRx10, TRx11i, TRx12i
 from sympy.matrices import Matrix, zeros
 from sympy.polys import roots, cancel, factor, Poly, together, degree
 from sympy.polys.polyerrors import GeneratorsNeeded, PolynomialError
@@ -1493,6 +1493,34 @@ def solveAcosFpBcosG(f, symbol):
         return result
     raise DontKnowHowToSolve()
 
+# Returns true if the equation has the form Acos(F(x)) + Bcos(G(x)) = 0
+def is_AcosFpBcosGpC(f, symbol):
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F) + B*cos(G) + C)
+    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 \
+        and not m[B].has(symbol) and m[F].has(symbol) and m[G].has(symbol) \
+        and m[C] != 0
+
+# Solve the equation in the form Acos(F(x)) + Bcos(G(x)) + C = 0
+def solve_AcosFpBcosGpC(f, symbol):
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(-2*A*cos(F/2) + A*cos(F) + C)
+    if m:
+        add_comment("Using reverse half-angle identity for cosine")
+        g1 = cos(m[F])
+        g2 = TRx12i(g1)
+        add_eq(g1, g2)
+        g3 = cos(m[F]/2)
+        add_comment("We get")
+        f1 = m[A]*g2 + -2*m[A]*g3 + m[C]
+        add_exp(f1)
+        add_comment("Rewrite equation")
+        # It shall simplify as: f2 = g3 * (f1/g3)
+        f2 = simplify(f1)
+        add_exp(f2)
+        result = solve(f2)
+        return result
+    raise DontKnowHowToSolve()
 
 # Returns true iff the equation has the form Asin(F(x)) + Bsin(G(x)) = 0
 def isAsinFpBsinG(f, symbol):
@@ -2231,21 +2259,62 @@ def _solve_poly(f, *symbols, **flags):
 
     gens = [g for g in poly.gens if g.has(symbol)]
 
-    # Transform equations of the forms f(cos(x), sin**2(x)) = 0 and f(sin(x), cos**2(x)) = 0
+    fu_rules_used = []
     if len(gens) == 2 and is_sin_cos(gens):
+        # Transform equations of the forms f(cos(x), sin**2(x)) = 0 and f(sin(x), cos**2(x)) = 0
         tr5_gens = [g for g in Poly(TR5(poly)).gens if g.has(symbol)]
         if len(tr5_gens) == 1:
             add_comment('Rewrite equation')
             poly = Poly(TR5(poly))
             add_eq(poly.as_expr(), 0)
             gens = tr5_gens
-        else:
-            tr6_gens = [g for g in Poly(TR6(poly)).gens if g.has(symbol)]
-            if len(tr6_gens) == 1:
+            fu_rules_used.append('TR5')
+        tr6_gens = [g for g in Poly(TR6(poly)).gens if g.has(symbol)]
+        if len(tr6_gens) == 1:
+            add_comment('Rewrite equation')
+            poly = Poly(TR6(poly))
+            add_eq(poly.as_expr(), 0)
+            gens = tr6_gens
+            fu_rules_used.append('TR6')
+        # Transform equations of the forms f(cos(x), sin(2*x)) = 0 and f(sin(x), cos(2*x)) = 0
+        tr11_gens = [g for g in Poly(TR11(poly)).gens if g.has(symbol)]
+        if len(tr11_gens) == 1 and ('TR5' not in fu_rules_used) and ('TR6' not in fu_rules_used):
+            add_comment('Using double angle identity')
+            poly = Poly(TR11(poly))
+            add_eq(poly.as_expr(), 0)
+            gens = tr11_gens
+            f = poly.as_expr()
+            fu_rules_used.append('TR11')
+        if len(tr11_gens) == 2 and ('TR5' not in fu_rules_used) and ('TR6' not in fu_rules_used):
+            # Check if our expression can be collected as cos(x)*(sin(x)+C) or likes
+            g1 = TR11(poly).as_expr()
+            g2 = collect(g1, tr11_gens[0])
+            g3 = collect(g1, tr11_gens[1])
+            if g2.as_expr().func is Mul or g3.as_expr().func is Mul:
+                g4 = g2.as_expr().func is Mul and g2 or g3
+                add_comment('Using double angle identity')
+                add_eq(g1, 0)
                 add_comment('Rewrite equation')
-                poly = Poly(TR6(poly))
-                gens = tr6_gens
-                add_eq(poly.as_expr(), 0)
+                add_eq(g4, 0)
+                poly = Poly(g4)
+                gens = tr11_gens
+                f1 = g4
+                fu_rules_used.append('TR11')
+                # Solve it as a 'Mul'
+                result = _solve(f1, symbol, **flags)
+                if result:
+                    return result
+
+    if is_sin_cos(gens):
+        # Sine/cosine products simplifying to a single trigonometric function
+        tr8_gens = [g for g in Poly(TR8(poly)).gens if g.has(symbol)]
+        if len(tr8_gens) == 1 and len(fu_rules_used) == 0:
+            add_comment('Converting products of sine or cosine to a som of sine or cosine terms')
+            poly = Poly(TR8(poly))
+            add_eq(poly.as_expr(), 0)
+            gens = tr8_gens
+            f = poly.as_expr()
+            fu_rules_used.append('TR8')
 
     if len(gens) > 1:
         # If there is more than one generator, it could be that the
@@ -2347,9 +2416,7 @@ def _solve_poly(f, *symbols, **flags):
         # in) so recast the poly in terms of our generator of interest.
         # Also use composite=True with f since Poly won't update
         # poly as documented in issue 8810.
-
         poly = Poly(f, gens[0], composite=True)
-
         # if we aren't on the tsolve-pass, use roots
         if not flags.pop('tsolve', False):
             soln = None
@@ -2648,6 +2715,8 @@ def _solve(f, *symbols, **flags):
             result = solveAcosFpBsinGpC(f, symbol)
         elif isAcosFpBcosG(f, symbol):
             result = solveAcosFpBcosG(f, symbol)
+        elif is_AcosFpBcosGpC(f, symbol):
+            result = solve_AcosFpBcosGpC(f, symbol)
         elif isAsinFpBsinG(f, symbol):
             result = solveAsinFpBsinG(f, symbol)
         elif isASinX_p_BSin2X_p_ASin3X(f, symbol):
