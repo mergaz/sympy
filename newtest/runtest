@@ -313,11 +313,12 @@ class Test:
     def __init__(self, files):
         now = datetime.today()
         fname = ""
-        if len(files) == 1:
-            fname = files[0]
-            self.file = open('test_{0:%Y%m%d}_{0:%H%M%S}_{1}.csv'.format(now, fname[:-4]), 'wb')
-        else:
-            self.file = open('test_{0:%Y%m%d}_{0:%H%M%S}.csv'.format(now), 'wb')
+        filenames = ''
+        for f in files:
+            if len(filenames) > 0:
+                filenames = filenames + ','
+            filenames = filenames + f[:-4]
+        self.file = open('result_{1},{0:%Y.%m.%d}_{0:%S}.csv'.format(now, filenames), 'wb')
         self.writer = csv.writer(self.file, delimiter=",")
         self.writer.writerows([['Function', 'Input', 'Expected', 'Result', 'Solution steps', 'Status']])
         self.tests_total = 0
@@ -464,32 +465,35 @@ class Test:
 if __name__ == '__main__':
     stats = default_state()
     files = {}
-    with Test(sys.argv[1:]) as test:
-        if len(sys.argv) > 1:
-            for f in sys.argv[1:]:
-                if f == '-d':
-                    DEBUG = True
-                    continue
-                elif f.startswith('-t'):
-                    time = int(f[3:])
-                    if time > 0:
-                        TIMEOUT = time
-                    continue
-                res = test.load_file(f)
-                files[f] = res
-                for key, value in res.items():
-                    stats[key] += value
-        else:
-            for f in glob.glob('*.csv'):
-                if f.startswith('test_'):
-                    print ('Skip', f)
-                elif f.startswith('compare_'):
-                    print ('Skip', f)
-                else:
-                    res = test.load_file(f)
-                    files[f] = res
-                    for key, value in res.items():
-                        stats[key] += value
+    testfiles = []
+    if len(sys.argv) > 1:
+        for f in sys.argv[1:]:
+            if f == '-d':
+                DEBUG = True
+                continue
+            elif f.startswith('-t'):
+                time = int(f[3:])
+                if time > 0:
+                    TIMEOUT = time
+                continue
+            else:
+                testfiles.append(f)
+    else:
+        for f in glob.glob('*.csv'):
+            if f.startswith('test_'):
+                print ('Skip', f)
+            elif f.startswith('result_'):
+                print ('Skip', f)
+            elif f.startswith('compare_'):
+                print ('Skip', f)
+            else:
+                testfiles.append(f)
+    with Test(testfiles) as test:
+        for f in testfiles:
+            res = test.load_file(f)
+            files[f] = res
+            for key, value in res.items():
+                stats[key] += value
     separator('Statistics')
     for key, value in files.items():
         message(key, ':', **value)
