@@ -171,6 +171,8 @@ if __name__ == '__main__':
         for f in glob.glob('*.csv'):
             if f.startswith('test_'):
                 files.append(f)
+            elif f.startswith('result_'):
+                files.append(f)
         if len(files) > 1:
             message('Compare', files[0], 'and', files[-1])
             compare(files[0], files[1])
