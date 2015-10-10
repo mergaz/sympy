@@ -11,6 +11,16 @@ TRx6 - reduce sin power of 4 (increase angle)
 TRx7 - reduce sin power of 5 (increase angle)
 TRx8 - reduce cos power of 3 (increase angle)
 TRx9 - reduce cos power of 4 (increase angle)
+TRx10 - sin,cos product to sum
+TRx11 - cosine of double angle (increase power)
+TRx11i - reversed TRx11
+TRx12 - cosine of half angle (increase angle)
+TRx12i - reversed TRx12
+TRx13 - sine of half angle (increase angle)
+TRx13i - reversed TRx13
+TRx14 - tangent of half angle (increase angle)
+TRx15 - sine of double angle to sin*cos product
+TRx16 - Pythagorean identity
 '''
 from sympy.simplify.simplify import bottom_up
 from sympy.functions.elementary.trigonometric import cos, sin, sqrt
@@ -218,5 +228,28 @@ def TRx14(rv):
         if rv.func is tan:
             a=rv.args[0]
             return sin(a)/(1+cos(a))
+        return rv
+    return bottom_up(rv, f)
+
+def TRx15(rv):
+    '''
+    sin(x) -> 2*sin(x/2)*cos(x/2)
+    '''
+    def f(rv):
+        if rv.func is sin:
+            a=rv.args[0]
+            return 2*sin(a/2)*cos(a/2)
+        return rv
+    return bottom_up(rv, f)
+
+def TRx16(rv):
+    '''
+    cos(x)**2+sin(x)**2 -> 1
+    '''
+    def f(rv):
+        A, F, G= Wild("A"), Wild("F"), Wild("G")
+        m = rv.match(A*cos(F)**2 + A*sin(F)**2 + G)
+        if m:
+            return m[A]+m[G]
         return rv
     return bottom_up(rv, f)

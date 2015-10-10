@@ -35,8 +35,8 @@ from sympy.simplify.simplify import bottom_up
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine, trigsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth
-from sympy.simplify.fu import TR1, TR5, TR6, TR8, TR11
-from sympy.simplify.fu_ext import TRx10, TRx11i, TRx12i
+from sympy.simplify.fu import TR1, TR5, TR6, TR7, TR8, TR10, TR11
+from sympy.simplify.fu_ext import TRx4, TRx10, TRx11, TRx11i, TRx12i, TRx15, TRx16
 from sympy.matrices import Matrix, zeros
 from sympy.polys import roots, cancel, factor, Poly, together, degree
 from sympy.polys.polyerrors import GeneratorsNeeded, PolynomialError
@@ -1761,6 +1761,84 @@ def solve_AsinF2pBcosF2pC(f, symbol):
         return False
     return result
 
+def is_AsinF2pBsinFpC(f, symbol):
+    '''Returns true if the equation has the form A*sin(F(x))**2+B*sin(G(x))+C=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**2 + B*sin(G) + C)
+    result = not m is None and \
+           not m[C].has(symbol) and \
+           m[A] != 0 and not m[A].has(symbol) and \
+           m[B] != 0 and not m[B].has(symbol) and \
+           m[F].has(symbol) and \
+           m[G].has(symbol)
+    return result
+
+def solve_AsinF2pBsinFpC(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F(x))**2+B*sin(G(x))+C=0
+    """
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**2 + B*sin(G) + C)
+    if m[A] == 4*m[B] and m[F] == m[G]/4:
+        f1 = sin(m[F])**2
+        f2 = sin(m[G])
+        add_comment("Using decrease sine power identity")
+        g1=TRx4(f1)
+        add_eq(f1, g1)
+        add_comment("Using sine of double angle identity")
+        g2=TRx15(f2)
+        add_eq(f2, g2)
+        add_comment("We get")
+        f3 = m[A]*g1 + m[B]*g2 + m[C]
+        add_eq(f3, 0)
+        add_comment('Rewrite equation')
+        f4 = simplify(f3)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    else:
+        return False
+
+def is_AcosF2pBsinFpC(f, symbol):
+    '''Returns true if the equation has the form A*cos(F(x))**2+B*sin(G(x))+C=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F)**2 + B*sin(G) + C)
+    result = not m is None and \
+           not m[C].has(symbol) and \
+           m[A] != 0 and not m[A].has(symbol) and \
+           m[B] != 0 and not m[B].has(symbol) and \
+           m[F].has(symbol) and \
+           m[G].has(symbol)
+    return result
+
+def solve_AcosF2pBsinFpC(f, symbol):
+    """ Solves the equation in the form of
+        A*cos(F(x))**2+B*sin(G(x))+C=0
+    """
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F)**2 + B*sin(G) + C)
+    if m[A] == -4*m[B] and m[F] == m[G]/4:
+        f1 = cos(m[F])**2
+        f2 = sin(m[G])
+        add_comment("Using decrease cosine power identity")
+        g1=TR7(f1)
+        add_eq(f1, g1)
+        add_comment("Using sine of double angle identity")
+        g2=TRx15(f2)
+        add_eq(f2, g2)
+        add_comment("We get")
+        f3 = m[A]*g1 + m[B]*g2 + m[C]
+        add_eq(f3, 0)
+        add_comment('Rewrite equation')
+        f4 = simplify(f3)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    else:
+        return False
+
 def to_exp_fixed_base(e, base, symbol, silent=True):
     if e.args and len(e.args) > 1:
         args = tuple([to_exp_fixed_base(a, base, symbol, silent) for a in e.args])
@@ -2261,6 +2339,19 @@ def _solve_poly(f, *symbols, **flags):
 
     fu_rules_used = []
     if len(gens) == 2 and is_sin_cos(gens):
+
+        # Reducing using Pythagorean identity
+        trx16_gens = [g for g in Poly(TRx16(poly)).gens if g.has(symbol)]
+        print(TRx16(poly).as_expr())
+        if len(trx16_gens) == 1:
+            g1 = TRx16(poly).as_expr()
+            add_comment('Reducing using Pythagorean identity')
+            add_eq(g1, 0)
+            fu_rules_used.append('TRx16')
+            result = _solve(g1, symbol, **flags)
+            if result:
+                return result
+
         # Transform equations of the forms f(cos(x), sin**2(x)) = 0 and f(sin(x), cos**2(x)) = 0
         tr5_gens = [g for g in Poly(TR5(poly)).gens if g.has(symbol)]
         if len(tr5_gens) == 1:
@@ -2276,6 +2367,7 @@ def _solve_poly(f, *symbols, **flags):
             add_eq(poly.as_expr(), 0)
             gens = tr6_gens
             fu_rules_used.append('TR6')
+
         # Transform equations of the forms f(cos(x), sin(2*x)) = 0 and f(sin(x), cos(2*x)) = 0
         tr11_gens = [g for g in Poly(TR11(poly)).gens if g.has(symbol)]
         if len(tr11_gens) == 1 and ('TR5' not in fu_rules_used) and ('TR6' not in fu_rules_used):
@@ -2305,11 +2397,48 @@ def _solve_poly(f, *symbols, **flags):
                 if result:
                     return result
 
+        # Sine and cosine of sums
+        tr10_gens = [g for g in Poly(TR10(poly)).gens if g.has(symbol)]
+        if len(tr10_gens) == 1 and (len(fu_rules_used) == 0 or (len(fu_rules_used) == 1 and 'TRx16' in fu_rules_used)):
+            g1 = TR10(poly).as_expr()
+            add_comment('Separating sums in sine or cosine terms')
+            add_eq(g1, 0)
+            fu_rules_used.append('TR10')
+            result = _solve(g1, symbol, **flags)
+            if result:
+                return result
+
+        # Cosine of double angle
+        trx11_gens = [g for g in Poly(TRx11(poly)).gens if g.has(symbol)]
+        if len(trx11_gens) == 1 and (len(fu_rules_used) == 0 or (len(fu_rules_used) == 1 and 'TRx16' in fu_rules_used)):
+            g1 = TRx11(poly).as_expr()
+            add_comment('Using identity for cosine of double angle')
+            add_eq(g1, 0)
+            fu_rules_used.append('TRx11')
+            result = _solve(g1, symbol, **flags)
+            if result:
+                return result
+
+        # Sine of double angle
+        trx15_gens = [g for g in Poly(TRx15(poly)).gens if g.has(symbol)]
+        if len(trx15_gens) == 1 and len(fu_rules_used) == 0:
+            g1 = TRx15(poly).as_expr()
+            add_comment('Using identity for sine of double angle')
+            add_eq(g1, 0)
+            fu_rules_used.append('TRx15')
+            result = _solve(g1, symbol, **flags)
+            if result:
+                return result
+
     if is_sin_cos(gens):
         # Sine/cosine products simplifying to a single trigonometric function
+        # FIXME: This part is triggered even when it's unnecessary
         tr8_gens = [g for g in Poly(TR8(poly)).gens if g.has(symbol)]
-        if len(tr8_gens) == 1 and len(fu_rules_used) == 0:
-            add_comment('Converting products of sine or cosine to a som of sine or cosine terms')
+        f1 = poly.as_expr()
+        g1 = TR8(f1)
+        if len(tr8_gens) == 1 and (len(fu_rules_used) == 0 or (len(fu_rules_used) == 1 and 'TRx16' in fu_rules_used))\
+            and not (f1 == g1):
+            add_comment('Converting products of sine or cosine to a sum of sine or cosine terms')
             poly = Poly(TR8(poly))
             add_eq(poly.as_expr(), 0)
             gens = tr8_gens
@@ -2727,6 +2856,10 @@ def _solve(f, *symbols, **flags):
             result = solve_AsinFcosGpBsinGcosFpC(f, symbol)
         elif is_AsinF2pBcosF2pC(f, symbol):
             result = solve_AsinF2pBcosF2pC(f, symbol)
+        elif is_AsinF2pBsinFpC(f, symbol):
+            result = solve_AsinF2pBsinFpC(f, symbol)
+        elif is_AcosF2pBsinFpC(f, symbol):
+            result = solve_AcosF2pBsinFpC(f, symbol)
         if result != False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
     except DontKnowHowToSolve:
