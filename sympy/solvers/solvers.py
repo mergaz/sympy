@@ -2185,7 +2185,7 @@ def _solve_abss(f, *symbols, **flags):
         if result_m is not None and result_m is not False:
             for r in result_m:
                 v = abss[0].args[0].subs(symbol, r)
-                if v.is_real and v <= 0:
+                if v.is_Number and v <= 0:
                     add_comment('The value {} is a root', str(r))
                     result.append(r)
                 else:

@@ -1,6 +1,26 @@
 # coding=utf-8
 
 comment_ru = {
+
+    'Converting products of sine or cosine to a sum of sine or cosine terms': u'',
+    'Intermediate solution': u'',
+    'Isolating sin(p)**2 + cos(p)**2': u'',
+    'It\'s handy to use an identity for product of sine and cosine': u'',
+    'Multiply both sides of equation by:': u'',
+    'Reducing using Pythagorean identity': u'',
+    'Reversing the substitution': u'',
+    'Separating sums in sine or cosine terms': u'',
+    'Since we have a product of sine and cosine with same arguments': u'',
+    'Using Pythagorean identity': u'',
+    'Using an identity for product of sine and cosine, we get:': u'',
+    'Using decrease cosine power identity': u'',
+    'Using decrease sine power identity': u'',
+    'Using identity for cosine of double angle': u'',
+    'Using identity for sine of double angle': u'',
+    'Using reverse formula for cosine of double argument, we get': u'',
+    'Using reverse half-angle identity for cosine': u'',
+    'Using the substitution': u'',
+
     'Add {} row multiplied by {} to {} row ': u'Добавим {} ряд, умноженный на {} к {} ряду ',
     'Add {} row to {} row': u'Добавим {} ряд к {} ряду',
     'Add the second equation multiplied by {} to the first equation': u'Добавим второе уравнение, умноженное на {} к первому уравнению',
@@ -250,10 +270,11 @@ comment_ru = {
     'is not emtpy': u'не пусто',
 
     # other localizable strings
-    'welcome string': 'Напишите любую формулу...',
+    'welcome string': u'Напишите любую формулу...',
     'purchase button': 'gfx/ru_show-solutions.png',
 }
 
 def solution_comment_table_ru():
     return comment_ru
+
 
