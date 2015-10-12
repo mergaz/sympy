@@ -1,4 +1,5 @@
 #!/opt/local/bin/python
+# coding=utf-8
 
 from __future__ import print_function
 import sys
@@ -117,17 +118,17 @@ def separator(*args, **kwargs):
         print('='*(columns-sl-l-2))
 
 class Tristate(object):
-    def __init__(self, value=None):
-        if value is None or value == True or value == False:
-            self.value = value
+    def __init__(self, val=None):
+        if val is None or val == True or val == False:
+            self.value = val
         else:
             raise ValueError("Tristate value must be True, False, or None. Got %s" % type(value))
     def __eq__(self, other):
-        return self.value is other
+        return self.value == other
     def __ne__(self, other):
-        return self.value is not other
+        return self.value != other
     def __nonzero__(self):   # Python 3: __bool__()
-        return self.value is True
+        return self.value == True
     def __str__(self):
         return str(self.value)
     def __repr__(self):
@@ -163,12 +164,17 @@ def tostring(A):
     else:
         return A.__str__()
 
-def equal(A, B):
+def equal(A, B, **kwargs):
     A = sympy.simplify(A)
     B = sympy.simplify(B)
     debug( A, B )
     debug( type(A), type(B))
-    #if DEBUG: 
+    if 'precision' in kwargs:
+        precision = kwargs['precision']
+        debug('Precision', precision)
+    else:
+        precision = 0.001
+    #if DEBUG:
     #    print_stack()
     if A == B:
         debug( 'Ok')
@@ -182,7 +188,7 @@ def equal(A, B):
                     args2 = list(B.args)
                     for arg in A.args:
                         for arg2 in args2:
-                            if equal(arg, arg2) == True:
+                            if equal(arg, arg2, **kwargs) == True:
                                 args2.remove(arg2)
                                 debug( 'Remove equal pair', arg, arg2)
                                 counter += 1
@@ -198,14 +204,15 @@ def equal(A, B):
                     for ind in range(len(A.args)):
                         arg1 = A.args[ind]
                         arg2 = B.args[ind]
-                        res = equal(arg1, arg2)
+                        res = equal(arg1, arg2, **kwargs)
                         if res is not True:
                             debug( 'Pair not equal', arg1, arg2)
                             return res
                     return Tristate(True)
             elif A.is_Float:
-                debug( 'Float:', A, B, A - B, sympy.Abs(A - B) < 0.001)
-                return Tristate(sympy.Abs(A - B) < 0.001)
+                res = sympy.Abs(A - B) < precision
+                debug( 'Float:', A, B, A - B, res)
+                return Tristate(res)
             elif A.is_Number:
                 debug('Numbers:', A, B)
                 return Tristate(A == B)
@@ -214,7 +221,7 @@ def equal(A, B):
                 if A.is_commutative:
                     # Add or Mul
                     debug('Test expressions:', A, B)
-                    res = equal(list(A.args), list(B.args))
+                    res = equal(list(A.args), list(B.args), **kwargs)
                     if res != True:
                         res = Tristate(False)
                     return res
@@ -224,7 +231,7 @@ def equal(A, B):
             for arg1 in A:
                 for arg2 in args2:
                     debug('Test equality for:', arg1, arg2)
-                    if equal(arg1, arg2):
+                    if equal(arg1, arg2, **kwargs):
                         args2.remove(arg2)
                         counter += 1
                         break
@@ -240,24 +247,24 @@ def equal(A, B):
         if isinstance(A, Basic) and isinstance(B, Basic):
             if A.is_Relational and B.is_Relational and len(A.args)==2 and len(B.args)==2:
                 if isinstance(A, StrictLessThan) and isinstance(B, StrictGreaterThan):
-                    return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
+                    return equal(A.args[0], B.args[1], **kwargs) and equal(A.args[1], B.args[0], **kwargs)
                 elif isinstance(A, StrictGreaterThan) and isinstance(B, StrictLessThan):
-                    return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
+                    return equal(A.args[0], B.args[1], **kwargs) and equal(A.args[1], B.args[0], **kwargs)
                 elif isinstance(A, LessThan) and isinstance(B, GreaterThan):
-                    return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
+                    return equal(A.args[0], B.args[1], **kwargs) and equal(A.args[1], B.args[0], **kwargs)
                 elif isinstance(A, GreaterThan) and isinstance(B, LessThan):
-                    return equal(A.args[0], B.args[1]) and equal(A.args[1], B.args[0])
+                    return equal(A.args[0], B.args[1], **kwargs) and equal(A.args[1], B.args[0], **kwargs)
             elif A.is_Number and B.is_Number:
                 return Tristate(A == B)
             elif A.is_Boolean:
                 # And, Or, Not
-                result = equal(list(A.args), B)
+                result = equal(list(A.args), B, **kwargs)
                 if result == True:
                     result = Tristate(None)
                 return result
             elif B.is_Boolean:
                 # And, Or, Not
-                result = equal(A, list(B.args))
+                result = equal(A, list(B.args), **kwargs)
                 if result == True:
                     result = Tristate(None)
                 return result
@@ -279,7 +286,7 @@ def equal(A, B):
                 A1 = sympy.N(A)
                 B1 = sympy.N(B)
                 if A1 != A or B1 != B:
-                    return equal(A1, B1)
+                    return equal(A1, B1, **kwargs)
                 else:
                     # the numerical result not differ
                     debug('Can\'t compare expressions')
@@ -288,8 +295,9 @@ def equal(A, B):
         elif isinstance(A, list):
             counter = 0
             for arg in A:
-                if equal(arg, B):
+                if equal(arg, B, **kwargs) == True:
                     counter += 1
+            debug('List A', len(A), counter)
             if counter == 0:
                 return Tristate(False)
             elif counter < len(A):
@@ -299,8 +307,9 @@ def equal(A, B):
         elif isinstance(B, list):
             counter = 0
             for arg in B:
-                if equal(A, arg):
+                if equal(A, arg, **kwargs) == True:
                     counter += 1
+            debug('List B', len(B), counter)
             if counter == 0:
                 return Tristate(False)
             elif counter < len(B):
@@ -318,12 +327,13 @@ class Test:
             if len(filenames) > 0:
                 filenames = filenames + ','
             filenames = filenames + f[:-4]
-        self.file = open('result_{1},{0:%Y.%m.%d}_{0:%S}.csv'.format(now, filenames), 'wb')
+        self.filename = 'result_{1},{0:%Y.%m.%d}_{0:%S}.csv'.format(now, filenames)
+        self.file = open(self.filename, 'wb')
         self.writer = csv.writer(self.file, delimiter=",")
         self.writer.writerows([['Function', 'Input', 'Expected', 'Result', 'Solution steps', 'Status']])
         self.tests_total = 0
         self.tests_count = 0
-        
+
     def __enter__(self):
         return self
 
@@ -350,6 +360,7 @@ class Test:
         status = 'Unknown'
         result = None
         eq = False
+        approximate = False
         try:
             message('Process('
                 + str(self.tests_count) + '/'
@@ -369,7 +380,14 @@ class Test:
             if answer == '???':
                 answer = None
             if isinstance(answer, basestring):
-                answer = sympy.sympify(answer)
+                ind = answer.find('≈')
+                if ind >= 0:
+                    approximate = True
+                    if ind == 0:
+                        answer = answer.replace('≈', '')
+                    else:
+                        answer = answer.replace('≈', '=')
+                    answer = sympy.sympify(answer)
             if SOLUTIONS:
                 reset_solution()
             with timeout(seconds=TIMEOUT):
@@ -394,7 +412,14 @@ class Test:
                     debug ('Result', result)
                     debug ('Answer', answer)
                     debug ('Solution', sol)
-                    eq = equal(result, answer)
+                    if approximate:
+                        if isinstance(result, list):
+                            result = [sympy.N(x) for x in result]
+                        else:
+                            result = sympy.N(result)
+                        eq = equal(result, answer, precision=0.01)
+                    else:
+                        eq = equal(result, answer)
                 if eq == True:
                     status = 'Passed'
                 elif eq == False:
@@ -466,6 +491,7 @@ if __name__ == '__main__':
     stats = default_state()
     files = {}
     testfiles = []
+    resfilename = ''
     if len(sys.argv) > 1:
         for f in sys.argv[1:]:
             if f == '-d':
@@ -494,9 +520,12 @@ if __name__ == '__main__':
             files[f] = res
             for key, value in res.items():
                 stats[key] += value
+        resfilename = test.filename
     separator('Statistics')
     for key, value in files.items():
         message(key, ':', **value)
         print()
     message('Total:', **stats)
+    print()
+    message('Log file:', resfilename)
     print()
