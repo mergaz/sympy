@@ -11,14 +11,17 @@ comment_ru = {
     'Reversing the substitution': u'',
     'Separating sums in sine or cosine terms': u'',
     'Since we have a product of sine and cosine with same arguments': u'',
+    'Therefore our equation is now': u'',
     'Using Pythagorean identity': u'',
     'Using an identity for product of sine and cosine, we get:': u'',
     'Using decrease cosine power identity': u'',
     'Using decrease sine power identity': u'',
+    'Using double angle identity': u'',
     'Using identity for cosine of double angle': u'',
     'Using identity for sine of double angle': u'',
     'Using reverse formula for cosine of double argument, we get': u'',
     'Using reverse half-angle identity for cosine': u'',
+    'Using sine of double angle identity': u'',
     'Using the substitution': u'',
 
     'Add {} row multiplied by {} to {} row ': u'Добавим {} ряд, умноженный на {} к {} ряду ',
@@ -65,7 +68,7 @@ comment_ru = {
     'Hence the system has no solution': u'Следовательно, система не имеет решений',
     'Hence we get the following solution': u'Таким образом, получили следующее решение',
     'Introduce a new variable {}': u'Введём новую переменную {}',
-    "Let's": "Пусть",
+    'Let\'s': 'Пусть',
     'Move the constant outside the derivative sign': u'Вынесем константу из-под знака производной',
     'Move the constant outside the integral sign': u'Вынесем константу из-под знака интеграла',
     'Multiply {} row by {}': u'Умножим {} строку на {}',
@@ -135,7 +138,7 @@ comment_ru = {
     'The roots are': u'Корни равны',
     'The roots of the characteristic equation are': u'Корни характеристического уравнения равны',
     'The roots of the quadric equation can be found using formulas': u'Корни крадратного уравнения могут быть найдены по формулам',
-    'The roots of the quartic equation is': u'Корни уравнения четвёртой степени могут быть найдены по формулам"',
+    'The roots of the quartic equation is': u'Корни уравнения четвёртой степени могут быть найдены по формулам',
     'The roots of this equation are equal to zero': u'Корни этого уравнения равны 0',
     'The solution has the form': u'Решение имеет вид',
     'The solution of this equation is': u'Решение этого уравнения равно',
@@ -196,7 +199,7 @@ comment_ru = {
     'Thus the interval': u'Следовательно, интервал',
     'Thus we have the following solution set': u'Следовательно, мы имеем следующее множество решений',
     'To solve this equation we find roots of the following equations': u'Для того чтобы решить это уравнение нужно найти корни следующих уравнений',
-    "Use Cardano's method": "Воспользуемся методом Кордано",
+    'Use Cardano\'s method': 'Воспользуемся методом Кордано',
     'Use Descartes-Euler method': u'Воспользуемся методом Эйлера',
     'Use Ferrari method': u'Воспользуемся методом Феррари',
     'Use numerical methods': u'Воспользуемся численными методами',
@@ -276,5 +279,4 @@ comment_ru = {
 
 def solution_comment_table_ru():
     return comment_ru
-
 
