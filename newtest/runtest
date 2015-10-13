@@ -477,8 +477,8 @@ class Test:
                     if row[0].startswith('###'):
                         skip = not skip
                     elif not skip:
-                        self.tests_count += 1
                         res = self.process(*row)
+                        self.tests_count += 1
                         if res is not None:
                             stats[res] = stats[res] + 1
             message('Result:', filename)
