@@ -290,6 +290,10 @@ def equal(A, B, **kwargs):
                 else:
                     # the numerical result not differ
                     debug('Can\'t compare expressions')
+            elif isinstance(A, sympy.FiniteSet):
+                return equal(list(A), B, **kwargs)
+            elif isinstance(B, sympy.FiniteSet):
+                return equal(A, list(B), **kwargs)
             else:
                 debug('Unknown pair')
         elif isinstance(A, list):
