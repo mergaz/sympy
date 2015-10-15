@@ -1379,11 +1379,19 @@ class DontKnowHowToSolve(Exception):
     pass
 
 
-# Returns true iff the equation has the form Acos(F(x)) + Bsin(G(x)) + C = 0
+# Returns true if the equation has the form Acos(F(x)) + Bsin(G(x)) + C = 0
 def isAcosFpBsinGpC(f, symbol):
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*cos(F) + B*sin(G) + C)
-    return not m is None and A in m and m[A] != 0 and not m[A].has(symbol) and B in m and m[B] != 0 and not m[B].has(symbol) and C in m and not m[C].has(symbol) and F in m and m[F].has(symbol) and G in m and m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
 
 
 # Solve the equation in the form Asin(F(x)) + Bsin(G(x)) + C = 0
@@ -1445,12 +1453,18 @@ def solveAcosFpBsinGpC(f, symbol):
     raise DontKnowHowToSolve()
 
 
-# Returns true iff the equation has the form Acos(F(x)) + Bcos(G(x)) = 0
+# Returns true if the equation has the form Acos(F(x)) + Bcos(G(x)) = 0
 def isAcosFpBcosG(f, symbol):
     A, B, F, G = Wild("A"), Wild("B"), Wild("F"), Wild("G")
     m = f.match(A*cos(F) + B*cos(G))
-    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
-
+    result = False
+    if m is not None and set([A, B, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
 
 # Solve the equation in the form Acos(F(x)) + Bcos(G(x)) = 0
 def solveAcosFpBcosG(f, symbol):
@@ -1497,9 +1511,15 @@ def solveAcosFpBcosG(f, symbol):
 def is_AcosFpBcosGpC(f, symbol):
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*cos(F) + B*cos(G) + C)
-    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 \
-        and not m[B].has(symbol) and m[F].has(symbol) and m[G].has(symbol) \
-        and m[C] != 0 and not m[C].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
 
 # Solve the equation in the form Acos(F(x)) + Bcos(G(x)) + C = 0
 def solve_AcosFpBcosGpC(f, symbol):
@@ -1523,12 +1543,18 @@ def solve_AcosFpBcosGpC(f, symbol):
         return result
     raise DontKnowHowToSolve()
 
-# Returns true iff the equation has the form Asin(F(x)) + Bsin(G(x)) = 0
+# Returns true if the equation has the form Asin(F(x)) + Bsin(G(x)) = 0
 def isAsinFpBsinG(f, symbol):
     A, B, F, G = Wild("A"), Wild("B"), Wild("F"), Wild("G")
     m = f.match(A*sin(F) + B*sin(G))
-    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
-
+    result = False
+    if m is not None and set([A, B, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
 
 # Solve the equation in the form Asin(F(x)) + Bsin(G(x)) = 0
 def solveAsinFpBsinG(f, symbol):
@@ -1576,10 +1602,13 @@ def isASinX_p_BSin2X_p_ASin3X(f, symbol):
     """
     A, B, X = Wild('A'), Wild('B'), Wild('X')
     m = f.match(A*sin(X) + B*sin(2*X) + A*sin(3*X))
-
-    return not m is None and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol)
+    result = False
+    if m is not None and set([A, B, X]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[X].has(symbol)
+    return result
 
 def solveASinX_p_BSin2X_p_ASin3X(f, symbol):
     """ Solve the equation in the form of
@@ -1632,11 +1661,13 @@ def is_sinFcosGpC(f, symbol):
     # and deal with it afterwards.
     A, C, F, G = Wild("A"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*sin(F)*cos(G)+C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_sinFcosGpC(f, symbol):
@@ -1666,12 +1697,14 @@ def is_AsinFcosGpBsinGcosFpC(f, symbol):
     '''
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*sin(F)*cos(G)+B*sin(G)*cos(F)+C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_AsinFcosGpBsinGcosFpC(f, symbol):
@@ -1699,12 +1732,14 @@ def is_AsinF2pBcosF2pC(f, symbol):
     '''
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*sin(F)**2 + B*cos(G)**2 + C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_AsinF2pBcosF2pC(f, symbol):
@@ -1767,12 +1802,14 @@ def is_AsinF2pBsinFpC(f, symbol):
     '''
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*sin(F)**2 + B*sin(G) + C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_AsinF2pBsinFpC(f, symbol):
@@ -1806,12 +1843,14 @@ def is_AcosF2pBsinFpC(f, symbol):
     '''
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*cos(F)**2 + B*sin(G) + C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_AcosF2pBsinFpC(f, symbol):
@@ -1867,15 +1906,12 @@ def solve_AsinF2pBsinGpCcosGpGd2(f, symbol):
         f2 = m[C]*cos(m[H])
         add_comment("Using identity for a sum of sines")
         g1=TR9(f1)
-        print('g1',g1)
         add_eq(f1, g1)
         add_comment("We get")
         g2=g1+f2
-        print('g2',g2)
         add_eq(g2, 0)
         add_comment('Rewrite equation')
         f4 =g2.collect(f2)
-        print('f4',f4)
         add_eq(f4, 0)
         result=solve(f4)
         return result
@@ -1909,15 +1945,12 @@ def solve_AcosF2pBcosGpCsinGpGd2(f, symbol):
         f2 = m[C]*sin(m[H])
         add_comment("Using identity for a sum of cosines")
         g1=TR9(f1)
-        print('g1',g1)
         add_eq(f1, g1)
         add_comment("We get")
         g2=g1+f2
-        print('g2',g2)
         add_eq(g2, 0)
         add_comment('Rewrite equation')
         f4 =g2.collect(f2)
-        print('f4',f4)
         add_eq(f4, 0)
         result=solve(f4)
         return result
