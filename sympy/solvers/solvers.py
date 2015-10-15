@@ -2341,7 +2341,6 @@ def _solve_poly(f, *symbols, **flags):
 
         # Reducing using Pythagorean identity
         trx16_gens = [g for g in Poly(TRx16(poly)).gens if g.has(symbol)]
-        print(TRx16(poly).as_expr())
         if len(trx16_gens) == 1:
             g1 = TRx16(poly).as_expr()
             add_comment('Reducing using Pythagorean identity')
