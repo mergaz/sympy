@@ -35,8 +35,8 @@ from sympy.simplify.simplify import bottom_up
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine, trigsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth
-from sympy.simplify.fu import TR1, TR5, TR6, TR7, TR8, TR10, TR11
-from sympy.simplify.fu_ext import TRx4, TRx10, TRx11, TRx11i, TRx12i, TRx15, TRx16
+from sympy.simplify.fu import TR1, TR5, TR6, TR7, TR8, TR9, TR10, TR11
+from sympy.simplify.fu_ext import TRx2, TRx3, TRx4, TRx10, TRx11, TRx11i, TRx12i, TRx15, TRx16
 from sympy.matrices import Matrix, zeros
 from sympy.polys import roots, cancel, factor, Poly, together, degree
 from sympy.polys.polyerrors import GeneratorsNeeded, PolynomialError
@@ -1841,6 +1841,132 @@ def solve_AcosF2pBsinFpC(f, symbol):
     else:
         return False
 
+def is_AsinF2pBsinGpCcosGpGd2(f, symbol):
+    '''Returns true if the equation has the form A*sin(F)+B*sin(G)+C*cos((F+G)/2)=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)+B*sin(G)+C*cos((F+G)/2))
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AsinF2pBsinGpCcosGpGd2(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F)+B*sin(G)+C*cos((F+G)/2)
+    """
+    A, B, C, F, G, H = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G"), Wild("H")
+    m = f.match(A*sin(F)+B*sin(G)+C*cos(H))
+    # H = (F+G)/2
+    if m[A] == -m[B]:
+        f1 = m[A]*sin(m[F])+m[B]*sin(m[G])
+        f2 = m[C]*cos(m[H])
+        add_comment("Using identity for a sum of sines")
+        g1=TR9(f1)
+        print('g1',g1)
+        add_eq(f1, g1)
+        add_comment("We get")
+        g2=g1+f2
+        print('g2',g2)
+        add_eq(g2, 0)
+        add_comment('Rewrite equation')
+        f4 =g2.collect(f2)
+        print('f4',f4)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    else:
+        return False
+
+def is_AcosF2pBcosGpCsinGpGd2(f, symbol):
+    '''Returns true if the equation has the form A*cos(F)+B*cos(G)+C*sin((F+G)/2)=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F)+B*cos(G)+C*sin((F+G)/2))
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AcosF2pBcosGpCsinGpGd2(f, symbol):
+    """ Solves the equation in the form of
+        A*cos(F)+B*cos(G)+C*sin((F+G)/2)
+    """
+    A, B, C, F, G, H = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G"), Wild("H")
+    m = f.match(A*cos(F)+B*cos(G)+C*sin(H))
+    # H = (F+G)/2
+    if m[A] == -m[B]:
+        f1 = m[A]*cos(m[F])+m[B]*cos(m[G])
+        f2 = m[C]*sin(m[H])
+        add_comment("Using identity for a sum of cosines")
+        g1=TR9(f1)
+        print('g1',g1)
+        add_eq(f1, g1)
+        add_comment("We get")
+        g2=g1+f2
+        print('g2',g2)
+        add_eq(g2, 0)
+        add_comment('Rewrite equation')
+        f4 =g2.collect(f2)
+        print('f4',f4)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    else:
+        return False
+
+def is_AsinF2PpBcosGPpC(f, symbol):
+    '''Returns true if the equation has the form A*sin(F)**(2*P)+B*cos(F)**P+C=0
+    '''
+    A, B, C, P, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("P"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**(2*P)+B*cos(F)**P+C)
+    result = False
+    if m is not None and set([A, B, C, P, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[P] != 0 and not m[P].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AsinF2PpBcosGPpC(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F)**(2*P)+B*cos(F)**P+C=0
+    """
+    A, B, C, P, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("P"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**(2*P)+B*cos(F)**P+C)
+    if m[A] == -m[C] and m[P] == 2:
+        f1 = -m[A]*(1-sin(m[F])**4)
+        f2 = m[B]*cos(m[F])**2
+        add_comment('Using polynomial identity for difference of squares')
+        g1 = -m[A]*(1-sin(m[F])**2)*(1+sin(m[F])**2)
+        add_eq(f1, g1)
+        add_comment('Then, replacing sine by cosine using Pythagorean identity')
+        g2 = -m[A]*(cos(m[F])**2)*(1+sin(m[F])**2)
+        add_eq(g1, g2)
+        add_comment("We get")
+        f3 = f2+g2
+        add_eq(f3, 0)
+        add_comment('Rewrite equation')
+        f4 =f3.collect(f2)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    else:
+        return False
+
 def to_exp_fixed_base(e, base, symbol, silent=True):
     if e.args and len(e.args) > 1:
         args = tuple([to_exp_fixed_base(a, base, symbol, silent) for a in e.args])
@@ -2353,6 +2479,28 @@ def _solve_poly(f, *symbols, **flags):
             if result:
                 return result
 
+        # See if equation can rewritten as sin(F)**2*P+sin(F)**P+C
+        trx3_gens = [g for g in Poly(TRx3(poly)).gens if g.has(symbol)]
+        if len(trx3_gens) == 1:
+            g1 = TRx3(poly).as_expr()
+            add_comment('Replacing cosine with sine using Pythagorean identity')
+            add_eq(g1, 0)
+            fu_rules_used.append('TRx3')
+            result = _solve(g1, symbol, **flags)
+            if result:
+                return result
+
+        # See if equation can rewritten as cos(F)**2*P+cos(F)**P+C
+        trx2_gens = [g for g in Poly(TRx2(poly)).gens if g.has(symbol)]
+        if len(trx2_gens) == 1:
+            g1 = TRx2(poly).as_expr()
+            add_comment('Replacing sin with cos using Pythagorean identity')
+            add_eq(g1, 0)
+            fu_rules_used.append('TRx2')
+            result = _solve(g1, symbol, **flags)
+            if result:
+                return result
+
         # Transform equations of the forms f(cos(x), sin**2(x)) = 0 and f(sin(x), cos**2(x)) = 0
         tr5_gens = [g for g in Poly(TR5(poly)).gens if g.has(symbol)]
         if len(tr5_gens) == 1:
@@ -2861,6 +3009,12 @@ def _solve(f, *symbols, **flags):
             result = solve_AsinF2pBsinFpC(f, symbol)
         elif is_AcosF2pBsinFpC(f, symbol):
             result = solve_AcosF2pBsinFpC(f, symbol)
+        elif is_AsinF2pBsinGpCcosGpGd2(f, symbol):
+            result = solve_AsinF2pBsinGpCcosGpGd2(f, symbol)
+        elif is_AcosF2pBcosGpCsinGpGd2(f, symbol):
+            result = solve_AcosF2pBcosGpCsinGpGd2(f, symbol)
+        elif is_AsinF2PpBcosGPpC(f, symbol):
+            result = solve_AsinF2PpBcosGPpC(f, symbol)
         if result != False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
     except DontKnowHowToSolve:
