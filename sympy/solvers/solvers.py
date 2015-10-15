@@ -1504,10 +1504,9 @@ def is_AcosFpBcosGpC(f, symbol):
 # Solve the equation in the form Acos(F(x)) + Bcos(G(x)) + C = 0
 def solve_AcosFpBcosGpC(f, symbol):
     A, C, F = Wild("A"), Wild("C"), Wild("F")
-    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
-    m = f.match(A*cos(F) + B*cos(G) + C)
+    m = f.match(-2*A*cos(F/2) + A*cos(F) + C)
     #Equations in the form of -2*A*cos(F/2) + A*cos(F) + C
-    if m[A] == -2*m[B] and m[F] == m[G]/2:
+    if m is not None and set([A, C, F]) == set(m):
         add_comment("Using reverse half-angle identity for cosine")
         g1 = cos(m[F])
         g2 = TRx12i(g1)
