@@ -391,7 +391,7 @@ class Test:
                         answer = answer.replace('≈', '')
                     else:
                         answer = answer.replace('≈', '=')
-                    answer = sympy.sympify(answer)
+                answer = sympy.sympify(answer)
             if SOLUTIONS:
                 reset_solution()
             with timeout(seconds=TIMEOUT):
