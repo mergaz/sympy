@@ -4250,6 +4250,95 @@ def exptrigsimp(expr, simplify=True):
         expr = newexpr
     return expr
 
+def umenshaizer(func, depth=-1, estimate=count_ops, history=None, lenLimit=0):
+    """ Recursive algorithm for simplification ``func``
+    """
+    from sympy.simplify.fu import (
+        TR1, TR2, TR3, TR2i, TR10, L, TR10i,
+        TR8, TR6, TR15, TR16, TR111, TR5, TRmorrie, TR11, TR14, TR22,
+        TR12)
+    trigs = lambda x: x.has(TrigonometricFunction)
+
+    actions = [
+        TR3,  # canonical angles
+        TR1,  # sec-csc -> cos-sin
+        TR12,  # expand tan of sum
+        lambda x: _eapply(factor, x, trigs),
+        TR2,  # tan-cot -> sin-cos
+        [identity, lambda x: _eapply(_mexpand, x, trigs)],
+        TR2i,  # sin-cos ratio -> tan
+        lambda x: _eapply(lambda i: factor(i.normal()), x, trigs),
+        TR14,  # factored identities
+        TR5,  # sin-pow -> cos_pow
+        TR10,  # sin-cos of sums -> sin-cos prod
+        TR11, TR6, # reduce double angles and rewrite cos pows
+        lambda x: _eapply(factor, x, trigs),
+        TR14,  # factored powers of identities
+        [identity, lambda x: _eapply(_mexpand, x, trigs)],
+        TRmorrie,
+        TR10i,  # sin-cos products > sin-cos of sums
+        [identity, TR8],  # sin-cos products -> sin-cos of sums
+        [identity, lambda x: TR2i(TR2(x))],  # tan -> sin-cos -> tan
+        [
+            lambda x: _eapply(expand_mul, TR5(x), trigs),
+            lambda x: _eapply(
+                expand_mul, TR15(x), trigs)], # pos/neg powers of sin
+        [
+            lambda x:  _eapply(expand_mul, TR6(x), trigs),
+            lambda x:  _eapply(
+                expand_mul, TR16(x), trigs)], # pos/neg powers of cos
+        TR111,  # tan, sin, cos to neg power -> cot, csc, sec
+        [identity, TR2i],  # sin-cos ratio to tan
+        [identity, lambda x: _eapply(
+            expand_mul, TR22(x), trigs)],  # tan-cot to sec-csc
+        TR1, TR2, TR2i,
+        [identity, lambda x: _eapply(
+            factor_terms, TR12(x), trigs)],  # expand tan of sum
+    ]
+    minFunc = func
+    l0 = estimate(func)
+    minLen = l0
+    minHistory = []
+    if history is None:
+        history = [func]
+    for action in actions:
+        if isinstance(action, list):
+            f1 = func
+            for a in action:
+                f1 = a(f1)
+        else:
+            f1 = action(func)
+        if f1 is func:
+            continue
+        l1 = estimate(f1)
+        if lenLimit > 0 and l1 > lenLimit:
+            continue
+        exist = False
+        for variant in history:
+            if f1 == variant:
+                exist = True
+                break
+        if exist:
+            continue
+        print(func, '->', f1)
+        print(l0, '->', l1)
+        history.append(f1)
+        if l1 < minLen:
+            minLen = l1
+            minFunc = f1
+            minHistory = list(history)
+        if depth > 0 or depth == -1:
+            f2, h2 = umenshaizer(f1, depth-1, estimate, history, minLen*2)
+            l2 = estimate(f2)
+            if l2 < minLen:
+                minLen = l2
+                minFunc = f2
+                minHistory = h2
+        history.pop()
+        if minLen <= 1:
+            break
+    return minFunc, minHistory
+
 
 def _is_Expr(e):
     """_eapply helper to tell whether ``e`` and all its args

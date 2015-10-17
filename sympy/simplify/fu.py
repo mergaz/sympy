@@ -1551,7 +1551,6 @@ def TR111(rv):
 
     return bottom_up(rv, f)
 
-
 def TR22(rv, max=4, pow=False):
     """Convert tan(x)**2 to sec(x)**2 - 1 and cot(x)**2 to csc(x)**2 - 1.
 
