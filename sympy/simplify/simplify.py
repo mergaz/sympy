@@ -55,7 +55,6 @@ from sympy.polys.polytools import groebner
 import mpmath
 
 
-
 def fraction(expr, exact=False):
     """Returns a pair with expression's numerator and denominator.
        If the given expression is not a fraction then this function
@@ -1418,7 +1417,7 @@ def trigsimp(expr, **opts):
 
     trigsimpfunc = {
         'fu': (lambda x: fu(x, **opts)),
-        'matching': (lambda x: futrig(x)),
+        'matching': (lambda x: simply_trig(x)),
         'groebner': (lambda x: groebnersimp(x, **opts)),
         'combined': (lambda x: futrig(groebnersimp(x,
                                polynomial=True, hints=[2, tan]))),
@@ -3718,6 +3717,7 @@ def simplify(expr, ratio=1.7, measure=count_ops, fu=False):
     if expr.has(TrigonometricFunction) and not fu or expr.has(
             HyperbolicFunction):
         expr = trigsimp(expr, deep=True)
+        #expr = simply_trig(expr)
 
     if expr.has(log):
         expr = shorter(expand_log(expr, deep=True), logcombine(expr))
@@ -4250,9 +4250,7 @@ def exptrigsimp(expr, simplify=True):
         expr = newexpr
     return expr
 
-def umenshaizer(func, depth=-1, estimate=count_ops, history=None, lenLimit=0):
-    """ Recursive algorithm for simplification ``func``
-    """
+def simply_trig(func, history=False):
     from sympy.simplify.fu import (
         TR1, TR2, TR3, TR2i, TR10, L, TR10i,
         TR8, TR6, TR15, TR16, TR111, TR5, TRmorrie, TR11, TR14, TR22,
@@ -4295,6 +4293,77 @@ def umenshaizer(func, depth=-1, estimate=count_ops, history=None, lenLimit=0):
         [identity, lambda x: _eapply(
             factor_terms, TR12(x), trigs)],  # expand tan of sum
     ]
+    res, hist = umenshaizer(func, actions, 10)
+    #res, hist = genetics(func, actions)
+    if history:
+        return res, hist
+    else:
+        return res
+
+def genetics(func, actions, population=50, estimate=count_ops):
+    import random
+    l0 = estimate(func)
+    def genapply(genome):
+        f = func
+        l = l0
+        minFunc = f
+        for gen in genome:
+            action = actions[gen]
+            if isinstance(action, list):
+                for a in action:
+                    f = a(f)
+            else:
+                f = action(f)
+            l1 = estimate(f)
+            if l1 < l:
+                l = l1
+                minFunc = f
+        return l, minFunc
+
+    def geneval(genome):
+        l, f = genapply(genome)
+        return l
+
+    def offspring(genome1, genome2):
+        #l1 = int(len(genome1)/2)
+        #res = genome1[:l1] + genome2[l1:]
+        res = []
+        l = min(len(genome1), len(genome2))
+        for i in xrange(l):
+            res.append(genome1[i])
+            res.append(genome2[i])
+        return res[:l]
+
+    def mutation(genome, variation):
+        if random.randint(0, 100) > 90:
+            ind = random.randrange(len(genome))
+            genome[ind] = random.randrange(variation)
+        return genome
+
+    maxlen = 10
+    generation = [random.sample(xrange(len(actions)), maxlen) for x in xrange(population)]
+    for iteration in xrange(100):
+        generation.sort(key=geneval)
+        print('Generation', iteration)
+        S = 0
+        for genome in generation:
+            l, f = genapply(genome)
+            S += l
+        print('Min form', genapply(generation[0]), 'sum', S, S/population)
+        adult = generation[:int(population/2)]
+        children = []
+        for genome in adult:
+            gen2 = random.choice(adult)
+            ng = offspring(genome, gen2)
+            ng = mutation(ng, len(actions))
+            children.append(ng)
+        generation = adult + children
+    l, f = genapply(generation[0])
+    return f, []
+
+def umenshaizer(func, actions, depth=-1, estimate=count_ops, history=None, lenLimit=0, stoplist=[]):
+    """ Recursive algorithm for simplification ``func``
+    """
     minFunc = func
     l0 = estimate(func)
     minLen = l0
@@ -4314,26 +4383,41 @@ def umenshaizer(func, depth=-1, estimate=count_ops, history=None, lenLimit=0):
         if lenLimit > 0 and l1 > lenLimit:
             continue
         exist = False
+        """
         for variant in history:
             if f1 == variant:
                 exist = True
                 break
         if exist:
             continue
-        print(func, '->', f1)
-        print(l0, '->', l1)
+        """
+        for variant in stoplist:
+            if f1 == variant:
+                exist = True
+                break
+        if exist:
+            continue
+        #print(func, '->', f1, '<', actions.index(action), '>')
+        #print(depth, ')', l0, '->', l1, '[', lenLimit, ']')
         history.append(f1)
+        stoplist.append(f1)
         if l1 < minLen:
             minLen = l1
             minFunc = f1
             minHistory = list(history)
+        newLenLimit = minLen * 2
+        if newLenLimit < lenLimit or lenLimit == 0:
+            lenLimit = newLenLimit
         if depth > 0 or depth == -1:
-            f2, h2 = umenshaizer(f1, depth-1, estimate, history, minLen*2)
+            f2, h2 = umenshaizer(f1, actions, depth-1, estimate, history, lenLimit, stoplist)
             l2 = estimate(f2)
             if l2 < minLen:
                 minLen = l2
                 minFunc = f2
                 minHistory = h2
+        newLenLimit = minLen * 2
+        if newLenLimit < lenLimit or lenLimit == 0:
+            lenLimit = newLenLimit
         history.pop()
         if minLen <= 1:
             break
