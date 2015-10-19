@@ -4361,13 +4361,15 @@ def genetics(func, actions, population=50, estimate=count_ops):
     l, f = genapply(generation[0])
     return f, []
 
-def umenshaizer(func, actions, depth=-1, estimate=count_ops, history=None, lenLimit=0, stoplist=[]):
+def umenshaizer(func, actions, depth=-1, estimate=count_ops, history=None, lenLimit=0, stoplist=None):
     """ Recursive algorithm for simplification ``func``
     """
     minFunc = func
     l0 = estimate(func)
     minLen = l0
     minHistory = []
+    if stoplist is None:
+        stoplist = []
     if history is None:
         history = [func]
     for action in actions:
@@ -4383,14 +4385,6 @@ def umenshaizer(func, actions, depth=-1, estimate=count_ops, history=None, lenLi
         if lenLimit > 0 and l1 > lenLimit:
             continue
         exist = False
-        """
-        for variant in history:
-            if f1 == variant:
-                exist = True
-                break
-        if exist:
-            continue
-        """
         for variant in stoplist:
             if f1 == variant:
                 exist = True
