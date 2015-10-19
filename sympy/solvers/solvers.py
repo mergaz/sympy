@@ -35,8 +35,8 @@ from sympy.simplify.simplify import bottom_up
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine, trigsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth
-from sympy.simplify.fu import TR1, TR5, TR6, TR7, TR8, TR10, TR11
-from sympy.simplify.fu_ext import TRx4, TRx10, TRx11, TRx11i, TRx12i, TRx15, TRx16
+from sympy.simplify.fu import TR1, TR2i, TR5, TR6, TR7, TR8, TR9, TR10, TR11
+from sympy.simplify.fu_ext import TRx2, TRx3, TRx4, TRx10, TRx11, TRx11i, TRx12i, TRx15, TRx16
 from sympy.matrices import Matrix, zeros
 from sympy.polys import roots, cancel, factor, Poly, together, degree
 from sympy.polys.polyerrors import GeneratorsNeeded, PolynomialError
@@ -1379,11 +1379,19 @@ class DontKnowHowToSolve(Exception):
     pass
 
 
-# Returns true iff the equation has the form Acos(F(x)) + Bsin(G(x)) + C = 0
+# Returns true if the equation has the form Acos(F(x)) + Bsin(G(x)) + C = 0
 def isAcosFpBsinGpC(f, symbol):
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*cos(F) + B*sin(G) + C)
-    return not m is None and A in m and m[A] != 0 and not m[A].has(symbol) and B in m and m[B] != 0 and not m[B].has(symbol) and C in m and not m[C].has(symbol) and F in m and m[F].has(symbol) and G in m and m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
 
 
 # Solve the equation in the form Asin(F(x)) + Bsin(G(x)) + C = 0
@@ -1445,12 +1453,18 @@ def solveAcosFpBsinGpC(f, symbol):
     raise DontKnowHowToSolve()
 
 
-# Returns true iff the equation has the form Acos(F(x)) + Bcos(G(x)) = 0
+# Returns true if the equation has the form Acos(F(x)) + Bcos(G(x)) = 0
 def isAcosFpBcosG(f, symbol):
     A, B, F, G = Wild("A"), Wild("B"), Wild("F"), Wild("G")
     m = f.match(A*cos(F) + B*cos(G))
-    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
-
+    result = False
+    if m is not None and set([A, B, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
 
 # Solve the equation in the form Acos(F(x)) + Bcos(G(x)) = 0
 def solveAcosFpBcosG(f, symbol):
@@ -1495,16 +1509,24 @@ def solveAcosFpBcosG(f, symbol):
 
 # Returns true if the equation has the form Acos(F(x)) + Bcos(G(x)) = 0
 def is_AcosFpBcosGpC(f, symbol):
-    A, C, F = Wild("A"), Wild("C"), Wild("F")
-    m = f.match(-2*A*cos(F/2) + A*cos(F) + C)
-    return not m is None and m[A] != 0 and not m[A].has(symbol) \
-        and m[F].has(symbol) and m[C] != 0 and not m[C].has(symbol)
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F) + B*cos(G) + C)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
 
 # Solve the equation in the form Acos(F(x)) + Bcos(G(x)) + C = 0
 def solve_AcosFpBcosGpC(f, symbol):
     A, C, F = Wild("A"), Wild("C"), Wild("F")
     m = f.match(-2*A*cos(F/2) + A*cos(F) + C)
-    if m:
+    #Equations in the form of -2*A*cos(F/2) + A*cos(F) + C
+    if m is not None and set([A, C, F]) == set(m):
         add_comment("Using reverse half-angle identity for cosine")
         g1 = cos(m[F])
         g2 = TRx12i(g1)
@@ -1521,12 +1543,18 @@ def solve_AcosFpBcosGpC(f, symbol):
         return result
     raise DontKnowHowToSolve()
 
-# Returns true iff the equation has the form Asin(F(x)) + Bsin(G(x)) = 0
+# Returns true if the equation has the form Asin(F(x)) + Bsin(G(x)) = 0
 def isAsinFpBsinG(f, symbol):
     A, B, F, G = Wild("A"), Wild("B"), Wild("F"), Wild("G")
     m = f.match(A*sin(F) + B*sin(G))
-    return not m is None and m[A] != 0 and not m[A].has(symbol) and m[B] != 0 and not m[B].has(symbol) and m[F].has(symbol) and m[G].has(symbol)
-
+    result = False
+    if m is not None and set([A, B, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
 
 # Solve the equation in the form Asin(F(x)) + Bsin(G(x)) = 0
 def solveAsinFpBsinG(f, symbol):
@@ -1574,10 +1602,13 @@ def isASinX_p_BSin2X_p_ASin3X(f, symbol):
     """
     A, B, X = Wild('A'), Wild('B'), Wild('X')
     m = f.match(A*sin(X) + B*sin(2*X) + A*sin(3*X))
-
-    return not m is None and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol)
+    result = False
+    if m is not None and set([A, B, X]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[X].has(symbol)
+    return result
 
 def solveASinX_p_BSin2X_p_ASin3X(f, symbol):
     """ Solve the equation in the form of
@@ -1630,11 +1661,13 @@ def is_sinFcosGpC(f, symbol):
     # and deal with it afterwards.
     A, C, F, G = Wild("A"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*sin(F)*cos(G)+C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_sinFcosGpC(f, symbol):
@@ -1664,12 +1697,14 @@ def is_AsinFcosGpBsinGcosFpC(f, symbol):
     '''
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*sin(F)*cos(G)+B*sin(G)*cos(F)+C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_AsinFcosGpBsinGcosFpC(f, symbol):
@@ -1691,18 +1726,19 @@ def solve_AsinFcosGpBsinGcosFpC(f, symbol):
     result=solve(f3)
     return result
 
-
 def is_AsinF2pBcosF2pC(f, symbol):
     '''Returns true if the equation has the form A*sin(F(x))**2+B*cos(G(x))**2+C=0
     '''
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*sin(F)**2 + B*cos(G)**2 + C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_AsinF2pBcosF2pC(f, symbol):
@@ -1760,17 +1796,55 @@ def solve_AsinF2pBcosF2pC(f, symbol):
         return False
     return result
 
+def is_AcosF2pBcosG2pC(f, symbol):
+    '''Returns true if the equation has the form A*cos(F(x))**2+B*cos(G(x))**2+C=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F)**2 + B*cos(G)**2 + C)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AcosF2pBcosG2pC(f, symbol):
+    """ Solves the equation in the form of
+        A*cos(F(x))**2+B*cos(G(x))**2+C=0
+    """
+    A, B, C, F = Wild("A"), Wild("B"), Wild("C"), Wild("F")
+    t = Symbol("t")
+    m = f.match(A*cos(2*F)**2 + B*cos(F)**2 + C)
+    if m is not None and set([A, B, C, F]) == set(m):
+        f1 = cos(2*m[F])**2
+        f2 = cos(m[F])**2
+        add_comment("Using decrease cosine power identity")
+        g1=TR7(f2)
+        add_eq(f2, g1)
+        add_comment("We get")
+        f3 = m[A]*f1 + m[B]*g1 + m[C]
+        add_eq(f3, 0)
+        result=solve(f3)
+        return result
+    else:
+        return False
+
 def is_AsinF2pBsinFpC(f, symbol):
     '''Returns true if the equation has the form A*sin(F(x))**2+B*sin(G(x))+C=0
     '''
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*sin(F)**2 + B*sin(G) + C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_AsinF2pBsinFpC(f, symbol):
@@ -1796,6 +1870,21 @@ def solve_AsinF2pBsinFpC(f, symbol):
         add_eq(f4, 0)
         result=solve(f4)
         return result
+    elif m[F] == m[G]/2 and m[C] == 0:
+        f1 = sin(m[F])**2
+        f2 = sin(m[G])
+        add_comment("Using sine of double angle identity")
+        g1=TRx15(f2)
+        add_eq(f2, g1)
+        add_comment("We get")
+        f3 = m[A]*f1 + m[B]*g1
+        add_eq(f3, 0)
+        add_comment('Rewrite equation')
+        # We should get P*sin(F)*(Q*cos(F)+R*sin(F)) here
+        f4 = simplify(f3)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
     else:
         return False
 
@@ -1804,12 +1893,14 @@ def is_AcosF2pBsinFpC(f, symbol):
     '''
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*cos(F)**2 + B*sin(G) + C)
-    result = not m is None and \
-           not m[C].has(symbol) and \
-           m[A] != 0 and not m[A].has(symbol) and \
-           m[B] != 0 and not m[B].has(symbol) and \
-           m[F].has(symbol) and \
-           m[G].has(symbol)
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
     return result
 
 def solve_AcosF2pBsinFpC(f, symbol):
@@ -1835,6 +1926,249 @@ def solve_AcosF2pBsinFpC(f, symbol):
         add_eq(f4, 0)
         result=solve(f4)
         return result
+    elif m[F] == m[G]/2 and m[C] == 0:
+        f1 = cos(m[F])**2
+        f2 = sin(m[G])
+        add_comment("Using sine of double angle identity")
+        g1=TRx15(f2)
+        add_eq(f2, g1)
+        add_comment("We get")
+        f3 = m[A]*f1 + m[B]*g1
+        add_eq(f3, 0)
+        add_comment('Rewrite equation')
+        # We should get P*cos(F)*(Q*cos(F)+R*sin(F)) here
+        f4 = simplify(f3)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    elif m[F] == m[G]/2 and m[C] != 0:
+        f1 = cos(m[F])**2
+        f2 = sin(m[G])
+        add_comment("Using decrease cosine power identity")
+        g1 = TR7(f1)
+        add_exp(g1)
+        add_comment("We get")
+        f3 = m[A]*g1 + m[B]*f2 + m[C]
+        add_comment("Divide this equation by")
+        fd = cos(m[G])
+        add_comment("We get")
+        add_exp(fd)
+        p4 = Poly(f3)/fd
+        f4 = p4.as_expr()
+        add_eq(f4, 0)
+        add_comment("Rewrite sine/cosine ratios as tangents")
+        f5 = TR2i(f4)
+        add_eq(f5, 0)
+        result=solve(f5)
+        return result
+    else:
+        return False
+
+def is_AsinF2pBsinGpCcosGpGd2(f, symbol):
+    '''Returns true if the equation has the form A*sin(F)+B*sin(G)+C*cos((F+G)/2)=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)+B*sin(G)+C*cos((F+G)/2))
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AsinF2pBsinGpCcosGpGd2(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F)+B*sin(G)+C*cos((F+G)/2)
+    """
+    A, B, C, F, G, H = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G"), Wild("H")
+    m = f.match(A*sin(F)+B*sin(G)+C*cos(H))
+    # H = (F+G)/2
+    if m[A] == -m[B]:
+        f1 = m[A]*sin(m[F])+m[B]*sin(m[G])
+        f2 = m[C]*cos(m[H])
+        add_comment("Using identity for a sum of sines")
+        g1=TR9(f1)
+        add_eq(f1, g1)
+        add_comment("We get")
+        g2=g1+f2
+        add_eq(g2, 0)
+        add_comment('Rewrite equation')
+        f4 =g2.collect(f2)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    else:
+        return False
+
+def is_AcosF2pBcosGpCsinGpGd2(f, symbol):
+    '''Returns true if the equation has the form A*cos(F)+B*cos(G)+C*sin((F+G)/2)=0
+    '''
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F)+B*cos(G)+C*sin((F+G)/2))
+    result = False
+    if m is not None and set([A, B, C, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AcosF2pBcosGpCsinGpGd2(f, symbol):
+    """ Solves the equation in the form of
+        A*cos(F)+B*cos(G)+C*sin((F+G)/2)
+    """
+    A, B, C, F, G, H = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G"), Wild("H")
+    m = f.match(A*cos(F)+B*cos(G)+C*sin(H))
+    # H = (F+G)/2
+    if m[A] == -m[B]:
+        f1 = m[A]*cos(m[F])+m[B]*cos(m[G])
+        f2 = m[C]*sin(m[H])
+        add_comment("Using identity for a sum of cosines")
+        g1=TR9(f1)
+        add_eq(f1, g1)
+        add_comment("We get")
+        g2=g1+f2
+        add_eq(g2, 0)
+        add_comment('Rewrite equation')
+        f4 =g2.collect(f2)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    else:
+        return False
+
+def is_AsinF2PpBcosGPpC(f, symbol):
+    '''Returns true if the equation has the form A*sin(F)**(2*P)+B*cos(F)**P+C=0
+    '''
+    A, B, C, P, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("P"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**(2*P)+B*cos(F)**P+C)
+    result = False
+    if m is not None and set([A, B, C, P, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[P] != 0 and not m[P].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AsinF2PpBcosGPpC(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F)**(2*P)+B*cos(F)**P+C=0
+    """
+    A, B, C, P, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("P"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**(2*P)+B*cos(F)**P+C)
+    if m[A] == -m[C] and m[P] == 2:
+        f1 = -m[A]*(1-sin(m[F])**4)
+        f2 = m[B]*cos(m[F])**2
+        add_comment('Using polynomial identity for difference of squares')
+        g1 = -m[A]*(1-sin(m[F])**2)*(1+sin(m[F])**2)
+        add_eq(f1, g1)
+        add_comment('Then, replacing sine by cosine using Pythagorean identity')
+        g2 = -m[A]*(cos(m[F])**2)*(1+sin(m[F])**2)
+        add_eq(g1, g2)
+        add_comment("We get")
+        f3 = f2+g2
+        add_eq(f3, 0)
+        add_comment('Rewrite equation')
+        f4 =f3.collect(f2)
+        add_eq(f4, 0)
+        result=solve(f4)
+        return result
+    else:
+        return False
+
+def is_AsinFpBcosFpCsinGpD(f, symbol):
+    '''Returns true if the equation has the form A*sin(F) + B*cos(F) + C*sin(G) + D
+    '''
+    A, B, C, D, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("D"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F) + B*cos(F) + C*sin(G) + D)
+    result = False
+    if m is not None and set([A, B, C, D, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            not m[D].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AsinFpBcosFpCsinGpD(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F)**(2*P)+B*cos(F)**P+C=0
+    """
+    A, B, C, D, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("D"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F) + B*cos(F) + C*sin(G) + D)
+    if m[F] == m[G]/2 and m[A] == m[B]:
+        if Abs(m[D]) == Abs(m[C]) and (Abs(m[D])/m[D] == - Abs(m[C])/m[C] or Abs(m[A])/m[A] == - Abs(m[C])/m[C]):
+            f1 = m[A]*(sin(m[F]) + cos(m[F]))
+            f2 = m[C]*sin(m[G])
+            f3 = m[D]
+            add_comment("Since")
+            f4 = f3 * (sin(m[F])**2 + cos(m[F])**2)
+            add_eq(f3, f4)
+            add_comment("And since")
+            f5 = f3 * ((sin(m[F]) + cos(m[F]))**2 - 2*sin(m[F])*cos(m[F]))
+            add_eq(f4, f5)
+            add_comment("Using reverse double-angle identity for sine")
+            f6 = f3 * ((sin(m[F]) + cos(m[F]))**2 - sin(2*m[F]))
+            add_eq(f5, f6)
+            add_comment("We get")
+            f7 = f1 + f2 + f6
+            add_eq(f7, 0)
+            add_comment('Rewrite equation')
+            # We should get P*(sin(F) + cos(F))*(Q*sin(F) + Q*cos(F) + R) here
+            f8 = f7.factor()
+            add_eq(f8, 0)
+            result=solve(f8)
+            return result
+        else:
+            f1 = m[A]*(sin(m[F]) + cos(m[F]))
+            f2 = m[C]*sin(m[G])
+            f3 = m[D]
+            add_comment("Since")
+            fa = sin(m[F])**2 + cos(m[F])**2 - 1
+            add_eq(fa, 0)
+            add_comment("We can add it to our equation")
+            f4 = f1 + f2 + fa + f3
+            add_eq(f4, 0)
+            add_comment('Using identity for sine of double angle')
+            g2 = TRx15(f2)
+            add_eq(f2, g2)
+            add_comment("We get")
+            f5 = f1 + g2 + fa + f3
+            add_eq(f5, 0)
+            add_comment("Since")
+            g3 = g2 + f3
+            g4 = m[C]*((sin(m[F])+cos(m[F]))**2 - 1) + m[D]
+            add_eq(g3, g4)
+            add_comment("And since")
+            g5 = f1.factor()
+            add_eq(f1, g2)
+            add_comment("We get")
+            f6 = g4 + g5
+            add_eq(f6, 0)
+            fs = sin(m[F])+cos(m[F])
+            add_comment('Use the substitution')
+            p = Symbol('p')
+            f7 = g4.subs(fs, p) + g5.subs(fs, p)
+            add_comment("We get")
+            add_eq(f7, 0)
+            p_results = solve(f7, p)
+            x_results = []
+            # TODO: Need more robust substitution framework
+            for p_result in p_results:
+                fi = fs - p_result
+                x_result = solve(fi, symbol)
+                x_results.append(x_result)
+            return x_results
     else:
         return False
 
@@ -2341,12 +2675,33 @@ def _solve_poly(f, *symbols, **flags):
 
         # Reducing using Pythagorean identity
         trx16_gens = [g for g in Poly(TRx16(poly)).gens if g.has(symbol)]
-        print(TRx16(poly).as_expr())
         if len(trx16_gens) == 1:
             g1 = TRx16(poly).as_expr()
             add_comment('Reducing using Pythagorean identity')
             add_eq(g1, 0)
             fu_rules_used.append('TRx16')
+            result = _solve(g1, symbol, **flags)
+            if result:
+                return result
+
+        # See if equation can rewritten as sin(F)**2*P+sin(F)**P+C
+        trx3_gens = [g for g in Poly(TRx3(poly)).gens if g.has(symbol)]
+        if len(trx3_gens) == 1:
+            g1 = TRx3(poly).as_expr()
+            add_comment('Replacing cosine with sine using Pythagorean identity')
+            add_eq(g1, 0)
+            fu_rules_used.append('TRx3')
+            result = _solve(g1, symbol, **flags)
+            if result:
+                return result
+
+        # See if equation can rewritten as cos(F)**2*P+cos(F)**P+C
+        trx2_gens = [g for g in Poly(TRx2(poly)).gens if g.has(symbol)]
+        if len(trx2_gens) == 1:
+            g1 = TRx2(poly).as_expr()
+            add_comment('Replacing sin with cos using Pythagorean identity')
+            add_eq(g1, 0)
+            fu_rules_used.append('TRx2')
             result = _solve(g1, symbol, **flags)
             if result:
                 return result
@@ -2855,10 +3210,20 @@ def _solve(f, *symbols, **flags):
             result = solve_AsinFcosGpBsinGcosFpC(f, symbol)
         elif is_AsinF2pBcosF2pC(f, symbol):
             result = solve_AsinF2pBcosF2pC(f, symbol)
+        elif is_AcosF2pBcosG2pC(f, symbol):
+            result = solve_AcosF2pBcosG2pC(f, symbol)
         elif is_AsinF2pBsinFpC(f, symbol):
             result = solve_AsinF2pBsinFpC(f, symbol)
         elif is_AcosF2pBsinFpC(f, symbol):
             result = solve_AcosF2pBsinFpC(f, symbol)
+        elif is_AsinF2pBsinGpCcosGpGd2(f, symbol):
+            result = solve_AsinF2pBsinGpCcosGpGd2(f, symbol)
+        elif is_AcosF2pBcosGpCsinGpGd2(f, symbol):
+            result = solve_AcosF2pBcosGpCsinGpGd2(f, symbol)
+        elif is_AsinF2PpBcosGPpC(f, symbol):
+            result = solve_AsinF2PpBcosGPpC(f, symbol)
+        elif is_AsinFpBcosFpCsinGpD(f, symbol):
+            result = solve_AsinFpBcosFpCsinGpD(f, symbol)
         if result != False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
     except DontKnowHowToSolve:

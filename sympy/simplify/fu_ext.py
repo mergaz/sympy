@@ -253,3 +253,4 @@ def TRx16(rv):
             return m[A]+m[G]
         return rv
     return bottom_up(rv, f)
+    
