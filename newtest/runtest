@@ -15,7 +15,9 @@ else:
 import sympy
 from sympy.core.basic import Basic
 from sympy.core.relational import StrictGreaterThan, StrictLessThan, GreaterThan, LessThan
+from sympy.core.cache import *
 import csv
+import cProfile
 try:
     from sympy.utilities.solution import last_solution, reset_solution
     SOLUTIONS=True
@@ -23,6 +25,7 @@ except:
     SOLUTIONS=False
 
 from datetime import datetime
+from time import *
 import threading
 try:
     import thread
@@ -337,13 +340,23 @@ class Test:
         self.writer.writerows([['Function', 'Input', 'Expected', 'Result', 'Solution steps', 'Status']])
         self.tests_total = 0
         self.tests_count = 0
+        self.min_time = -1
+        self.max_time = -1
+        self.all_time = 0
 
     def __enter__(self):
+        if DEBUG:
+            self.profile_filename = self.filename[:-3] + 'prof'
+            self.profiler = cProfile.Profile()
+        else:
+            self.profiler = None
         return self
 
     def __exit__(self, type, value, traceback):
         if self.file is not None:
             self.finish()
+        if self.profiler is not None:
+            self.profiler.dump_stats(self.profile_filename)
 
     def finish(self):
         self.file.close()
@@ -395,7 +408,10 @@ class Test:
             if SOLUTIONS:
                 reset_solution()
             with timeout(seconds=TIMEOUT):
-                result = func(*arguments)
+                if self.profiler is not None:
+                    result = self.profiler.runcall(func, *arguments)
+                else:
+                    result = func(*arguments)
             if SOLUTIONS:
                 sol = last_solution()
             if result is None or result == False:
@@ -481,9 +497,17 @@ class Test:
                     if row[0].startswith('###'):
                         skip = not skip
                     elif not skip:
+                        t1 = time()
                         res = self.process(*row)
-                        self.tests_count += 1
                         if res is not None:
+                            t2 = time()
+                            t = t2 - t1
+                            if self.min_time < 0 or self.min_time > t:
+                                self.min_time = t
+                            if self.max_time < t:
+                                self.max_time = t
+                            self.all_time += t
+                            self.tests_count += 1
                             stats[res] = stats[res] + 1
             message('Result:', filename)
             print()
@@ -518,18 +542,33 @@ if __name__ == '__main__':
                 print ('Skip', f)
             else:
                 testfiles.append(f)
+    mint = 0
+    maxt = 0
+    allt = 0
+    medt = 0
     with Test(testfiles) as test:
+        rescount = 0
         for f in testfiles:
             res = test.load_file(f)
             files[f] = res
             for key, value in res.items():
                 stats[key] += value
+                rescount += value
         resfilename = test.filename
+        mint = test.min_time
+        maxt = test.max_time
+        allt = test.all_time
+        medt = test.all_time / rescount
     separator('Statistics')
     for key, value in files.items():
         message(key, ':', **value)
         print()
     message('Total:', **stats)
     print()
+    message('Min time: {0:.2f} Max time: {1:.2f} Median time: {2:.2f} Total time: {3:.2f}'.format(mint, maxt, medt, allt))
+    print()
     message('Log file:', resfilename)
     print()
+    #if DEBUG:
+    #    print_cache()
+
