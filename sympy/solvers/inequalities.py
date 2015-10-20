@@ -458,6 +458,8 @@ def solve_univariate_inequality(expr, gen, relational=True):
 
     def valid(x):
         v = e.subs(gen, x)
+        for variable in v.atoms(Symbol):
+            v = v.subs(variable, 0)
         try:
             r = expr.func(v, 0)
         except TypeError:
@@ -750,41 +752,41 @@ def solve_trig_ineq(trig_ineq_params):
     add_comment("This inequality is trigonometric")
     if a < 0:
         rel = corel(rel)
+    result = S.EmptySet
     if trig in [sin, cos] and (
             (rel is StrictLessThan and c <= -1) or
             (rel is LessThan and c < -1) or
             (rel is StrictGreaterThan and c >= 1) or
             (rel is GreaterThan and c > 1)):
         add_comment("There is no solution")
-        return S.EmptySet
     elif trig in [sin, cos] and (
             (rel is StrictLessThan and c > 1) or
             (rel is LessThan and c >= 1) or
             (rel is StrictGreaterThan and c < -1) or
             (rel is GreaterThan and c <= -1)):
         add_comment("Any number is a solution to this equation")
-        return Interval(-inf, inf)
+        result = Interval(-inf, inf)
     elif trig is sin:
         if rel in [LessThan, StrictLessThan]:
-            return solve_trig_help(2*pi*k - pi - asin(c), 2*pi*k + asin(c), rel, f, symbol)
+            result = solve_trig_help(2*pi*k - pi - asin(c), 2*pi*k + asin(c), rel, f, symbol)
         if rel in [GreaterThan, StrictGreaterThan]:
-            return solve_trig_help(2*pi*k + asin(c), 2*pi*k + pi - asin(c), rel, f, symbol)
+            result = solve_trig_help(2*pi*k + asin(c), 2*pi*k + pi - asin(c), rel, f, symbol)
     elif trig is cos:
         if rel in [LessThan, StrictLessThan]:
-            return solve_trig_help(2*pi*k + acos(c), 2*pi*k + 2*pi - acos(c), rel, f, symbol)
+            result = solve_trig_help(2*pi*k + acos(c), 2*pi*k + 2*pi - acos(c), rel, f, symbol)
         if rel in [GreaterThan, StrictGreaterThan]:
-            return solve_trig_help(2*pi*k - acos(c), 2*pi*k + acos(c), rel, f, symbol)
+            result = solve_trig_help(2*pi*k - acos(c), 2*pi*k + acos(c), rel, f, symbol)
     elif trig is tan:
         if rel in [LessThan, StrictLessThan]:
-            return solve_trig_help(-pi/2 + pi*k, pi*k + atan(c), rel, f, symbol)
+            result = solve_trig_help(-pi/2 + pi*k, pi*k + atan(c), rel, f, symbol)
         if rel in [GreaterThan, StrictGreaterThan]:
-            return solve_trig_help(pi*k + atan(c), pi/2 + pi*k, rel, f, symbol)
+            result = solve_trig_help(pi*k + atan(c), pi/2 + pi*k, rel, f, symbol)
     elif trig is cot:
         if rel in [LessThan, StrictLessThan]:
-            return solve_trig_help(pi*k + acot(c), pi + pi*k, rel, f, symbol)
+            result = solve_trig_help(pi*k + acot(c), pi + pi*k, rel, f, symbol)
         if rel in [GreaterThan, StrictGreaterThan]:
-            return solve_trig_help(pi*k, pi*k + acot(c), rel, f, symbol)
-
+            result = solve_trig_help(pi*k, pi*k + acot(c), rel, f, symbol)
+    return result.as_relational(symbol)
 
 def _reduce_inequalities(inequalities, symbols):
     # helper for reduce_inequalities
@@ -907,4 +909,7 @@ def reduce_inequalities(inequalities, symbols=[]):
     rv = _reduce_inequalities(inequalities, symbols)
 
     # restore original symbols and return
-    return rv.xreplace(dict([(v, k) for k, v in recast.items()]))
+    if rv in (S.true, S.false):
+        return rv
+    else:
+        return rv.xreplace(dict([(v, k) for k, v in recast.items()]))
