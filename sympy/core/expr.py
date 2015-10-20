@@ -20,6 +20,7 @@ def represent(v):
         return "".join(r)
 
 def make_repr(v1, op, v2, res):
+    return
     if res is None:
         return 
     if isinstance(v1, Expr):

@@ -2572,15 +2572,17 @@ def _solve_pow1(f, *symbols, **flags):
     rf_num = simplify_exp_eq(powsimp(f), symbol, True)
     m = rf_num.match(Pow(A, B) - Pow(A, C))
     if not m is None:
+        if m[A].has(symbol) or not m[B].has(symbol) or not m[C].has(symbol):
+            return False
         m[A] = simplify(m[A])
         m[B] = simplify(m[B])
         m[C] = simplify(m[C])
-    if m is not None and not m[A].has(symbol) and m[B].has(symbol) and m[C].has(symbol):
-        add_comment("Rewrite the equation as")
-        add_eq(Pow(m[A], m[B]), Pow(m[A], m[C]))
-        add_comment("Therefore we get")
-        add_eq(m[B], m[C])
-        return _solve(m[B] - m[C], symbol, **flags)
+        if not m[A].has(symbol) and m[B].has(symbol) and m[C].has(symbol):
+            add_comment("Rewrite the equation as")
+            add_eq(Pow(m[A], m[B]), Pow(m[A], m[C]))
+            add_comment("Therefore we get")
+            add_eq(m[B], m[C])
+            return _solve(m[B] - m[C], symbol, **flags)
     return False
 
 def _solve_log(f, *symbols, **flags):
