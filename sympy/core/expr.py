@@ -116,7 +116,8 @@ class Expr(Basic, EvalfMixin):
 
     def __repr__(self):
         if self._repr:
-            return "".join(map(represent,self._repr))
+            return self.__str__()
+            #return "".join(map(represent,self._repr))
         else:
             return self.__str__()
 
