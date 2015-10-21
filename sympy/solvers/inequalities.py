@@ -786,7 +786,10 @@ def solve_trig_ineq(trig_ineq_params):
             result = solve_trig_help(pi*k + acot(c), pi + pi*k, rel, f, symbol)
         if rel in [GreaterThan, StrictGreaterThan]:
             result = solve_trig_help(pi*k, pi*k + acot(c), rel, f, symbol)
-    return result.as_relational(symbol)
+    if result is S.EmptySet:
+        return []
+    else:
+        return result.as_relational(symbol)
 
 def _reduce_inequalities(inequalities, symbols):
     # helper for reduce_inequalities
@@ -909,7 +912,7 @@ def reduce_inequalities(inequalities, symbols=[]):
     rv = _reduce_inequalities(inequalities, symbols)
 
     # restore original symbols and return
-    if rv in (S.true, S.false):
+    if rv in (S.true, S.false, []):
         return rv
     else:
         return rv.xreplace(dict([(v, k) for k, v in recast.items()]))
