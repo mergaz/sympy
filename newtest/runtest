@@ -499,7 +499,7 @@ class Test:
         with open(filename, 'rb') as csvfile:
             # Count number of lines first - memory-friendly way
             self.tests_total = sum(1 for line in csvfile)
-            self.tests_count = 0
+            self.tests_count = 1
             csvfile.seek(0)
             separator(filename)
             reader = csv.reader(csvfile, delimiter=';', quotechar='"')
