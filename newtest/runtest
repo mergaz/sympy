@@ -47,7 +47,7 @@ try:
 except:
     COLORS=False
 
-TIMEOUT=15
+TIMEOUT=8
 
 def default_state():
     return {'Passed': 0, 'Missed': 0, 'Answer': 0, 'Timeout': 0, 'Exception': 0}
@@ -338,6 +338,7 @@ class Test:
         self.file = open(self.filename, 'wb')
         self.writer = csv.writer(self.file, delimiter=",")
         self.writer.writerows([['Function', 'Input', 'Expected', 'Result', 'Solution steps', 'Status']])
+        self.file_solutions = open(self.filename[:-4]+'_solutions.txt', 'wb')
         self.tests_total = 0
         self.tests_count = 0
         self.min_time = -1
@@ -353,15 +354,18 @@ class Test:
         return self
 
     def __exit__(self, type, value, traceback):
-        if self.file is not None:
-            self.finish()
-        if self.profiler is not None:
-            self.profiler.dump_stats(self.profile_filename)
+        self.finish()
 
     def finish(self):
-        self.file.close()
-        self.file = None
+        if self.file is not None:
+            self.file.close()
+            self.file = None
         self.writer = None
+        if self.file_solutions is not None:
+            self.file_solutions.close()
+            self.file_solutions = None
+        if self.profiler is not None:
+            self.profiler.dump_stats(self.profile_filename)
 
     def process(self, *arg):
         if len(arg) < 2: return None
@@ -480,6 +484,14 @@ class Test:
             #self.file.flush()
             message('\t\t', status)
             print()
+            
+            # write solutions
+            self.file_solutions.write('[========================================]\n')
+            self.file_solutions.write('Process({0}/{1}): {2}\t{3}\n'.format(self.tests_count, self.tests_total, args, status))
+            self.file_solutions.write('\n')
+            for line in sol:
+                self.file_solutions.write(line+'\n')
+            self.file_solutions.write('\n')
         return status
 
     def load_file(self, filename):
