@@ -284,6 +284,24 @@ def equal(A, B, **kwargs):
                 A = sympy.N(A)
                 debug('Test number and function', A, B)
                 return Tristate(A == B)
+            elif A.is_Equality:
+                nonsymbol = None
+                for s in A.args:
+                    if not s.is_Symbol:
+                        if nonsymbol is not None:
+                            debug('Warning, two non symbols in Eq', A.args)
+                        nonsymbol = s
+                if nonsymbol is not None:
+                    return equal(nonsymbol, B)
+            elif B.is_Equality:
+                nonsymbol = None
+                for s in B.args:
+                    if not s.is_Symbol:
+                        if nonsymbol is not None:
+                            debug('Warning, two non symbols in Eq', B.args)
+                        nonsymbol = s
+                if nonsymbol is not None:
+                    return equal(A, nonsymbol)
             elif isinstance(A, sympy.Expr) and isinstance(B, sympy.Expr):
                 debug('Test two expressions', A, B)
                 A1 = sympy.N(A)
