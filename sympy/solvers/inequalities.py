@@ -708,7 +708,7 @@ def solve_trig_help(left, right, rel, f, symbol):
         else:
             add_exp(And(LessThan(left, symbol), LessThan(symbol, right)))
     if rel in [StrictGreaterThan, StrictLessThan]:
-        interval = Interval(left, right)
+        interval = Interval(left, right, True, True)
     else:
         interval = Interval(left, right, False, False)
     return interval
