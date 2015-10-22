@@ -11,52 +11,6 @@ from mpmath.libmp import mpf_log, prec_to_dps
 
 from collections import defaultdict
 
-def represent(v):
-    if isinstance(v, basestring):
-        return v
-    else:
-        l = "".join(map(represent, v))
-        r = ["(", l, ")"]
-        return "".join(r)
-
-def make_repr(v1, op, v2, res):
-    return
-    if res is None:
-        return 
-    if isinstance(v1, Expr):
-        r1 = v1.repr()
-    else:
-        r1 = (repr(v1),)
-    if isinstance(v2, Expr):
-        r2 = v2.repr()
-    else:
-        r2 = (repr(v2),)
-    if res == v1:
-        res.set_repr(r1)
-    elif res == v2:
-        res.set_repr(r2)
-    else:
-        if op == "*":
-            if v1 == -1:
-                v2 = v2.__neg__()
-                if isinstance(v2, Expr):
-                    res.set_repr(v2.repr())
-                else:
-                    res.set_repr(repr(v2))
-                return
-            elif v2 == -1:
-                v1 = v1.__neg__()
-                if isinstance(v1, Expr):
-                    res.set_repr(v1.repr())
-                else:
-                    res.set_repr(repr(v1))
-                return
-        if op == "/":
-            if v2 == -1:
-                res.set_repr(v1.__neg__().repr())
-                return
-        res.set_repr((r1, op, r2))
-        
 class Expr(Basic, EvalfMixin):
     """
     Base class for algebraic expressions.
@@ -106,53 +60,16 @@ class Expr(Basic, EvalfMixin):
         return False
 
     def __init__(self, *args, **kwargs):
-        self._repr = None
         super(Expr, self).__init__(*args, **kwargs)
         
-    def __getattr__(self, attr):
-        if attr == "_repr":
-            self._repr = None
-            return None
-        return super(Expr, self).__getattr__(attr)
-
     def __repr__(self):
-        if self._repr:
-            return self.__str__()
-            #return "".join(map(represent,self._repr))
-        else:
-            return self.__str__()
+        return self.__str__()
 
     def repr(self):
-        if self._repr:
-            return self._repr
-        elif self.is_Float or self.is_Integer:
+        if self.is_Float or self.is_Integer:
             return self.__str__()
         else:
             return (self.__str__(),)
-
-    def set_repr(self, r):
-        self._repr = r
-
-    def clear_repr(self):
-        if self.is_Float or self.is_Integer:
-            self.set_repr(self.__str__())
-        else:
-            self.set_repr((self.__str__(),))
-
-    def make_repr1(self, op, res):
-        r = self.repr()
-        if op == "-":
-            if isinstance(r, tuple) and r[0] == "-" and len(r) == 2:
-                r = r[1]
-            else:
-                r = ("-", r)
-            res.set_repr(r)
-        else:
-            if isinstance(r, basestring):
-                res.set_repr((op, (r,)))
-            else:
-                res.set_repr((op, r))
-        
 
     @cacheit
     def sort_key(self, order=None):
@@ -204,12 +121,6 @@ class Expr(Basic, EvalfMixin):
 
     def __neg__(self):
         res = Mul(S.NegativeOne, self)
-        rr = self.repr()
-        if isinstance(rr, tuple) and rr[0] == "-" and len(rr) == 2:
-            rr = rr[1]
-        else:
-            rr = ("-", rr)
-        res.set_repr(rr)
         return res
 
     def __abs__(self):
@@ -220,70 +131,60 @@ class Expr(Basic, EvalfMixin):
     @call_highest_priority('__radd__')
     def __add__(self, other):
         res = Add(self, other)
-        make_repr(self, "+", other, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__add__')
     def __radd__(self, other):
         res = Add(other, self)
-        make_repr(other, "+", self, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__rsub__')
     def __sub__(self, other):
         res = Add(self, -other)
-        make_repr(self, "-", other, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__sub__')
     def __rsub__(self, other):
         res = Add(other, -self)
-        make_repr(other, "-", self, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__rmul__')
     def __mul__(self, other):
         res = Mul(self, other)
-        make_repr(self, "*", other, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__mul__')
     def __rmul__(self, other):
         res = Mul(other, self)
-        make_repr(other, "*", self, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__rpow__')
     def __pow__(self, other):
         res = Pow(self, other)
-        make_repr(self, "**", other, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__pow__')
     def __rpow__(self, other):
         res = Pow(other, self)
-        make_repr(other, "**", self, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__rdiv__')
     def __div__(self, other):
         res = Mul(self, Pow(other, S.NegativeOne))
-        make_repr(self, "/", other, res)
         return res
 
     @_sympifyit('other', NotImplemented)
     @call_highest_priority('__div__')
     def __rdiv__(self, other):
         res = Mul(other, Pow(self, S.NegativeOne))
-        make_repr(other, "/", self, res)
         return res
 
     __truediv__ = __div__
@@ -3258,7 +3159,6 @@ class AtomicExpr(Atom, Expr):
     is_Atom = True
 
     __slots__ = []
-    #__slots__ = ("_repr", )
 
     def _eval_derivative(self, s):
         if self == s:

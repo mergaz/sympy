@@ -109,7 +109,6 @@ def roots_quadratic(f):
         d = b**2 - S(4)*a*c
         add_comment('The discriminant is')
         add_eq('D', d.simplify())
-        d.clear_repr()
 
         add_comment("Use the formulas")
         add_eq(f.gen, Mul(Add(-b, Pow(d, S(1)/2, evaluate=False), evaluate=False), Pow(Mul(S(2), a, evaluate=False), -1, evaluate=False), evaluate=False))

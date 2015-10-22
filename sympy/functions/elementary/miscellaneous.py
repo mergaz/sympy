@@ -119,7 +119,6 @@ def sqrt(arg):
             r = (r,)
     else:
         r = (str(arg),)
-    res.set_repr(("sqrt", r))
     return res
 
 
