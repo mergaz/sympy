@@ -229,6 +229,10 @@ def equal(A, B, **kwargs):
                         res = Tristate(False)
                     return res
         elif isinstance(A, list):
+            if len(A) == 1 and isinstance(A[0], list):
+                A = A[0]
+            if len(B) == 1 and isinstance(B[0], list):
+                B = B[0]
             counter = 0
             args2 = list(B)
             for arg1 in A:
@@ -556,9 +560,9 @@ if __name__ == '__main__':
                 DEBUG = True
                 continue
             elif f.startswith('-t'):
-                time = int(f[3:])
-                if time > 0:
-                    TIMEOUT = time
+                newtimeout = int(f[3:])
+                if newtimeout > 0:
+                    TIMEOUT = newtimeout
                 continue
             else:
                 testfiles.append(f)
