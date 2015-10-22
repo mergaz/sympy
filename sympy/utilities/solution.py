@@ -3,6 +3,7 @@
 import gc, sys
 from sympy.printing.latex import LatexPrinter
 from sympy.printing.mathml import MathMLPrinter
+from sympy.printing.str import StrPrinter
 from sympy.core import sympify
 from sympy.core.relational import Eq
 from sympy.utilities.solution_en import solution_comment_table_en
@@ -127,3 +128,7 @@ def setMathMLOutput():
 def setLatexOutput():
     global printer
     printer = LatexPrinter()
+
+def setStrOutput():
+    global printer
+    printer = StrPrinter()

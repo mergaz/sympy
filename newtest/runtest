@@ -19,7 +19,7 @@ from sympy.core.cache import *
 import csv
 import cProfile
 try:
-    from sympy.utilities.solution import last_solution, reset_solution
+    from sympy.utilities.solution import last_solution, reset_solution, setStrOutput
     SOLUTIONS=True
 except:
     SOLUTIONS=False
@@ -433,6 +433,7 @@ class Test:
                 answer = sympy.sympify(answer)
             if SOLUTIONS:
                 reset_solution()
+                setStrOutput()
             with timeout(seconds=TIMEOUT):
                 if self.profiler is not None:
                     result = self.profiler.runcall(func, *arguments)
