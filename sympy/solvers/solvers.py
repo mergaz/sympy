@@ -3117,7 +3117,8 @@ for univariate expressions, use nroots.
                                     a = lin.nth(1)
                                     b = lin.nth(0)
                                     #r[2]=exp((2*log(3)))
-                                    result += [(simplify(r[2]) - b) / a]
+                                    if a != 0:
+                                        result += [(simplify(r[2]) - b) / a]
                                 else:
                                     #flags['tsolve'] = False
                                     # ^ this can lead to infinite recursion
@@ -3154,6 +3155,38 @@ for univariate expressions, use nroots.
                             cancel_subroutine()
                         result = soln
     return result
+
+def _solve_frac(f, *symbols, **flags):
+    # check if we have fractions
+    pows = f.atoms(Pow)
+    found = False
+    for p in pows:
+        if p.args[1] == -1:
+            found = True
+            break
+    if not found:
+        return False
+    
+    A, B, C = Wild("A"), Wild("B"), Wild("C")
+    symbol = symbols[0]
+    m = f.match(A/B-C)
+    if not m is None:
+        # check if we have some fractions in matches
+        found = False
+        for el in m:
+            pows = m[el].atoms(Pow)
+            for p in pows:
+                if p.args[1] == -1:
+                    found = True
+                    break
+        if found:
+            return False
+        ##if m[A].has(symbol) and not m[B].has(symbol) and not m[C].has(symbol):
+        add_comment("Rewrite the equation as")
+        add_eq(m[A], m[B]*m[C])
+        return _solve(m[A] - m[B]*m[C], *symbols, **flags)
+
+    return False
 
 def _solve(f, *symbols, **flags):
     """Return a checked solution for f in terms of one or more of the
@@ -3194,6 +3227,10 @@ def _solve(f, *symbols, **flags):
         result = _solve_piecewise(f, *symbols, **flags)
         if result != False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    result = _solve_frac(f, *symbols, **flags)
+    if result != False:
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     try:
         if isAcosFpBsinGpC(f, symbol):
