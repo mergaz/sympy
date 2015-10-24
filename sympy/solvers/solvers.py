@@ -1523,21 +1523,23 @@ def is_AcosFpBcosGpC(f, symbol):
 
 # Solve the equation in the form Acos(F(x)) + Bcos(G(x)) + C = 0
 def solve_AcosFpBcosGpC(f, symbol):
-    A, C, F = Wild("A"), Wild("C"), Wild("F")
-    m = f.match(-2*A*cos(F/2) + A*cos(F) + C)
+    A, B, C, F = Wild("A"), Wild("B"), Wild("C"), Wild("F")
+    #m = f.match(-2*A*cos(F/2) + A*cos(F) + C)
+    m = f.match(A*cos(F/2) + B*cos(F) + C)
     #Equations in the form of -2*A*cos(F/2) + A*cos(F) + C
-    if m is not None and set([A, C, F]) == set(m):
+    if m is not None and set([A, B, C, F]) == set(m):
         add_comment("Using reverse half-angle identity for cosine")
-        g1 = cos(m[F])
-        g2 = TRx12i(g1)
-        add_eq(g1, g2)
-        g3 = cos(m[F]/2)
+        g1 = cos(m[F]/2)
+        g2 = cos(m[F])
+        h2 = TRx12i(g2)
+        add_eq(g2, h2)
         add_comment("We get")
-        f1 = m[A]*g2 + -2*m[A]*g3 + m[C]
+        #f1 = m[A]*g2 + -2*m[A]*g3 + m[C]
+        f1 = m[A]*g1 + m[B]*h2 + m[C]
         add_exp(f1)
         add_comment("Rewrite equation")
-        # It shall simplify as: f2 = g3 * (f1/g3)
-        f2 = simplify(f1)
+        # It shall simplify as: f2 = g1 * (f1/g1)
+        f2 = (Poly(f1/g1)).as_expr()*g1
         add_exp(f2)
         result = solve(f2)
         return result
