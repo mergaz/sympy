@@ -36,7 +36,7 @@ from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine, trigsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth
 from sympy.simplify.fu import TR1, TR2i, TR5, TR6, TR7, TR8, TR9, TR10, TR11
-from sympy.simplify.fu_ext import TRx2, TRx3, TRx4, TRx10, TRx11, TRx11i, TRx12i, TRx15, TRx16
+from sympy.simplify.fu_ext import TRx2, TRx3, TRx4, TRx10, TRx11, TRx11i, TRx12i, TRx15, TRx16, TRx17
 from sympy.matrices import Matrix, zeros
 from sympy.polys import roots, cancel, factor, Poly, together, degree
 from sympy.polys.polyerrors import GeneratorsNeeded, PolynomialError
@@ -1523,14 +1523,16 @@ def is_AcosFpBcosGpC(f, symbol):
 
 # Solve the equation in the form Acos(F(x)) + Bcos(G(x)) + C = 0
 def solve_AcosFpBcosGpC(f, symbol):
-    A, B, C, F = Wild("A"), Wild("B"), Wild("C"), Wild("F")
-    #m = f.match(-2*A*cos(F/2) + A*cos(F) + C)
-    m = f.match(A*cos(F/2) + B*cos(F) + C)
+    A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
+    m = f.match(A*cos(F) + B*cos(G) + C)
     #Equations in the form of -2*A*cos(F/2) + A*cos(F) + C
-    if m is not None and set([A, B, C, F]) == set(m):
+    if m[G] == m[F]/2:
+        m[F], m[G] = m[G], m[F]
+        m[A], m[B] = m[B], m[A]
+    if m[F] == m[G]/2:
         add_comment("Using reverse half-angle identity for cosine")
-        g1 = cos(m[F]/2)
-        g2 = cos(m[F])
+        g1 = cos(m[F])
+        g2 = cos(m[G])
         h2 = TRx12i(g2)
         add_eq(g2, h2)
         add_comment("We get")
@@ -1755,7 +1757,7 @@ def solve_AsinF2pBcosF2pC(f, symbol):
         arg1 = m[F]
         g1 = m[A]*sin(m[F])**2 + m[B]*cos(m[G])**2
         g2 = m[C]
-        add_comment("Using reverse formula for cosine of double argument, we get")
+        add_comment("Using reverse identity for cosine of double term")
         g3 = TRx11i(g1)
         arg2 = arg1*2
         add_eq(g1, g3)
@@ -1887,6 +1889,44 @@ def solve_AsinF2pBsinFpC(f, symbol):
         add_eq(f4, 0)
         result=solve(f4)
         return result
+    if m[F] == m[G]/2 and m[C] != 0:
+        # Should be similar to solve_AcosF2pBsinFpC()
+        g1 = sin(m[F])**2
+        g2 = sin(m[G])
+        g3 = m[C]
+        add_comment("Using sine of double term identity")
+        g2_1 = TRx15(g2)
+        add_eq(g2, g2_1)
+        add_comment("Using Pythagorean identity")
+        g3_1 = g3*(sin(m[F])**2+cos(m[F])**2)
+        add_eq(g3, g3_1)
+        add_comment("We get")
+        f1 = m[A]*g1 + m[B]*g2_1 + g3_1
+        add_eq(f1, 0)
+        add_comment("Divide this equation by")
+        fd = cos(m[F])**2
+        add_exp(fd)
+        add_comment("We get")
+        f2 = (Poly(f1/fd)).as_expr()
+        add_eq(f2, 0)
+        add_comment("Rewrite sine/cosine ratios as tangents")
+        f3 = TR2i(Poly(f2)).as_expr()
+        add_eq(f3, 0)
+        add_comment('Use the substitution')
+        fs = tan(m[F])
+        p = Symbol('p')
+        add_eq(fs, p)
+        f4 = f3.subs(fs, p)
+        add_comment("We get")
+        add_eq(f4, 0)
+        p_results = solve(f4, p)
+        x_results = []
+        # TODO: Need more robust substitution framework
+        for p_result in p_results:
+            fi = fs - p_result
+            x_result = solve(fi, symbol)
+            x_results.append(x_result)
+        return x_results
     else:
         return False
 
@@ -1943,26 +1983,65 @@ def solve_AcosF2pBsinFpC(f, symbol):
         add_eq(f4, 0)
         result=solve(f4)
         return result
-    elif m[F] == m[G]/2 and m[C] != 0:
+    elif m[F] == m[G]/2 and m[C] == -m[A]/2:
+        # TEST: Find related eqation
         f1 = cos(m[F])**2
         f2 = sin(m[G])
         add_comment("Using decrease cosine power identity")
         g1 = TR7(f1)
-        add_exp(g1)
+        add_eq(f1, g1)
         add_comment("We get")
         f3 = m[A]*g1 + m[B]*f2 + m[C]
+        add_eq(f3, 0)
         add_comment("Divide this equation by")
         fd = cos(m[G])
-        add_comment("We get")
         add_exp(fd)
+        add_comment("We get")
         p4 = Poly(f3)/fd
         f4 = p4.as_expr()
         add_eq(f4, 0)
         add_comment("Rewrite sine/cosine ratios as tangents")
-        f5 = TR2i(f4)
+        f5 = TR2i(Poly(f4)).as_expr()
         add_eq(f5, 0)
         result=solve(f5)
         return result
+    elif m[F] == m[G]/2 and m[C] != 0:
+        g1 = cos(m[F])**2
+        g2 = sin(m[G])
+        g3 = m[C]
+        add_comment("Using sine of double term identity")
+        g2_1 = TRx15(g2)
+        add_eq(g2, g2_1)
+        add_comment("Using Pythagorean identity")
+        g3_1 = g3*(sin(m[F])**2+cos(m[F])**2)
+        add_eq(g3, g3_1)
+        add_comment("We get")
+        f1 = m[A]*g1 + m[B]*g2_1 + g3_1
+        add_eq(f1, 0)
+        add_comment("Divide this equation by")
+        fd = cos(m[F])**2
+        add_exp(fd)
+        add_comment("We get")
+        f2 = (Poly(f1/fd)).as_expr()
+        add_eq(f2, 0)
+        add_comment("Rewrite sine/cosine ratios as tangents")
+        f3 = TR2i(Poly(f2)).as_expr()
+        add_eq(f3, 0)
+        add_comment('Use the substitution')
+        fs = tan(m[F])
+        p = Symbol('p')
+        add_eq(fs, p)
+        f4 = f3.subs(fs, p)
+        add_comment("We get")
+        add_eq(f4, 0)
+        p_results = solve(f4, p)
+        x_results = []
+        # TODO: Need more robust substitution framework
+        for p_result in p_results:
+            fi = fs - p_result
+            x_result = solve(fi, symbol)
+            x_results.append(x_result)
+        return x_results
     else:
         return False
 
@@ -2173,6 +2252,167 @@ def solve_AsinFpBcosFpCsinGpD(f, symbol):
             return x_results
     else:
         return False
+
+def is_AsinF2pBcos2FpCsinFcosF(f, symbol):
+    '''Returns true if the equation has the form A*sin(F)**2 + B*cos(2*F) + C*sin(F)*cos(F) = 0
+    '''
+    #TODO: Include constant into checker (A*sin(F)**2 + B*cos(2*F) + C*sin(F)*cos(F) + D = 0)
+    A, B, C, F = Wild("A"), Wild("B"), Wild("C"), Wild("F")
+    m = f.match(A*sin(F)**2 + B*cos(2*F) + C*sin(F)*cos(F))
+    result = False
+    if m is not None and set([A, B, C, F]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[F].has(symbol)
+    return result
+
+def solve_AsinF2pBcos2FpCsinFcosF(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F)**2 + B*cos(2*F) + C*sin(F)*cos(F) + D = 0
+    """
+    A, B, C, F = Wild("A"), Wild("B"), Wild("C"), Wild("F")
+    m = f.match(A*sin(F)**2 + B*cos(2*F) + C*sin(F)*cos(F))
+    #TODO: Include case with a constant (A*sin(F)**2 + B*cos(2*F) + C*sin(F)*cos(F) + D = 0)
+    if m:
+        # Should be similar to solve_AcosF2pBsinFpC()
+        # TODO: Replace parts of solve_AsinF2pBsinFpC() and solve_AcosF2pBsinFpC() with this solution
+        g1 = sin(m[F])**2
+        g2 = cos(2*m[F])
+        g3 = sin(m[F])*cos(m[F])
+        add_comment("Using cosine of double term identity")
+        g2_1 = TRx11(g2)
+        add_eq(g2, g2_1)
+        add_comment("We get")
+        f1 = m[A]*g1 + m[B]*g2_1 + m[C]*g3
+        add_eq(f1, 0)
+        add_comment("Divide this equation by")
+        fd = cos(m[F])**2
+        add_exp(fd)
+        add_comment("We get")
+        f2 = (Poly(f1/fd)).as_expr()
+        add_eq(f2, 0)
+        add_comment("Rewrite sine/cosine ratios as tangents")
+        f3 = TR2i(Poly(f2)).as_expr()
+        add_eq(f3, 0)
+        add_comment('Use the substitution')
+        fs = tan(m[F])
+        p = Symbol('p')
+        add_eq(fs, p)
+        f4 = f3.subs(fs, p)
+        add_comment("We get")
+        add_eq(f4, 0)
+        p_results = solve(f4, p)
+        x_results = []
+        # TODO: Need more robust substitution framework
+        for p_result in p_results:
+            fi = fs - p_result
+            x_result = solve(fi, symbol)
+            x_results.append(x_result)
+        return x_results
+    else:
+        return False
+
+def is_AsinF2pBcos2FpCcosGpD(f, symbol):
+    '''Returns true if the equation has the form A*sin(F)**2 + B*cos(F)**2 + C*cos(G) + D = 0
+    '''
+    A, B, C, D, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("D"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**2 + B*cos(F)**2 + C*cos(G) + D)
+    result = False
+    if m is not None and set([A, B, C, D, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            not m[D].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_AsinF2pBcos2FpCcosGpD(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F)**2 + B*cos(F)**2 + C*cos(G) + D = 0
+    """
+    A, B, C, D, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("D"), Wild("F"), Wild("G")
+    m = f.match(A*sin(F)**2 + B*cos(F)**2 + C*cos(G) + D)
+    if m[G] == 4*m[F] and m[A] == -m[B]:
+        g1 = cos(m[F])**2 - sin(m[F])**2
+        g2 = cos(m[G])
+        g3 = m[D]
+        add_comment("Using reverse identity for cosine of double term")
+        g1_1 = TRx11i(g1)
+        add_eq(g1, g1_1)
+        add_comment("Using identity for cosine of double term")
+        g2_1 = TRx17(g2)
+        add_eq(g2, g2_1)
+        add_comment("We get")
+        f1 = m[B]*g1_1 + m[C]*g2_1 + g3
+        add_eq(f1, 0)
+        add_comment('Use the substitution')
+        fs = cos(2*m[F])
+        p = Symbol('p')
+        add_eq(fs, p)
+        f2 = f1.subs(fs, p)
+        add_comment("We get")
+        add_eq(f2, 0)
+        p_results = solve(f2, p)
+        x_results = []
+        # TODO: Need more robust substitution framework
+        for p_result in p_results:
+            fi = fs - p_result
+            x_result = solve(fi, symbol)
+            x_results.append(x_result)
+        return x_results
+
+def is_AsinF2pBcosF2pCsinFcosF(f, symbol):
+    '''Returns true if the equation has the form A*sin(F)**2 + B*cos(F)**2 + C*cos(F)*sin(F)= 0
+    '''
+    A, B, C, F = Wild("A"), Wild("B"), Wild("C"), Wild("F")
+    m = f.match(A*sin(F)**2 + B*cos(F)**2 + C*sin(F)*cos(F))
+    result = False
+    if m is not None and set([A, B, C, F]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[C] != 0 and not m[C].has(symbol) and \
+            m[F].has(symbol)
+    return result
+
+#!!!
+
+def solve_AsinF2pBcosF2pCsinFcosF(f, symbol):
+    """ Solves the equation in the form of
+        A*sin(F)**2 + B*cos(F)**2 + C*cos(F)*sin(F)= 0
+    """
+    A, B, C, F = Wild("A"), Wild("B"), Wild("C"), Wild("F")
+    m = f.match(A*sin(F)**2 + B*cos(F)**2 + C*sin(F)*cos(F))
+    if m:
+        f1 = m[A]*sin(m[F])**2 + m[B]*cos(m[F])**2 + m[C]*sin(m[F])*cos(m[F])
+        add_comment("Divide this equation by")
+        fd = cos(m[F])**2
+        add_exp(fd)
+        add_comment("We get")
+        f2 = (Poly(f1/fd)).as_expr()
+        add_eq(f2, 0)
+        add_comment("Rewrite sine/cosine ratios as tangents")
+        f3 = TR2i(Poly(f2)).as_expr()
+        add_eq(f3, 0)
+        add_comment('Use the substitution')
+        fs = tan(m[F])**2
+        p = Symbol('p')
+        add_eq(fs, p)
+        f4 = f3.subs(fs, p)
+        add_comment("We get")
+        add_eq(f2, 0)
+        p_results = solve(f4, p)
+        x_results = []
+        # TODO: Need more robust substitution framework
+        for p_result in p_results:
+            fi = fs - p_result
+            x_result = solve(fi, symbol)
+            x_results.append(x_result)
+        return x_results
 
 def to_exp_fixed_base(e, base, symbol, silent=True):
     if e.args and len(e.args) > 1:
@@ -3198,6 +3438,7 @@ def _solve(f, *symbols, **flags):
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     try:
+        # Specific forms of equations
         if isAcosFpBsinGpC(f, symbol):
             result = solveAcosFpBsinGpC(f, symbol)
         elif isAcosFpBcosG(f, symbol):
@@ -3228,6 +3469,12 @@ def _solve(f, *symbols, **flags):
             result = solve_AsinF2PpBcosGPpC(f, symbol)
         elif is_AsinFpBcosFpCsinGpD(f, symbol):
             result = solve_AsinFpBcosFpCsinGpD(f, symbol)
+        elif is_AsinF2pBcos2FpCsinFcosF(f, symbol):
+            result = solve_AsinF2pBcos2FpCsinFcosF(f, symbol)
+        elif is_AsinF2pBcos2FpCcosGpD(f, symbol):
+            result = solve_AsinF2pBcos2FpCcosGpD(f, symbol)
+        elif is_AsinF2pBcosF2pCsinFcosF(f, symbol):
+            result = solve_AsinF2pBcosF2pCsinFcosF(f, symbol)
         if result != False:
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
     except DontKnowHowToSolve:
