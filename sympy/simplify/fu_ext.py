@@ -12,15 +12,14 @@ TRx7 - reduce sin power of 5 (increase angle)
 TRx8 - reduce cos power of 3 (increase angle)
 TRx9 - reduce cos power of 4 (increase angle)
 TRx10 - sin,cos product to sum
-TRx11 - cosine of double angle (increase power)
-TRx11i - reversed TRx11
-TRx12 - cosine of half angle (increase angle)
-TRx12i - reversed TRx12
-TRx13 - sine of half angle (increase angle)
-TRx13i - reversed TRx13
+TRx11, TRx11i - cosine of double angle (cos(2*x) -> cos(x)**2 - sin(x)**2)
+TRx12, TRx12i - cosine of half angle (increase angle)
+TRx13, TRx13i - sine of half angle (increase angle)
 TRx14 - tangent of half angle (increase angle)
 TRx15 - sine of double angle to sin*cos product
 TRx16 - Pythagorean identity
+TRx17 - cosine of double angle (cos(x) -> 2*cos(x/2)**2 - 1)
+TRx18 - cosine of double angle (cos(x) -> 1 - 2*sin(x/2)**2)
 '''
 from sympy.simplify.simplify import bottom_up
 from sympy.functions.elementary.trigonometric import cos, sin, sqrt
@@ -251,6 +250,28 @@ def TRx16(rv):
         m = rv.match(A*cos(F)**2 + A*sin(F)**2 + G)
         if m:
             return m[A]+m[G]
+        return rv
+    return bottom_up(rv, f)
+
+def TRx17(rv):
+    '''
+    cos(x) -> 2*cos(x/2)**2-1
+    '''
+    def f(rv):
+        if rv.func is cos:
+            a=rv.args[0]
+            return 2*cos(a/2)**2-1
+        return rv
+    return bottom_up(rv, f)
+
+def TRx18(rv):
+    '''
+    cos(x) -> 1-2*sin(x/2)**2
+    '''
+    def f(rv):
+        if rv.func is cos:
+            a=rv.args[0]
+            return 1-2*sin(a/2)**2
         return rv
     return bottom_up(rv, f)
     
