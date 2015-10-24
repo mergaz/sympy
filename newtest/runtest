@@ -444,8 +444,8 @@ class Test:
             if result is None or result == False:
                 eq = False
                 status = 'Answer'
-            if (isinstance(result, list) and len(result) == 0):
-                if isinstance(answer, list) and len(answer) == 0:
+            if (isinstance(result, list) and len(result) == 0) or result == False:
+                if (isinstance(answer, list) and len(answer) == 0) or answer == False:
                     eq = True
                     status = 'Passed'
                 else:
