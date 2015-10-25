@@ -2379,8 +2379,6 @@ def is_AsinF2pBcosF2pCsinFcosF(f, symbol):
             m[F].has(symbol)
     return result
 
-#!!!
-
 def solve_AsinF2pBcosF2pCsinFcosF(f, symbol):
     """ Solves the equation in the form of
         A*sin(F)**2 + B*cos(F)**2 + C*cos(F)*sin(F)= 0
@@ -3617,6 +3615,71 @@ def _after_solve(result, check_flag, checkdens_flag, f, *symbols, **flags):
         add_comment("Therefore there is no solution")
     return result
 
+def _solve_system_with_subs(exprs, symbols):
+    '''
+    Try to solve system where one of the equations can be used for a substitution
+    For example:
+    [-y + (4*sin(2*x) + 5*cos(2*x))/(2*sin(2*x) - 3*cos(2*x)), cot(x) - 1/3]
+    '''
+    if len(exprs) != 2:
+        return False
+    p1 = Poly(exprs[0])
+    p2 = Poly(exprs[1])
+    p_subs = None
+    p_solve = None
+    if len(p1.gens) == 1:
+        p_subs = p1
+        p_solve = p2
+    elif len(p2.gens) == 1:
+        p_subs = p2
+        p_solve = p1
+    else:
+        return False
+    # Get a clear substitution
+    f_subs = p_subs.gens[0]
+    add_comment("Trying to use a substitution")
+    add_comment("Find")
+    add_exp(f_subs)
+    vals_subs = solve(p_subs, f_subs)
+    if not hasattr(vals_subs,'__iter__'):
+        val_subs = vals_subs
+    elif hasattr(vals_subs,'__iter__') and len(vals_subs)==1:
+        val_subs = vals_subs[0]
+    else:
+        return False
+
+    # At this point, we've got a clear substitution: f_subs = val_subs
+    func_subs = f_subs.func
+    p_solve_st1 = p_solve.rewrite(func_subs)
+    f_solve_st1 = p_solve_st1.as_expr()
+    f_solve_st2 = f_solve_st1.subs(f_subs, val_subs)
+    p_solve_st2 = Poly(f_solve_st2)
+
+    if (len(p_solve_st2.gens)==1 and p_solve_st2.gens[0] in symbols) or (len(p_solve_st2.gens) == 0):
+        add_comment('Using this equation')
+        add_eq(p_subs.as_expr(), 0)
+        add_comment('We get')
+        add_eq(f_subs, val_subs)
+        add_comment("Rewriting other equation")
+        add_eq(p_solve.as_expr(), 0)
+        add_comment('We get')
+        add_eq(f_solve_st1, 0)
+        add_comment("Using the substitution")
+        add_eq(f_subs, val_subs)
+        add_comment("We get")
+        add_eq(f_solve_st2, 0)
+        if len(p_solve_st2.gens) == 0:
+            res = [p_solve_st2.as_expr()]
+        else:
+            res = solve(p_solve_st2, symbols)
+
+        # We've solved it for a function, now solving it for a symbol
+        res_subs = solve(f_subs-val_subs, symbols)
+        # TODO: result would probably need depper merging in some cases here
+        res_system = res + res_subs
+        return res_system
+    return False
+
 def _solve_system(exprs, symbols, **flags):
     add_comment('Solve the system of equations')
     for i in exprs:
@@ -3625,6 +3688,12 @@ def _solve_system(exprs, symbols, **flags):
     check = flags.get('check', True)
     if not exprs:
         return []
+
+    # Try to solve bu substituting one expression with another
+    if len(exprs) == 2:
+        res = _solve_system_with_subs(exprs, symbols)
+        if res:
+            return res
 
     polys = []
     dens = set()
