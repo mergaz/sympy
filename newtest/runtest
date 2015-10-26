@@ -595,12 +595,17 @@ if __name__ == '__main__':
         allt = test.all_time
         medt = test.all_time / rescount
     separator('Statistics')
+    totaltests = 0
+    totalcorrect = 0
     for key, value in files.items():
         message(key, ':', **value)
         print()
+        for v in value:
+            totaltests += value[v]
+        totalcorrect += value['Passed']
     message('Total:', **stats)
     print()
-    message('Min time: {0:.2f} Max time: {1:.2f} Median time: {2:.2f} Total time: {3:.2f}'.format(mint, maxt, medt, allt))
+    message('Min time: {0:.2f} Max time: {1:.2f} Median time: {2:.2f} Total time: {3:.2f}\nCorrect: {4}%'.format(mint, maxt, medt, allt, totalcorrect*100/totaltests))
     print()
     message('Log file:', resfilename)
     print()
