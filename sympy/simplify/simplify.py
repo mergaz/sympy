@@ -4074,10 +4074,13 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
     """
     try:
         if rv.args:
-            args = tuple([bottom_up(a, F, atoms, nonbasic)
-                for a in rv.args])
-            if args != rv.args:
-                rv = rv.func(*args)
+            try:
+                args = tuple([bottom_up(a, F, atoms, nonbasic)
+                    for a in rv.args])
+                if args != rv.args:
+                    rv = rv.func(*args)
+            except:
+                pass
             rv = F(rv)
         elif atoms:
             rv = F(rv)
