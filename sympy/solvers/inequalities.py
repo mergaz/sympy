@@ -686,7 +686,7 @@ def is_trig_ineq(ineq, symbol):
     return None
 
 
-def solve_trig_help(left, right, rel, f, symbol):
+def solve_trig_help(left, right, rel, f, symbol, leftPoint=False, rightPoint=False):
     from sympy.solvers.solvers import solve
     add_comment("We have")
     if rel in [StrictGreaterThan, StrictLessThan]:
@@ -710,7 +710,7 @@ def solve_trig_help(left, right, rel, f, symbol):
     if rel in [StrictGreaterThan, StrictLessThan]:
         interval = Interval(left, right, True, True)
     else:
-        interval = Interval(left, right, False, False)
+        interval = Interval(left, right, leftPoint, rightPoint)
     return interval
 
 
@@ -779,14 +779,14 @@ def solve_trig_ineq(trig_ineq_params):
             result = solve_trig_help(2*pi*k - acos(c), 2*pi*k + acos(c), rel, f, symbol)
     elif trig is tan:
         if rel in [LessThan, StrictLessThan]:
-            result = solve_trig_help(-pi/2 + pi*k, pi*k + atan(c), rel, f, symbol)
+            result = solve_trig_help(-pi/2 + pi*k, pi*k + atan(c), rel, f, symbol, True, False)
         if rel in [GreaterThan, StrictGreaterThan]:
-            result = solve_trig_help(pi*k + atan(c), pi/2 + pi*k, rel, f, symbol)
+            result = solve_trig_help(pi*k + atan(c), pi/2 + pi*k, rel, f, symbol, False, True)
     elif trig is cot:
         if rel in [LessThan, StrictLessThan]:
-            result = solve_trig_help(pi*k + acot(c), pi + pi*k, rel, f, symbol)
+            result = solve_trig_help(pi*k + acot(c), pi + pi*k, rel, f, symbol, False, True)
         if rel in [GreaterThan, StrictGreaterThan]:
-            result = solve_trig_help(pi*k, pi*k + acot(c), rel, f, symbol)
+            result = solve_trig_help(pi*k, pi*k + acot(c), rel, f, symbol, True, False)
     if result in (S.true, S.false):
         return result
     elif result is S.EmptySet:
