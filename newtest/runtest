@@ -167,6 +167,15 @@ def tostring(A):
     else:
         return A.__str__()
 
+def unlist(A):
+    if isinstance(A, list):
+        result = []
+        for it in A:
+            result.extend(unlist(it))
+        return result
+    else:
+        return (A,)
+
 def equal(A, B, **kwargs):
     A = sympy.simplify(A)
     B = sympy.simplify(B)
@@ -229,10 +238,12 @@ def equal(A, B, **kwargs):
                         res = Tristate(False)
                     return res
         elif isinstance(A, list):
-            if len(A) == 1 and isinstance(A[0], list):
-                A = A[0]
-            if len(B) == 1 and isinstance(B[0], list):
-                B = B[0]
+            #if len(A) == 1 and isinstance(A[0], list):
+            #    A = A[0]
+            #if len(B) == 1 and isinstance(B[0], list):
+            #    B = B[0]
+            A = unlist(A)
+            B = unlist(B)
             counter = 0
             args2 = list(B)
             for arg1 in A:
