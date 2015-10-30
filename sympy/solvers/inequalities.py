@@ -449,6 +449,7 @@ def solve_univariate_inequality(expr, gen, relational=True):
         solns = solve(n, gen, check=False)
         singularities = solve(d, gen, check=False)
     else:
+        add_comment('Lets find the roots of inequality')
         solns = solve(e, gen, check=False)
         singularities = []
         for d in denoms(e):
@@ -507,6 +508,8 @@ def solve_univariate_inequality(expr, gen, relational=True):
         sol_sets.append(Interval(start, end, True, True))
 
     rv = Union(*sol_sets)
+    if rv is S.EmptySet:
+        add_comment('There is no solution')
     return rv if not relational else rv.as_relational(gen)
 
 
