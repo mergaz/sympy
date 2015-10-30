@@ -16,10 +16,11 @@ TRx11, TRx11i - cosine of double angle (cos(2*x) -> cos(x)**2 - sin(x)**2)
 TRx12, TRx12i - cosine of half angle (increase angle)
 TRx13, TRx13i - sine of half angle (increase angle)
 TRx14 - tangent of half angle (increase angle)
-TRx15 - sine of double angle to sin*cos product
+TRx15, TRx15i - sine of double angle to sin*cos product
 TRx16 - Pythagorean identity
 TRx17 - cosine of double angle (cos(x) -> 2*cos(x/2)**2 - 1)
 TRx18 - cosine of double angle (cos(x) -> 1 - 2*sin(x/2)**2)
+TRx19, TRx19i - cosine of double angle (cos(x) -> cos(x/2)**2-sin(x/2)**2)
 '''
 from sympy.simplify.simplify import bottom_up
 from sympy.functions.elementary.trigonometric import cos, sin, sqrt
@@ -216,7 +217,7 @@ def TRx13i(rv):
             a=rv.args[0]
             return 1-2*sin(a/2)**2
         return rv
-    return bottom_up(rv, f) 
+    return bottom_up(rv, f)
 
 def TRx14(rv):
     '''
@@ -241,6 +242,22 @@ def TRx15(rv):
         return rv
     return bottom_up(rv, f)
 
+def TRx15i(rv):
+    '''
+    sin(x)*cos(x) -> sin(2*x)/2
+    '''
+    def f(rv):
+        if rv.is_Mul:
+            A=rv.args[0]
+            B=rv.args[1]
+            if (A.func is cos and B.func is sin) or (A.func is sin and B.func is cos):
+                a=A.args[0]
+                b=B.args[0]
+                if a == b:
+                    return (sin(2*a))/2
+        return rv
+    return f(rv)
+
 def TRx16(rv):
     '''
     cos(x)**2+sin(x)**2 -> 1
@@ -248,7 +265,7 @@ def TRx16(rv):
     def f(rv):
         A, F, G= Wild("A"), Wild("F"), Wild("G")
         m = rv.match(A*cos(F)**2 + A*sin(F)**2 + G)
-        if m:
+        if m and set([A, F, G]) == set(m):
             return m[A]+m[G]
         return rv
     return bottom_up(rv, f)
@@ -274,4 +291,26 @@ def TRx18(rv):
             return 1-2*sin(a/2)**2
         return rv
     return bottom_up(rv, f)
-    
+
+def TRx19(rv):
+    '''
+    cos(x) -> cos(x/2)**2-sin(x/2)**2
+    '''
+    def f(rv):
+        if rv.func is cos:
+            a=rv.args[0]
+            return cos(a/2)**2-sin(a/2)**2
+        return rv
+    return bottom_up(rv, f)
+
+def TRx19i(rv):
+    '''
+    cos(x)**2-sin(x)**2 -> cos(2*x)
+    '''
+    def f(rv):
+        A, F, G= Wild("A"), Wild("F"), Wild("G")
+        m = rv.match(A*cos(F)**2 - A*sin(F)**2 + G)
+        if m and set([A, F, G]) == set(m):
+            return m[A]*cos(2*m[F])+m[G]
+        return rv
+    return bottom_up(rv, f)
