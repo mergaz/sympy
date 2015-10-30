@@ -3514,13 +3514,18 @@ for univariate expressions, use nroots.
                 u = poly.gen
                 if u != symbol:
                     try:
+                        start_subroutine('Polynome')
                         t = Dummy('t')
                         iv = _solve(u - t, symbol, **flags)
                         if iv is not None and iv is not False:
                             soln = list(ordered(set([i.subs(t, s) for i in iv for s in soln])))
+                            commit_subroutine()
+                        else:
+                            cancel_subroutine()
                     except NotImplementedError:
                         # perhaps _tsolve can handle f
                         soln = None
+                        cancel_subroutine()
                 else:
                     check = False  # only dens need to be checked
                 if soln is not None:
