@@ -428,7 +428,8 @@ class Test:
                 if isinstance(a, basestring):
                     # HACK
                     a = a.replace('abs', 'Abs')
-                    arguments.append(sympy.sympify(a))
+                    with sympy.evaluate(False):
+                        arguments.append(sympy.sympify(a, evaluate=False))
                 else:
                     arguments.append(a)
             if answer == '???':
@@ -441,7 +442,8 @@ class Test:
                         answer = answer.replace('≈', '')
                     else:
                         answer = answer.replace('≈', '=')
-                answer = sympy.sympify(answer)
+                with sympy.evaluate(False):
+                    answer = sympy.sympify(answer, evaluate=False)
             if SOLUTIONS:
                 reset_solution()
                 setStrOutput()
@@ -452,11 +454,11 @@ class Test:
                     result = func(*arguments)
             if SOLUTIONS:
                 sol = last_solution()
-            if result is None or result == False:
+            if result is None:
                 eq = False
                 status = 'Answer'
-            if (isinstance(result, list) and len(result) == 0) or result == False:
-                if (isinstance(answer, list) and len(answer) == 0) or answer == False:
+            elif (isinstance(result, list) and len(result) == 0) or result == False:
+                if (isinstance(answer, list) and len(answer) == 0) or (answer == False and not answer.is_number):
                     eq = True
                     status = 'Passed'
                 else:
