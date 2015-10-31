@@ -1399,7 +1399,55 @@ def isAcosFpBsinGpC(f, symbol):
 def solveAcosFpBsinGpC(f, symbol):
     A, B, C, F, G = Wild("A"), Wild("B"), Wild("C"), Wild("F"), Wild("G")
     m = f.match(A*cos(F) + B*sin(G) + C)
-    if m[F] == m[G] and m[C] == 0:
+    if m[F] == m[G] and m[A] == -m[B] and m[C] != 0:
+        # FIXME: this part solves (-sin(x) + cos(x) = 0) wrong
+        d = sqrt(m[A]**2 + m[B]**2)
+        if d != 1:
+            add_comment("Divide this equation by")
+            add_exp(d)
+            add_comment("We get")
+            add_eq(f / d, 0)
+        add_comment("Rewrite this equation as")
+        s = asin(m[A] / d)
+        t = acos(m[B] / d)
+        add_eq(sin(s, evaluate=False)*cos(m[F]) + cos(t, evaluate=False)*sin(m[G]), -m[C] / d)
+        add_comment("Using the formula for the sine of the sum we get")
+        add_eq(sin(s + m[F]), -m[C] / d)
+        r1 = solve(sin(s + m[F]) + m[C] / d, symbol)
+        #add_comment("We have the following solution")
+        #for r in r1:
+        #    add_eq(symbol, r)
+        return r1
+    if m[F] == m[G] and m[A] == m[B]:
+        g1 = sin(m[F])+cos(m[F])
+        g2 = m[C]
+        add_comment("Divide this equation by")
+        fd = sqrt(2)
+        add_exp(fd)
+        add_comment("We get")
+        f1 = Poly(f/fd).as_expr()
+        add_eq(f1, 0)
+        add_comment("Since")
+        # Use sin(pi/4) = cos(pi/4) = 1/sqrt(2)
+        fm1 = sin(pi/4, evaluate=False)
+        fm2 = cos(pi/4, evaluate=False)
+        add_eq(1/fd, fm1)
+        add_comment("And")
+        add_eq(1/fd, fm2)
+        add_comment("We get")
+        g1_1 = fm1*cos(m[F]) + fm2*sin(m[F])
+        g2_1 = g2/sqrt(2)
+        f2 = g1_1 + g2_1
+        add_eq(f2, 0)
+        add_comment('Converting products of sine or cosine to a sum of sine or cosine terms')
+        # We should get: (1/sqrt(2))*sin(x) + (1/sqrt(2))*cos(x) -> sin(x+pi/4)
+        g1_2 = TR8(g1_1)
+        add_eq(g1_1, g1_2)
+        add_comment("We get")
+        f3 = g1_2 + g2_1
+        r1 = solve(f3, symbol)
+        return r1
+    elif m[F] == m[G] and m[C] == 0:
         add_comment("Divide this equation by")
         fd = cos(m[F])
         add_exp(fd)
@@ -1411,7 +1459,7 @@ def solveAcosFpBsinGpC(f, symbol):
         add_eq(f2, 0)
         r1 = solve(f2, symbol)
         return r1
-    if m[F] == m[G]:
+    elif m[F] == m[G]:
         # Example: cos(2*x)+3*sin(2*x)-3
         g1 = cos(m[F])
         g2 = sin(m[F]) # Since F = G
@@ -1462,31 +1510,6 @@ def solveAcosFpBsinGpC(f, symbol):
             x_result = solve(fi, symbol)
             x_results.append(x_result)
         return x_results
-    else:
-        return False
-    '''
-    ####################
-    # Alternate method #
-    ####################
-    if m[F] == m[G]:
-        # FIXME: this part solves (-sin(x) + cos(x) = 0) wrong
-        d = sqrt(m[A]**2 + m[B]**2)
-        if d != 1:
-            add_comment("Divide this equation by")
-            add_exp(d)
-            add_comment("We get")
-            add_eq(f / d, 0)
-        add_comment("Rewrite this equation as")
-        s = asin(m[A] / d)
-        t = acos(m[B] / d)
-        add_eq(sin(s, evaluate=False)*cos(m[F]) + cos(t, evaluate=False)*sin(m[G]), -m[C] / d)
-        add_comment("Using the formula for the sine of the sum we get")
-        add_eq(sin(s + m[F]), -m[C] / d)
-        r1 = solve(sin(s + m[F]) + m[C] / d, symbol)
-        #add_comment("We have the following solution")
-        #for r in r1:
-        #    add_eq(symbol, r)
-        return r1'''
     if m[A] == m[B] and m[C] == 0:
         add_comment("Rewrite the equation as")
         add_eq(cos(m[F]), cos(pi/2 + m[G], evaluate=False))
@@ -1523,8 +1546,8 @@ def solveAcosFpBsinGpC(f, symbol):
                 add_eq(symbol, r)
             add_comment("where {} can be any integer", str(_k))
         return result
-    raise DontKnowHowToSolve()
-
+    else:
+        return False
 
 # Returns true if the equation has the form Acos(F(x)) + Bcos(G(x)) = 0
 def isAcosFpBcosG(f, symbol):
