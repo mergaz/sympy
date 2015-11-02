@@ -21,9 +21,11 @@ TRx16 - Pythagorean identity
 TRx17 - cosine of double angle (cos(x) -> 2*cos(x/2)**2 - 1)
 TRx18 - cosine of double angle (cos(x) -> 1 - 2*sin(x/2)**2)
 TRx19, TRx19i - cosine of double angle (cos(x) -> cos(x/2)**2-sin(x/2)**2)
+TRx20 - Handy substitution sin(x) + cos(x) -> sqrt(2)*sin(x+pi/4)
 '''
 from sympy.simplify.simplify import bottom_up
 from sympy.functions.elementary.trigonometric import cos, sin, sqrt
+from sympy.core.numbers import pi
 from sympy.core.mul import Mul
 from sympy.core.power import Pow
 from sympy.core import Wild
@@ -314,3 +316,19 @@ def TRx19i(rv):
             return m[A]*cos(2*m[F])+m[G]
         return rv
     return bottom_up(rv, f)
+
+def TRx20(rv):
+    '''
+    sin(x) + cos(x) -> sqrt(2)*sin(x+pi/4)
+    '''
+    def f(rv):
+        if rv.is_Add:
+            A=rv.args[0]
+            B=rv.args[1]
+            if (A.func is cos and B.func is sin) or (A.func is sin and B.func is cos):
+                a=A.args[0]
+                b=B.args[0]
+                if a == b:
+                    return (sqrt(2)*sin(a + pi/4))
+        return rv
+    return f(rv)
