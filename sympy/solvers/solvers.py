@@ -58,7 +58,7 @@ import warnings
 
 from sympy import lcm
 
-from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine
+from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine, add_solution_type
 from fractions import Fraction
 
 # An integer parameter for solutions of trig eqs.
@@ -967,6 +967,7 @@ def solve(f, *symbols, **flags):
         elif isinstance(fi, Poly):
             f[i] = fi.as_expr()
         elif isinstance(fi, (bool, BooleanAtom)) or fi.is_Relational:
+            add_solution_type('solve-inequality', f)
             return reduce_inequalities(f, symbols=symbols)
 
         # rewrite hyperbolics in terms of exp
@@ -3452,6 +3453,11 @@ def _solve_poly(f, *symbols, **flags):
                 return False
         return True
 
+    def _expand(p):
+        b, e = p.as_base_exp()
+        e = expand_mul(e)
+        return expand_power_exp(b**e)
+
     symbol = symbols[0]
     result = False
 
@@ -4025,11 +4031,6 @@ def _solve(f, *symbols, **flags):
     will be raised. In the case that conversion of an expression to a Poly
     gives None a ValueError will be raised."""
 
-    def _expand(p):
-        b, e = p.as_base_exp()
-        e = expand_mul(e)
-        return expand_power_exp(b**e)
-
     add_comment('Solve the equation')
     add_eq(f, 0)
 
@@ -4049,14 +4050,17 @@ def _solve(f, *symbols, **flags):
     # build up solutions if f is a Mul
     if f.is_Mul:
         result =  _solve_mul(f, *symbols, **flags)
+        add_solution_type('solve-mult', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
     if f.is_Piecewise:
         result = _solve_piecewise(f, *symbols, **flags)
         if result != False:
+            add_solution_type('solve-piecewise', f)
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_frac(f, *symbols, **flags)
     if result != False:
+        add_solution_type('solve-fraction', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     try:
@@ -4116,6 +4120,7 @@ def _solve(f, *symbols, **flags):
         elif is_AsinFpBsinGpCsinPcosQ(f, symbol):
             result = solve_AsinFpBsinGpCsinPcosQ(f, symbol)
         if result != False:
+            add_solution_type('solve-trygonometry', f)
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
     except DontKnowHowToSolve:
         pass
@@ -4123,17 +4128,20 @@ def _solve(f, *symbols, **flags):
     f_num = simplify_log_eq(f, symbol)
     if f_num != f:
         result = _solve(f_num, symbol, **flags)
+        add_solution_type('solve-log', f)
         return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
 
     f_num = simplify_exp_eq(f, symbol, False)
     if f_num != f:
         result = _solve(f_num, symbol, **flags)
+        add_solution_type('solve-exp', f)
         return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
 
     # first see if it really depends on symbol and whether there
     # is a linear solution
     result = _solve_linear(f, *symbols, **flags)
     if result != False:
+        add_solution_type('solve-linear', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     # Poly is generally robust enough to convert anything to
@@ -4143,28 +4151,34 @@ def _solve(f, *symbols, **flags):
 
     result = _solve_pow1(f, *symbols, **flags)
     if result != False:
+        add_solution_type('solve-power', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_log(f, *symbols, **flags)
     if result != False:
+        add_solution_type('solve-log', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_pow2(f, *symbols, **flags)
     if result is not False:
+        add_solution_type('solve-power', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_abss(f, *symbols, **flags)
     if result is not False:
+        add_solution_type('solve-abs', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     # but first remove radicals as this will help Polys
     if flags.pop('unrad', True):
         result = _solve_unrad(f, *symbols, **flags)
         if result is not False:
+            add_solution_type('solve-unrad', f)
             return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_poly(f, *symbols, **flags)
     if result != False:
+        add_solution_type('solve-poly', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     # fallback if above fails
@@ -4214,6 +4228,7 @@ def _solve(f, *symbols, **flags):
 
     if result is False or result is None:
         add_comment("This equation cannot be solved")
+        add_solution_type('solve-fail', f)
         return False
         #raise NotImplementedError(msg + "\nNo algorithms are implemented to solve equation %s" % f)
 

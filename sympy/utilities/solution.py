@@ -12,6 +12,7 @@ from traceback import print_stack
 
 solution_list = []
 subroutines = []
+solution_types = []
 comment_table = solution_comment_table_en()
 printer = LatexPrinter()
 
@@ -41,6 +42,13 @@ def find_name(obj):
 def set_comment_table(ct):
     global comment_table
     comment_table = ct
+
+def add_solution_type(soltype, expression):
+    try:
+        r = StrPrinter._print(expression)
+    except:
+        r = repr(expression)
+    solution_types.append({"type": soltype, "expression": r})
 
 def add_comment(cm, *args):
     c = None
@@ -99,6 +107,7 @@ def reset_solution():
     #print("New solution")
     del solution_list[:]
     del subroutines[:]
+    del solution_types[:]
 
 def start_subroutine(name):
     """Start add soubroutine steps"""
@@ -120,6 +129,9 @@ def commit_subroutine():
 
 def last_solution():
     return solution_list
+
+def last_solution_type():
+    return solution_types
 
 def setMathMLOutput():
     global printer
