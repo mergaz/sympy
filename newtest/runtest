@@ -555,8 +555,8 @@ class Test:
                             if self.max_time < t:
                                 self.max_time = t
                             self.all_time += t
-                            self.tests_count += 1
                             stats[res] = stats[res] + 1
+                        self.tests_count += 1
             message('Result:', filename)
             print()
             message(**stats)
