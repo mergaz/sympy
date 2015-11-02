@@ -45,7 +45,7 @@ def set_comment_table(ct):
 
 def add_solution_type(soltype, expression):
     try:
-        r = StrPrinter._print(expression)
+        r = StrPrinter()._print(expression)
     except:
         r = repr(expression)
     solution_types.append({"type": soltype, "expression": r})
