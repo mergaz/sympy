@@ -1166,3 +1166,12 @@ class EvaluateFalseTransformer(ast.NodeTransformer):
 
             return new_node
         return node
+
+    def visit_Call(self, node):
+        if isinstance(node.func, ast.Name) and node.func.id in ['sin', 'cos', 'tan', 'cot']:
+            for keyword in node.keywords:
+                if keyword.arg == 'evaluate':
+                    keyword.value = ast.Name(id='False', ctx=ast.Load())
+                    return node
+            node.keywords.append(ast.keyword(arg='evaluate', value=ast.Name(id='False', ctx=ast.Load())))
+        return node
