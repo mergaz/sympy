@@ -3737,7 +3737,9 @@ def _solve_poly(f, *symbols, **flags):
             flags['tsolve'] = True
             solvers = dict([(k, flags.get(k, True)) for k in
                 ('cubics', 'quartics', 'quintics')])
+            start_subroutine("Roots")
             soln = roots(poly, **solvers)
+            cancel_subroutine()
             if sum(soln.values()) < deg:
                 # e.g. roots(32*x**5 + 400*x**4 + 2032*x**3 +
                 #            5000*x**2 + 6250*x + 3189) -> {}
