@@ -58,7 +58,7 @@ import warnings
 
 from sympy import lcm
 
-from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine, add_solution_type
+from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine, commit_subroutine, add_solution_type
 from fractions import Fraction
 
 # An integer parameter for solutions of trig eqs.
