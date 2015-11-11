@@ -44,7 +44,7 @@ solve; 2*(x**2)+8*x-111<(3*x-5)*(2*x+6); [0]
 solve; 2*x*(3*x-1)>4*(x**2)+5*x+9; Or(And(-oo>x, x<-1), And(4.5<x, x<oo) )
 solve; (5*x+7)*(x-2)<21*(x**2)-11*x-13; [0]
 solve; (x-14)*(x+10)<0; Or(And(-10>x, x<14) )
-solve; (x+0.1)*(x+6.3)>=0; Or(And(-oo>x, x<=-6.3), And(-0.1=<x, x<oo) )
+solve; (x+0.1)*(x+6.3)>=0; Or(And(-oo>x, x<=-6.3), And(-0.1<=x, x<oo) )
 solve; (x-2)*(x-5)*(x-12)>0; Or(And(2>x, x<5), And(12<x, x<oo) )
 solve; -4*(x+0.9)*(x-3.2)<0; Or(And(-oo>x, x<-0.9), And(3.2<x, x<oo) )
 solve; (1.4-x)/(x+3.8)<0; Or(And(-oo>x, x<-3.8), And(1.4<x, x<oo) )
