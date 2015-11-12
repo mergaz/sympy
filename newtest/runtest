@@ -455,14 +455,17 @@ class Test:
             if result is None:
                 eq = False
                 status = 'Answer'
-            elif (isinstance(result, list) and len(result) == 0) or result == False:
+            elif (isinstance(result, list) and len(result) == 0) or (result == False and not result.is_number):
                 if (isinstance(answer, list) and len(answer) == 0) or (answer == False and not answer.is_number):
+                    debug ('No solutions (Passed):', answer, result)
                     eq = True
                     status = 'Passed'
                 else:
+                    debug ('No solutions (Answer):', answer, result)
                     eq = False
                     status = 'Answer'
             elif answer is None:
+                debug ('Expected no solutions: Passed')
                 eq = True
                 status = 'Passed'
             else:
