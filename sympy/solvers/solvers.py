@@ -4243,8 +4243,12 @@ def _solve(f, *symbols, **flags):
 
     if len(f.free_symbols) == 0:
         # the function have no variables
-        # we can not solve this, return it now
-        return [f]
+        # check if it equals to zero
+        f1 = simplify(f)
+        if f1 == 0:
+            return [f]
+        else:
+            return []
 
     add_comment('Solve the equation')
     add_eq(f, 0)
@@ -6234,9 +6238,9 @@ def unrad(eq, *syms, **flags):
         if len(rterms) == 2:
             if not others:
                 add_comment("Rewrite the equation as")
-                add_eq(rterms[0], rterms[1])
+                add_eq(rterms[0], -rterms[1])
                 add_comment("Raise both sides of the equation to the {} power", th(lcm))
-                add_eq(Pow(rterms[0], lcm, evaluate=False), Pow(rterms[1], lcm, evaluate=False))
+                add_eq(Pow(rterms[0], lcm, evaluate=False), -Pow(rterms[1], lcm, evaluate=False))
                 eq = rterms[0]**lcm - (-rterms[1])**lcm
                 ok = True
             elif not log(lcm, 2).is_Integer:
