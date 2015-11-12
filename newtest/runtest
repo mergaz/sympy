@@ -428,7 +428,7 @@ class Test:
                 if isinstance(a, basestring):
                     # HACK
                     a = a.replace('abs', 'Abs')
-                    arguments.append(sympy.sympify(a, evaluate=False))
+                    arguments.append(sympy.sympify(a, evaluate=True)) # evaluate=False
                 else:
                     arguments.append(a)
             if answer == '???':
@@ -441,7 +441,7 @@ class Test:
                         answer = answer.replace('≈', '')
                     else:
                         answer = answer.replace('≈', '=')
-                answer = sympy.sympify(answer, evaluate=False)
+                answer = sympy.sympify(answer, evaluate=True) # evaluate=False
             if SOLUTIONS:
                 reset_solution()
                 setStrOutput()
