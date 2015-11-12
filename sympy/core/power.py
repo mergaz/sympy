@@ -229,7 +229,7 @@ class Pow(Expr):
             return (b**e)**other  # let __new__ handle it
 
         s = None
-        if other.is_integer:
+        if other.is_number:
             s = 1
         elif b.is_polar:  # e.g. exp_polar, besselj, var('p', polar=True)...
             s = 1
