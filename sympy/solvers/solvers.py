@@ -4241,6 +4241,11 @@ def _solve(f, *symbols, **flags):
     will be raised. In the case that conversion of an expression to a Poly
     gives None a ValueError will be raised."""
 
+    if len(f.free_symbols) == 0:
+        # the function have no variables
+        # we can not solve this, return it now
+        return [f]
+
     add_comment('Solve the equation')
     add_eq(f, 0)
 
