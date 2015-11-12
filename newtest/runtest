@@ -274,6 +274,32 @@ def equal(A, B, **kwargs):
                     return equal(A.args[0], B.args[1], **kwargs) and equal(A.args[1], B.args[0], **kwargs)
             elif A.is_Number and B.is_Number:
                 return Tristate(A == B)
+            elif isinstance(A, sympy.And) and B.is_Relational:
+                # compare the pair of bounds with one bound
+                # And(-oo < x, x < 0) with x < 0
+                #
+                second = None
+                if isinstance(B, GreaterThan) or isinstance(B, StrictGreaterThan):
+                    if B.args[0].is_Symbol:
+                        second = StrictLessThan(B.args[0], sympy.oo)
+                    elif B.args[1].is_Symbol:
+                        second = StrictGreaterThan(B.args[1], -sympy.oo)
+                if isinstance(B, LessThan) or isinstance(B, StrictLessThan):
+                    if B.args[0].is_Symbol:
+                        second = StrictGreaterThan(B.args[0], -sympy.oo)
+                    elif B.args[1].is_Symbol:
+                        second = StrictLessThan(B.args[1], sympy.oo)
+                if second is not None:
+                    return equal(A, sympy.And(B, second), **kwargs)
+                else:
+                    result = equal(list(A.args), B, **kwargs)
+                    if result == True:
+                        result = Tristate(None)
+            elif A.is_Relational and isinstance(B, sympy.And):
+                # compare the pair of bounds with one bound
+                # x < 0 with And(-oo < x, x < 0)
+                #
+                return equal(B, A, **kwargs)
             elif A.is_Boolean:
                 # And, Or, Not
                 result = equal(list(A.args), B, **kwargs)
