@@ -7,7 +7,7 @@ from sympy.core.basic import preorder_traversal
 from sympy.core import S, Add, Symbol, Equality, Dummy, Expr, Mul, Pow, Wild, expand
 from sympy.core.singleton import S
 from sympy.core.relational import GreaterThan, StrictLessThan
-from sympy.solvers.solvers import _solve
+import sympy.solvers.solvers 
 from sympy.solvers.inequalities import reduce_inequalities
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest, nsimplify, denom, logcombine, trigsimp)
 from sympy.sets import Interval, Set
@@ -22,7 +22,7 @@ def domain(eq, symbols=None):
         for d in denoms:
             if not symbol in d.free_symbols:
                 continue
-            root = _solve(d, symbol)
+            root = sympy.solvers.solve(d, symbol)
             if isinstance(root, list):
                 for r in root:
                     result = result - FiniteSet(r)
@@ -94,19 +94,16 @@ def domain(eq, symbols=None):
             for free in sr.free_symbols:
                 symbols.add(free)
 
-    print('Symbols', symbols)
     result = None
     
     if len(symbols) == 1:
         # one variable
-        print('One variable')
         symbol = symbols.pop()
         result = calc_denoms(dens, symbol)
         result = result.intersect(calc_roots(sqroots, symbol))
 
     elif len(symbols) > 1:
         # multiple variables
-        print('Multiple variables')
         result = {}
         for symbol in symbols:
             res = calc_denoms(dens, symbol)
@@ -114,9 +111,8 @@ def domain(eq, symbols=None):
             result[symbol] = res
     else:
         # no variables
-        print('No variables')
         result = Interval(S.NegativeInfinity, S.Infinity)
 
-    print('Domain', result)
+    #print('Domain', result)
     return result
 

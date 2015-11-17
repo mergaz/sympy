@@ -51,6 +51,7 @@ from mpmath import findroot
 
 from sympy.solvers.polysys import solve_poly_system
 from sympy.solvers.inequalities import reduce_inequalities
+from sympy.solvers.domain import *
 
 from types import GeneratorType
 from collections import defaultdict
@@ -4484,6 +4485,8 @@ def _after_solve(result, check_flag, checkdens_flag, f, *symbols, **flags):
                           for d in dens)]
         except:
             pass
+        #dom = domain(f)
+        #result = [r for r in result if r in dom]
     if check_flag:
         # keep only results if the check is not False
         try:
