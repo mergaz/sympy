@@ -36,7 +36,7 @@ def domain(eq, symbols=None):
             if not symbol in r.free_symbols:
                 continue
             interval = sympy.solvers.reduce_inequalities(StrictLessThan(r, 0), symbols=[symbol])
-            print('Interval', interval)
+            #print('Interval', interval)
             if isinstance(interval, list):
                 for it in interval:
                     if it is S.false or it is []:

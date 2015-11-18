@@ -934,7 +934,6 @@ def reduce_inequalities(inequalities, symbols=[]):
         return rv
     else:
         rv = rv.xreplace(dict([(v, k) for k, v in recast.items()]))
-        print('Solution', rv, 'Domain', dom)
         for symbol in rv.free_symbols:
             break
         rv = rv.as_set().intersect(dom).as_relational(symbol)
