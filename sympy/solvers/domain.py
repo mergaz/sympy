@@ -8,7 +8,7 @@ from sympy.core import S, Add, Symbol, Equality, Dummy, Expr, Mul, Pow, Wild, ex
 from sympy.core.singleton import S
 from sympy.core.relational import GreaterThan, StrictLessThan
 import sympy.solvers.solvers 
-from sympy.solvers.inequalities import reduce_inequalities
+from sympy.solvers.inequalities import *
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest, nsimplify, denom, logcombine, trigsimp)
 from sympy.sets import Interval, Set
 from sympy.sets.sets import FiniteSet, Union
@@ -35,7 +35,7 @@ def domain(eq, symbols=None):
         for r in roots:
             if not symbol in r.free_symbols:
                 continue
-            interval = reduce_inequalities(StrictLessThan(r, 0), symbols=[symbol])
+            interval = sympy.solvers.reduce_inequalities(StrictLessThan(r, 0), symbols=[symbol])
             print('Interval', interval)
             if isinstance(interval, list):
                 for it in interval:

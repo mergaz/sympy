@@ -27,6 +27,7 @@ from sympy.simplify.simplify import simplify
 from sympy.utilities.solution import add_comment, add_eq, add_exp
 from sympy.polys.polyutils import _nsort
 from sympy.utilities.misc import filldedent
+from sympy.solvers.domain import *
 
 def signToRel(sign):
     if sign == '>':
@@ -886,6 +887,7 @@ def reduce_inequalities(inequalities, symbols=[]):
 
     # prefilter
     keep = []
+    dom = None
     for i in inequalities:
         if isinstance(i, Relational):
             i = i.func(i.lhs.as_expr() - i.rhs.as_expr(), 0)
@@ -899,6 +901,11 @@ def reduce_inequalities(inequalities, symbols=[]):
             raise NotImplementedError(
                 "could not determine truth value of %s" % i)
         keep.append(i)
+        d = domain(i)
+        if dom is None:
+            dom = d
+        else:
+            dom = dom.intersect(d, symbols)
     inequalities = keep
     del keep
 
@@ -918,7 +925,17 @@ def reduce_inequalities(inequalities, symbols=[]):
     rv = _reduce_inequalities(inequalities, symbols)
 
     # restore original symbols and return
-    if rv in (S.true, S.false, []):
+    if rv is S.true:
+        if dom is not None:
+            return dom
+        else:
+            return rv
+    elif rv in (S.false, []):
         return rv
     else:
-        return rv.xreplace(dict([(v, k) for k, v in recast.items()]))
+        rv = rv.xreplace(dict([(v, k) for k, v in recast.items()]))
+        print('Solution', rv, 'Domain', dom)
+        for symbol in rv.free_symbols:
+            break
+        rv = rv.as_set().intersect(dom).as_relational(symbol)
+        return rv
