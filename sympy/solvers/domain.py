@@ -25,7 +25,8 @@ def domain(eq, symbols=None):
             root = sympy.solvers.solve(d, symbol)
             if isinstance(root, list):
                 for r in root:
-                    result = result - FiniteSet(r)
+                    if not r.is_complex:
+                        result = result - FiniteSet(r)
             else:
                 result = result - FiniteSet(root)
         return result

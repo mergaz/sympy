@@ -905,7 +905,7 @@ def reduce_inequalities(inequalities, symbols=[]):
         if dom is None:
             dom = d
         else:
-            dom = dom.intersect(d, symbols)
+            dom = dom.intersect(d)
     inequalities = keep
     del keep
 
