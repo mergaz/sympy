@@ -1386,6 +1386,10 @@ def solve(f, *symbols, **flags):
 class DontKnowHowToSolve(Exception):
     pass
 
+def isTrigFunction(f, symbol):
+    if len(f.atoms(sin)) > 0 or len(f.atoms(cos)) > 0 or len(f.atoms(tan)) > 0 or len(f.atoms(cot)) > 0 or len(f.atoms(asin)) > 0 or len(f.atoms(acos)) > 0 or len(f.atoms(atan)) > 0 or len(f.atoms(acot)) > 0:
+        return True
+    return False
 
 # Returns true if the equation has the form Acos(F(x)) + Bsin(G(x)) + C = 0
 def isAcosFpBsinGpC(f, symbol):
@@ -4319,76 +4323,77 @@ def _solve(f, *symbols, **flags):
         add_solution_type('solve-fraction', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
-    try:
-        f_poly = Poly(f).as_expr()
-        # Specific forms of equations
-        if isAcosFpBsinGpC(f, symbol):
-            result = solveAcosFpBsinGpC(f, symbol)
-        elif isAcosFpBcosG(f, symbol):
-            result = solveAcosFpBcosG(f, symbol)
-        elif is_AcosFpBcosGpC(f, symbol):
-            result = solve_AcosFpBcosGpC(f, symbol)
-        elif isAsinFpBsinG(f, symbol):
-            result = solveAsinFpBsinG(f, symbol)
-        elif isASinX_p_BSin2X_p_ASin3X(f, symbol):
-            result = solveASinX_p_BSin2X_p_ASin3X(f, symbol)
-        elif is_AcosFpBsinFpCsinGpD(f, symbol):
-            result = solve_AcosFpBsinFpCsinGpD(f, symbol)
-        elif is_sinFcosGpC(f, symbol):
-            result = solve_sinFcosGpC(f, symbol)
-        elif is_AsinFcosGpBsinGcosFpC(f, symbol):
-            result = solve_AsinFcosGpBsinGcosFpC(f, symbol)
-        elif is_AsinF2pBcosF2pC(f, symbol):
-            result = solve_AsinF2pBcosF2pC(f, symbol)
-        elif is_AcosF2pBcosG2pC(f, symbol):
-            result = solve_AcosF2pBcosG2pC(f, symbol)
-        elif is_AsinF2pBsinFpC(f, symbol):
-            result = solve_AsinF2pBsinFpC(f, symbol)
-        elif is_AcosF2pBsinFpC(f, symbol):
-            result = solve_AcosF2pBsinFpC(f, symbol)
-        elif is_AsinF2pBsinGpCcosGpGd2(f, symbol):
-            result = solve_AsinF2pBsinGpCcosGpGd2(f, symbol)
-        elif is_AcosF2pBcosGpCsinGpGd2(f, symbol):
-            result = solve_AcosF2pBcosGpCsinGpGd2(f, symbol)
-        elif is_AsinF2PpBcosGPpC(f, symbol):
-            result = solve_AsinF2PpBcosGPpC(f, symbol)
-        elif is_AsinFpBcosFpCsinGpD(f, symbol):
-            result = solve_AsinFpBcosFpCsinGpD(f, symbol)
-        elif is_AsinF2pBcos2FpCsinFcosF(f, symbol):
-            result = solve_AsinF2pBcos2FpCsinFcosF(f, symbol)
-        elif is_AsinF2pBcos2FpCcosGpD(f, symbol):
-            result = solve_AsinF2pBcos2FpCcosGpD(f, symbol)
-        elif is_AsinF2pBcos2FpCsinGpD(f, symbol):
-            result = solve_AsinF2pBcos2FpCsinGpD(f, symbol)
-        elif is_AsinF2pBcosF2pCsinFcosF(f, symbol):
-            result = solve_AsinF2pBcosF2pCsinFcosF(f, symbol)
-        elif is_AsinFcosFcos2FpBsin4F2(f, symbol):
-            result = solve_AsinFcosFcos2FpBsin4F2(f, symbol)
-        elif is_AsinF2pBcosG3pC(f, symbol):
-            result = solve_AsinF2pBcosG3pC(f, symbol)
-        elif is_AsinFPGpBsinFcosG(f, symbol):
-            result = solve_AsinFPGpBsinFcosG(f, symbol)
-        elif is_AsinFpBsinGcosF(f, symbol):
-            result = solve_AsinFpBsinGcosF(f, symbol)
-        elif is_AcosFMGpBcosFcosG(f, symbol):
-            result = solve_AcosFMGpBcosFcosG(f, symbol)
-        elif is_AsinF2pBsinG2pCsinFPGd2(f, symbol):
-            result = solve_AsinF2pBsinG2pCsinFPGd2(f, symbol)
-        elif is_AsinF4pBcosF4pCsinG2(f, symbol):
-            result = solve_AsinF4pBcosF4pCsinG2(f, symbol)
-        elif is_AcosFpBcosGpCcosFPGd2(f, symbol):
-            result = solve_AcosFpBcosGpCcosFPGd2(f, symbol)
-        elif is_AsinFpBsinGpCsinPcosQ(f, symbol):
-            result = solve_AsinFpBsinGpCsinPcosQ(f, symbol)
-        elif is_AsinF2pBcosF2pCsinFcosFpDcosG(f_poly, symbol):
-            result = solve_AsinF2pBcosF2pCsinFcosFpDcosG(f_poly, symbol)
-        elif is_AsinF2pBcosF2pCsinFcosFpDsinG(f_poly, symbol):
-            result = solve_AsinF2pBcosF2pCsinFcosFpDsinG(f_poly, symbol)
-        if result != False:
-            add_solution_type('solve-trygonometry', f)
-            return _after_solve(result, check, checkdens, f, *symbols, **flags)
-    except DontKnowHowToSolve:
-        pass
+    if isTrigFunction(f, symbol):
+        try:
+            f_poly = Poly(f).as_expr()
+            # Specific forms of equations
+            if isAcosFpBsinGpC(f, symbol):
+                result = solveAcosFpBsinGpC(f, symbol)
+            elif isAcosFpBcosG(f, symbol):
+                result = solveAcosFpBcosG(f, symbol)
+            elif is_AcosFpBcosGpC(f, symbol):
+                result = solve_AcosFpBcosGpC(f, symbol)
+            elif isAsinFpBsinG(f, symbol):
+                result = solveAsinFpBsinG(f, symbol)
+            elif isASinX_p_BSin2X_p_ASin3X(f, symbol):
+                result = solveASinX_p_BSin2X_p_ASin3X(f, symbol)
+            elif is_AcosFpBsinFpCsinGpD(f, symbol):
+                result = solve_AcosFpBsinFpCsinGpD(f, symbol)
+            elif is_sinFcosGpC(f, symbol):
+                result = solve_sinFcosGpC(f, symbol)
+            elif is_AsinFcosGpBsinGcosFpC(f, symbol):
+                result = solve_AsinFcosGpBsinGcosFpC(f, symbol)
+            elif is_AsinF2pBcosF2pC(f, symbol):
+                result = solve_AsinF2pBcosF2pC(f, symbol)
+            elif is_AcosF2pBcosG2pC(f, symbol):
+                result = solve_AcosF2pBcosG2pC(f, symbol)
+            elif is_AsinF2pBsinFpC(f, symbol):
+                result = solve_AsinF2pBsinFpC(f, symbol)
+            elif is_AcosF2pBsinFpC(f, symbol):
+                result = solve_AcosF2pBsinFpC(f, symbol)
+            elif is_AsinF2pBsinGpCcosGpGd2(f, symbol):
+                result = solve_AsinF2pBsinGpCcosGpGd2(f, symbol)
+            elif is_AcosF2pBcosGpCsinGpGd2(f, symbol):
+                result = solve_AcosF2pBcosGpCsinGpGd2(f, symbol)
+            elif is_AsinF2PpBcosGPpC(f, symbol):
+                result = solve_AsinF2PpBcosGPpC(f, symbol)
+            elif is_AsinFpBcosFpCsinGpD(f, symbol):
+                result = solve_AsinFpBcosFpCsinGpD(f, symbol)
+            elif is_AsinF2pBcos2FpCsinFcosF(f, symbol):
+                result = solve_AsinF2pBcos2FpCsinFcosF(f, symbol)
+            elif is_AsinF2pBcos2FpCcosGpD(f, symbol):
+                result = solve_AsinF2pBcos2FpCcosGpD(f, symbol)
+            elif is_AsinF2pBcos2FpCsinGpD(f, symbol):
+                result = solve_AsinF2pBcos2FpCsinGpD(f, symbol)
+            elif is_AsinF2pBcosF2pCsinFcosF(f, symbol):
+                result = solve_AsinF2pBcosF2pCsinFcosF(f, symbol)
+            elif is_AsinFcosFcos2FpBsin4F2(f, symbol):
+                result = solve_AsinFcosFcos2FpBsin4F2(f, symbol)
+            elif is_AsinF2pBcosG3pC(f, symbol):
+                result = solve_AsinF2pBcosG3pC(f, symbol)
+            elif is_AsinFPGpBsinFcosG(f, symbol):
+                result = solve_AsinFPGpBsinFcosG(f, symbol)
+            elif is_AsinFpBsinGcosF(f, symbol):
+                result = solve_AsinFpBsinGcosF(f, symbol)
+            elif is_AcosFMGpBcosFcosG(f, symbol):
+                result = solve_AcosFMGpBcosFcosG(f, symbol)
+            elif is_AsinF2pBsinG2pCsinFPGd2(f, symbol):
+                result = solve_AsinF2pBsinG2pCsinFPGd2(f, symbol)
+            elif is_AsinF4pBcosF4pCsinG2(f, symbol):
+                result = solve_AsinF4pBcosF4pCsinG2(f, symbol)
+            elif is_AcosFpBcosGpCcosFPGd2(f, symbol):
+                result = solve_AcosFpBcosGpCcosFPGd2(f, symbol)
+            elif is_AsinFpBsinGpCsinPcosQ(f, symbol):
+                result = solve_AsinFpBsinGpCsinPcosQ(f, symbol)
+            elif is_AsinF2pBcosF2pCsinFcosFpDcosG(f_poly, symbol):
+                result = solve_AsinF2pBcosF2pCsinFcosFpDcosG(f_poly, symbol)
+            elif is_AsinF2pBcosF2pCsinFcosFpDsinG(f_poly, symbol):
+                result = solve_AsinF2pBcosF2pCsinFcosFpDsinG(f_poly, symbol)
+            if result != False:
+                add_solution_type('solve-trygonometry', f)
+                return _after_solve(result, check, checkdens, f, *symbols, **flags)
+        except DontKnowHowToSolve:
+            pass
 
     f_num = simplify_log_eq(f, symbol)
     if f_num != f:
