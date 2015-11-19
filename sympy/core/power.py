@@ -229,7 +229,7 @@ class Pow(Expr):
             return (b**e)**other  # let __new__ handle it
 
         s = None
-        if other.is_number:
+        if other.is_integer:
             s = 1
         elif b.is_polar:  # e.g. exp_polar, besselj, var('p', polar=True)...
             s = 1
@@ -266,10 +266,10 @@ class Pow(Expr):
                         if b.is_real is False:
                             return Pow(b.conjugate()/Abs(b)**2, other)
                 elif e.is_even:
-                    if b.is_real:
-                        b = abs(b)
                     if b.is_imaginary:
                         b = abs(im(b))*S.ImaginaryUnit
+                    else:
+                        b = abs(b)
 
                 if (abs(e) < 1) == True or (e == 1) == True:
                     s = 1  # floor = 0

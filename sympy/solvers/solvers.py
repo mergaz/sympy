@@ -260,9 +260,10 @@ def checksol(f, symbol, sol=None, **flags):
         return None
 
     illegal = set([S.NaN,
-               S.ComplexInfinity,
-               S.Infinity,
-               S.NegativeInfinity])
+               S.ComplexInfinity
+               #S.Infinity,  <- disable check for intervals like [C, oo)  TODO: check intervals. Now it throws an exception
+               #S.NegativeInfinity
+               ])
     if any(sympify(v).atoms() & illegal for k, v in sol.items()):
         return False
 
@@ -370,7 +371,10 @@ def is_trig_linear(solution):
     """
     if isinstance(solution, Expr) and not solution.is_polynomial(_k):
         return False
-    p = Poly(solution, _k)
+    try:
+        p = Poly(solution, _k)
+    except:
+        return False
     return p.is_linear and p.nth(1) != 0
 
 
@@ -3506,38 +3510,70 @@ def _solve_abss(f, *symbols, **flags):
         abss = [a for a in f.atoms(Function) if a.has(*symbols) and isinstance(a, type(A))]
     if len(abss) > 0:
         f_p = f.xreplace({abss[0]: abss[0].args[0]})
+        #start_subroutine('domain')
+        #domain_p = _solve(abss[0].args[0] > 0)
+        #cancel_subroutine()
         add_comment('Solve the following two equations')
         add_eq(f_p, 0)
         add_comment('assuming that')
         add_exp(abss[0].args[0] > 0)
         add_comment('and')
         f_m = f.xreplace({abss[0]: -abss[0].args[0]})
+        #start_subroutine('domain')
+        #domain_m = _solve(abss[0].args[0] < 0)
+        #cancel_subroutine()
         add_eq(f_m, 0)
         add_comment('assuming that')
         add_exp(abss[0].args[0] < 0)
-        result_p = _solve(f_p, symbol, **flags)
         result = []
-        if result_p is not None and result_p is not False:
-            for r in result_p:
-                v = abss[0].args[0].subs(symbol, r)
-                if v.is_Number and v >= 0:
-                    add_comment('The value {} is a root', str(r))
-                    result.append(r)
-                else:
-                    add_comment('The value {} is an extraneous root', str(r))
-        result_m = _solve(f_m, symbol, **flags)
-        if result_m is not None and result_m is not False:
-            for r in result_m:
-                v = abss[0].args[0].subs(symbol, r)
-                if v.is_Number and v <= 0:
-                    add_comment('The value {} is a root', str(r))
-                    result.append(r)
-                else:
-                    add_comment('The value {} is an extraneous root', str(r))
+        unite = False
+        if f_p == 0:
+            result_p = reduce_inequalities(GreaterThan(abss[0].args[0], 0), symbols=[symbol]).as_set()
+            add_comment('The interval {} is a solution', result_p)
+            result.append(result_p)
+            unite = True
+        else:
+            result_p = _solve(f_p, symbol, **flags)
+            if result_p is not None and result_p is not False:
+                for r in result_p:
+                    v = abss[0].args[0].subs(symbol, r)
+                    if v.is_Number and v >= 0:
+                        add_comment('The value {} is a root', str(r))
+                        result.append(r)
+                    else:
+                        add_comment('The value {} is an extraneous root', str(r))
+        if f_m == 0:
+            result_m = reduce_inequalities(LessThan(abss[0].args[0], 0), symbols=[symbol]).as_set()
+            add_comment('The interval {} is a solution', result_m)
+            result.append(result_m)
+            unite = True
+        else:
+            result_m = _solve(f_m, symbol, **flags)
+            if result_m is not None and result_m is not False:
+                for r in result_m:
+                    v = abss[0].args[0].subs(symbol, r)
+                    if v.is_Number and v <= 0:
+                        add_comment('The value {} is a root', str(r))
+                        result.append(r)
+                    else:
+                        add_comment('The value {} is an extraneous root', str(r))
+        if unite:
+            it = S.EmptySet
+            for r in result:
+                if r.is_number:
+                    r = FiniteSet(r)
+                it = Union(it, r)
+            result = [it.as_relational(symbol)]
+            add_comment("Finally we have")
+            add_exp(result)
+            return result
         if len(result) > 0:
             add_comment("Finally we have")
             for r in result:
-                add_eq(symbol, r)
+                if r.is_number:
+                    add_eq(symbol, r)
+                else:
+                    add_exp(r)
             return result
         else:
             add_comment("Therefore there is no root")
@@ -4480,7 +4516,7 @@ def _after_solve(result, check_flag, checkdens_flag, f, *symbols, **flags):
         # if in doubt, keep it
         try:
             dens = _simple_dens(f, symbols)
-            result = [s for s in result if
+            checked_result = [s for s in result if
                       all(not checksol(d, {symbol: s}, **flags)
                           for d in dens)]
         except:
@@ -4490,14 +4526,15 @@ def _after_solve(result, check_flag, checkdens_flag, f, *symbols, **flags):
     if check_flag:
         # keep only results if the check is not False
         try:
-            result = [r for r in result if checksol(f, {symbol: r}, **flags) is not False]
+            checked_result = [r for r in checked_result if checksol(f, {symbol: r}, **flags) is not False]
         except:
             pass
-    for r in result:
-        if not r in checked_result:
-            add_comment("After substituting the value in the equation we get that it is not a root")
-            add_exp(r)
-    result = checked_result
+    if checkdens_flag or check_flag:
+        for r in result:
+            if not r in checked_result:
+                add_comment("After substituting the value in the equation we get that it is not a root")
+                add_exp(r)
+        result = checked_result
     result = merge_trig_solutions(result)
     if len(result) == 0:
         add_comment("Therefore there is no solution")
