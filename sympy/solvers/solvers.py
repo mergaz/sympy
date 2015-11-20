@@ -3880,8 +3880,9 @@ def _solve_linear(f, *symbols, **flags):
         add_comment("Rewrite the equation as")
         add_eq(f_num / sol, 0)
         if sol != 1:
-            add_comment("Solve the equation")
-            add_eq(f_num, 0)
+            #add_comment("Solve the equation")
+            #add_eq(f_num, 0)
+            return _solve(f_num, symbol, **flags)
 
     return result
 
