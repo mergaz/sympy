@@ -23,7 +23,7 @@ from sympy.core.function import (expand_mul, expand_multinomial, expand_log,
                           Function, expand_power_exp, Lambda, _mexpand)
 from sympy.integrals.integrals import Integral
 from sympy.core.numbers import ilcm, Float, pi
-from sympy.core.relational import Relational, Ge
+from sympy.core.relational import Relational, Ge, Gt
 from sympy.logic.boolalg import And, Or, BooleanAtom
 from sympy.core.basic import preorder_traversal
 
@@ -59,7 +59,8 @@ import warnings
 
 from sympy import lcm
 
-from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine, commit_subroutine, add_solution_type
+from sympy.utilities.solution import (add_exp, add_eq, add_ne, add_ineq, add_step, add_comment,
+                                      start_subroutine, cancel_subroutine, commit_subroutine, add_solution_type)
 from fractions import Fraction
 
 # An integer parameter for solutions of trig eqs.
@@ -3217,7 +3218,6 @@ def is_APpowFpBQpowGpC(f, symbol):
             m[G].has(symbol)
     return result
 
-
 def solve_APpowFpBQpowGpC(f, symbol):
     """ Solves the equation in the form of
         A*(P**F) + B*(Q**G) + C = 0
@@ -3410,6 +3410,51 @@ def solve_APpowBFpDpC(f, symbol):
                 x_result = solve(fi, symbol)
                 x_results.append(x_result)
         return x_results
+        return False
+
+def is_APpowFpBPpowG(f, symbol):
+    '''Returns true if the equation has the form A*(P**F) + B*(P**G) = 0
+    '''
+    A, B, P, F, G = \
+        Wild("A"), Wild("B"), Wild("P"), \
+        Wild("F", exclude=[1]), Wild("G", exclude=[1])
+    m = f.match(A*(P**F) + B*(P**G))
+    result = False
+    if m is not None and set([A, B, P, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[P] != 0 and not m[P].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_APpowFpBPpowG(f, symbol):
+    """ Solves the equation in the form of
+        A*(P**F) + B*(P**G) = 0
+    """
+    A, B, P, F, G = \
+        Wild("A"), Wild("B"), Wild("P"), \
+        Wild("F", exclude=[1]), Wild("G", exclude=[1])
+    m = f.match(A*(P**F) + B*(P**G))
+    result = False
+    if m[A] == -m[B] and m[P] > 0 and m[P] != 1:
+        # Example: 5**(2*(x**2)-5*x)-5**(x**2+2*x-10)
+        g1a = m[A]
+        g1b = m[P]
+        g1c = m[F]
+        g2a = m[B]
+        g2b = m[P]
+        g2c = m[G]
+        add_comment("Since")
+        add_ineq(g1b, 0, Gt)
+        add_comment("And")
+        add_ne(g1b, 1)
+        add_comment("We get")
+        f1 = g1c - g2c
+        result=solve(f1)
+        return result
+    else:
         return False
 
 # Specific forms - end
@@ -4623,6 +4668,8 @@ def _solve(f, *symbols, **flags):
         try:
             if is_APpowFpC(f, symbol):
                 result = solve_APpowFpC(f, symbol)
+            if is_APpowFpBPpowG(f, symbol):
+                result = solve_APpowFpBPpowG(f, symbol)
             if is_APpowBFpDpC(f, symbol):
                 result = solve_APpowBFpDpC(f, symbol)
             if is_APpowFpBQpowGpC(f, symbol):
@@ -4632,6 +4679,14 @@ def _solve(f, *symbols, **flags):
                 return _after_solve(result, check, checkdens, f, *symbols, **flags)
         except DontKnowHowToSolve:
             pass
+
+    '''
+    # /!\ Causes infinite recursion
+    f_ps = powsimp(f)
+    if f_ps != f:
+        result = _solve(f_ps, symbol, **flags)
+        add_solution_type('solve-powsimp', f)
+        return _after_solve(result, check, checkdens, f_ps, *symbols, **flags)'''
 
     f_num = simplify_log_eq(f, symbol)
     if f_num != f:
