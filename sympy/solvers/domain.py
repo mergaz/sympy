@@ -68,7 +68,7 @@ def domain(eq, symbols=None):
 
     sqroots = set()
     for p in eq.atoms(Pow):
-        if p.exp < 1 and p.exp > -1:
+        if len(p.exp.free_symbols) == 0 and p.exp < 1 and p.exp > -1:
             rexp = 1/p.exp
             if rexp.is_even:
                 sqroots.add(p.base)

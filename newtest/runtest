@@ -177,8 +177,16 @@ def unlist(A):
         return (A,)
 
 def equal(A, B, **kwargs):
-    A = sympy.simplify(A)
-    B = sympy.simplify(B)
+    try:
+        A = sympy.simplify(A)
+    except :
+        debug('An exception while simplify', A)
+        pass
+    try:
+        B = sympy.simplify(B)
+    except:
+        debug('An exception while simplify', B)
+        pass
     debug( A, B )
     debug( type(A), type(B))
     if 'precision' in kwargs:

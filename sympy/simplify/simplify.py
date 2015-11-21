@@ -4079,7 +4079,11 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
                     for a in rv.args])
                 if args != rv.args:
                     rv = rv.func(*args)
+            except RuntimeError as e:
+                # if we get an infinity loop we just raise an exception
+                raise e
             except:
+                # all other exceptions: you shall not pass!
                 pass
             rv = F(rv)
         elif atoms:
