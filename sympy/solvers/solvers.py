@@ -3457,6 +3457,75 @@ def solve_APpowFpBPpowG(f, symbol):
     else:
         return False
 
+# Specific forms of equivalent equations
+
+def isEquivalentFunction(f, symbol):
+    ''' Consider function a equivalent if it does not
+    belong to any other type.
+    '''
+    res = isTrigFunction(f, symbol)
+    return not res
+
+def is_fracAMpfracBNmfracCMN(f, symbol):
+    '''Returns true if the equation has the form A/M + B/N - C/(MN) = 0
+    '''
+    A, B, C, M, N, MN = \
+        Wild("A"), Wild("B"), Wild("C"), \
+        Wild("M", exclude=[0]), Wild("N", exclude=[0]), Wild("MN", exclude=[0])
+    m = f.match(A/M + B/N - C/(MN))
+    result = False
+    if m is not None and set([A, B, C, M, N, MN]) == set(m):
+        result = \
+            m[A] != 0 and m[A].has(symbol) and \
+            m[B] != 0 and m[B].has(symbol) and \
+            m[C] != 0 and m[C].has(symbol) and \
+            m[M].has(symbol) and \
+            m[N].has(symbol) and \
+            m[MN].has(symbol)
+    return result
+
+def solve_fracAMpfracBNmfracCMN(f, symbol):
+    """ Solves the equation in the form of
+        A/M + B/N - C/(MN) = 0
+    """
+    A, B, C, M, N, MN = \
+        Wild("A"), Wild("B"), Wild("C"), \
+        Wild("M", exclude=[0]), Wild("N", exclude=[0]), Wild("MN", exclude=[0])
+    m = f.match(A/M + B/N - C/(MN))
+    result = False
+
+    gmn = m[M]*m[N]
+    gmn = simplify(gmn)
+    equivalmn = gmn == m[MN]
+
+    if equivalmn:
+        # Example: x/(x+1)+(2*x)/(x-1)-(4*x)/(x**2-1)
+        num = m[A]*m[N] + m[B]*m[M] - m[C]
+        den = gmn
+        f1 = num / den
+        add_comment("Rewrite equation")
+        add_eq(f1, 0) 
+
+        num2=simplify(num)
+        if num2 != num:     
+            add_comment("Simplify it")
+            f2 = num2 / den
+            add_eq(f2, 0)
+
+            f3 = simplify(f2)
+            if f3 != f2:
+                add_comment("We get")
+                f2 = num2 / den
+                add_eq(f3, 0)
+                result=solve(f3, symbol)
+            else:
+                result=solve(f2, symbol)
+        else:
+            result=solve(f1, symbol)
+        return result
+    else:
+        return False
+
 # Specific forms - end
 
 def to_exp_fixed_base(e, base, symbol, silent=True):
@@ -3880,9 +3949,10 @@ def _solve_linear(f, *symbols, **flags):
         add_comment("Rewrite the equation as")
         add_eq(f_num / sol, 0)
         if sol != 1:
-            #add_comment("Solve the equation")
-            #add_eq(f_num, 0)
-            return _solve(f_num, symbol, **flags)
+            add_comment("Solve the equation")
+            add_eq(f_num, 0)
+            #result = _solve(f_num, symbol, **flags)
+            #return result
 
     return result
 
@@ -4677,6 +4747,17 @@ def _solve(f, *symbols, **flags):
                 result = solve_APpowFpBQpowGpC(f, symbol)
             if result != False:
                 add_solution_type('solve-poly', f)
+                return _after_solve(result, check, checkdens, f, *symbols, **flags)
+        except DontKnowHowToSolve:
+            pass
+
+    # Specific forms of equivalent equations
+    if isEquivalentFunction(f, symbol):
+        try:
+            if is_fracAMpfracBNmfracCMN(f, symbol):
+                result =  solve_fracAMpfracBNmfracCMN(f, symbol)
+            if result != False:
+                add_solution_type('solve-equivalent', f)
                 return _after_solve(result, check, checkdens, f, *symbols, **flags)
         except DontKnowHowToSolve:
             pass
