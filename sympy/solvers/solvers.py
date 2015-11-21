@@ -23,7 +23,7 @@ from sympy.core.function import (expand_mul, expand_multinomial, expand_log,
                           Function, expand_power_exp, Lambda, _mexpand)
 from sympy.integrals.integrals import Integral
 from sympy.core.numbers import ilcm, Float, pi
-from sympy.core.relational import Relational, Ge
+from sympy.core.relational import Relational, Ge, Gt
 from sympy.logic.boolalg import And, Or, BooleanAtom
 from sympy.core.basic import preorder_traversal
 
@@ -33,7 +33,7 @@ from sympy.functions.elementary.trigonometric import (TrigonometricFunction,
                                                       HyperbolicFunction)
 from sympy.simplify.simplify import bottom_up
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
-                            nsimplify, denom, logcombine, trigsimp)
+                            nsimplify, denom, logcombine, trigsimp, radsimp)
 from sympy.simplify.sqrtdenest import sqrt_depth
 from sympy.simplify.fu import TR1, TR2i, TR5, TR6, TR7, TR8, TR9, TR10, TR11
 from sympy.simplify.fu_ext import (TRx2, TRx3, TRx4, TRx10, TRx11, TRx11i, TRx12i,
@@ -59,7 +59,8 @@ import warnings
 
 from sympy import lcm
 
-from sympy.utilities.solution import add_exp, add_eq, add_step, add_comment, start_subroutine, cancel_subroutine, commit_subroutine, add_solution_type
+from sympy.utilities.solution import (add_exp, add_eq, add_ne, add_ineq, add_step, add_comment,
+                                      start_subroutine, cancel_subroutine, commit_subroutine, add_solution_type)
 from fractions import Fraction
 
 # An integer parameter for solutions of trig eqs.
@@ -3189,6 +3190,273 @@ def solve_AsinF2pBcosF2pCsinFcosFpDsinG(f, symbol):
     else:
         return False
 
+# Specific forms of poly equations
+
+def isPolyFunction(f, symbol):
+    ''' Consider function a polynome if it does not
+    belong to any other type.
+    '''
+    res = isTrigFunction(f, symbol)
+    return not res
+
+def is_APpowFpBQpowGpC(f, symbol):
+    '''Returns true if the equation has the form A*(P**F) + B*(Q**G) + C = 0
+    '''
+    A, B, C, P, Q, F, G = \
+        Wild("A"), Wild("B"), Wild("C"), Wild("P"), Wild("Q"), \
+        Wild("F", exclude=[1]), Wild("G", exclude=[1])
+    m = f.match(A*(P**F) + B*(Q**G) + C)
+    result = False
+    if m is not None and set([A, B, C, P, Q, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[P] != 0 and not m[P].has(symbol) and \
+            m[Q] != 0 and not m[Q].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_APpowFpBQpowGpC(f, symbol):
+    """ Solves the equation in the form of
+        A*(P**F) + B*(Q**G) + C = 0
+    """
+    A, B, C, P, Q, F, G = \
+        Wild("A"), Wild("B"), Wild("C"), Wild("P"), Wild("Q"), \
+        Wild("F", exclude=[1]), Wild("G", exclude=[1])
+    m = f.match(A*(P**F) + B*(Q**G) + C)
+    if m[C] == 0 and m[A] == -m[B] and not (m[F]/m[G]).has(symbol):
+        # Example: (3**x)-5**(2*x)
+        g1 = m[P]**m[F]
+        g2 = m[Q]**m[G]
+        g1a = m[P]
+        g2a = m[Q]
+        add_comment("Rewrite equation")
+        f1 = m[A]*(g1 - g2)
+        add_eq(f1, 0)
+        # Remove constant mul.
+        if m[A] != 1:
+            add_comment("Rewrite equation")
+            f2 = (g1 - g2)
+            add_eq(f2, 0)
+        else:
+            f2 = f1
+        # Make powers equal
+        if m[F] != m[G]:
+            p = m[G]/m[F]
+            g2a_1 = m[Q]**p
+            g2b = m[F]
+            g2_1 = g2a_1**g2b
+            add_comment("Since")
+            add_eq(g2, g2_1)
+            add_comment("We get")
+            f3 = g1 + (m[B]/m[A])*g2_1
+            add_eq(f3, 0)
+        else:
+            g2_1 = g2
+            f3 = f2
+            g2a_1 = g2a
+
+        add_comment("Divide this equation by")
+        fd = g2_1
+        add_exp(fd)
+        add_comment("We get")
+        # Here: g2 != 0
+        f4 = Poly(f3/fd).as_expr()
+        add_eq(f4,0)
+        # Collect powers after division
+        f5 = powsimp(f4)
+        if f5 != f4:
+            add_comment("Rewrite equation")
+            add_eq(f5, 0)
+        result=solve(f5)
+        return result
+
+    if not (m[F]-m[G]).has(symbol) and m[P] == m[Q]**2 or m[Q] == m[P]**2:
+        # Example: -(9**(x-1)) + (3**x) -810
+        # A*(P**F) + B*(Q**G) + C
+        if m[P] == m[Q]**2:
+            g1a = m[A]
+            g1b = m[Q]
+            g1c =2*m[F]
+            g2a = m[B]
+            g2b = m[Q]
+            g2c = m[G]
+            g3 = m[C]
+        else:
+            g1a = m[B]
+            g1b = m[P]
+            g1c = 2*m[G]
+            g2a = m[A]
+            g2b = m[P]
+            g2c = m[F]
+            g3 = m[C]
+        add_comment("Rewrite equation")
+        #Here: g1c = 2*g2c+p
+        h1 = g1a*(g1b**g1c)
+        h2 = g2a*(g2b**g2c)
+        f1 = h1 + h2 + g3
+        add_eq(f1, 0)
+        add_comment("Since")
+        p = g1c - 2*g2c
+        q = 2*g2c
+        h1_1 = radsimp(Mul(g1a*g1b**p, g1a*g1b**q, evaluate=False))
+        # Here: t**g1c = t**(2*g2c+p) = t**2*g2c * t**p
+        add_eq(h2, h1_1)
+        add_comment("We get")
+        f2 = h1_1 + h2 + g3
+        add_eq(f2, 0)
+        add_comment('Use the substitution')
+        fs = g2b**g2c
+        p = Symbol('p')
+        add_eq(fs, p)
+        f3 = f2.subs(fs, p)
+        add_comment("We get")
+        add_eq(f3, 0)
+        p_results = solve(f3, p)
+        x_results = []
+        for p_result in p_results:
+            # Ignore negative roots since we have a substitution for a t**x = p, assuming t>0
+            if p_result >= 0:
+                fi = fs - p_result
+                x_result = solve(fi, symbol)
+                x_results.append(x_result)
+        return x_results
+    else:
+        return False
+
+def is_APpowFpC(f, symbol):
+    '''Returns true if the equation has the form A*(P**F) + C = 0
+    '''
+    A, C, P, F = \
+        Wild("A"), Wild("C"), Wild("P"), Wild("F", exclude=[1])
+    m = f.match(A*(P**F) + C)
+    result = False
+    if m is not None and set([A, C, P, F]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[P] != 0 and not m[P].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol)
+    return result
+
+def solve_APpowFpC(f, symbol):
+    """ Solves the equation in the form of
+        A*(P**F) + B*(Q**G) + C = 0
+    """
+    A, C, P, F = \
+        Wild("A"), Wild("C"), Wild("P"), Wild("F", exclude=[1])
+    m = f.match(A*(P**F) + C)
+    if m:
+        # Example: (Fraction(3,25))**x - 1
+        g1 = m[P]**m[F]
+        g2 = m[C]/m[A]
+        add_comment("Rewrite equation")
+        add_eq(g1, -g2)
+        add_comment("Apply to both sides the logarithm of base")
+        fl = m[P]
+        add_exp(fl)
+        add_comment("We get")
+        # Here: g1_1 = log(g1, fl), but apparently it's just 'F'
+        g1_1 = m[F]
+        g2_1 = -log(-g2, fl)
+        add_eq(g1_1, -g2_1)
+        f1 = g1_1 + g2_1
+        result=solve(f1)
+        return result
+    else:
+        return False
+
+def is_APpowBFpDpC(f, symbol):
+    '''Returns true if the equation has the form A*(P**(B*F + D)) + C = 0
+    '''
+    A, B, C, D, P, F = Wild("A"), Wild("B"), Wild("C"), Wild("D"), Wild("P"), Wild("F", exclude=[1, 0])
+    m = f.match(A*(P**(B*F + D)) + C)
+    result = False
+    if m is not None and set([A, B, C, D, P, F]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[D] != 0 and not m[D].has(symbol) and \
+            not m[C].has(symbol) and \
+            m[F].has(symbol)
+    return result
+
+def solve_APpowBFpDpC(f, symbol):
+    """ Solves the equation in the form of
+        A*(P**(B*F + D)) + C = 0
+    """
+    A, B, C, D, P, F = Wild("A"), Wild("B"), Wild("C"), Wild("D"), Wild("P"), Wild("F", exclude=[1, 0])
+    m = f.match(A*(P**(B*F + D)) + C)
+    if m:
+        g1a = m[A]
+        g1b = m[P]
+        g1c = m[B]*m[F] + m[D]
+        g2 = m[C]
+        add_comment('Use the substitution')
+        fs = g1c
+        p = Symbol('p')
+        add_eq(fs, p)
+        f1 = f.subs(fs, p)
+        add_comment("We get")
+        add_eq(f1, 0)
+        p_results = solve(f1, p)
+        x_results = []
+        for p_result in p_results:
+            # Ignore negative roots since we have a substitution for a t**x = p, assuming t>0
+            if p_result >= 0 and m[P] >= 0:
+                fi = fs - p_result
+                x_result = solve(fi, symbol)
+                x_results.append(x_result)
+        return x_results
+        return False
+
+def is_APpowFpBPpowG(f, symbol):
+    '''Returns true if the equation has the form A*(P**F) + B*(P**G) = 0
+    '''
+    A, B, P, F, G = \
+        Wild("A"), Wild("B"), Wild("P"), \
+        Wild("F", exclude=[1]), Wild("G", exclude=[1])
+    m = f.match(A*(P**F) + B*(P**G))
+    result = False
+    if m is not None and set([A, B, P, F, G]) == set(m):
+        result = \
+            m[A] != 0 and not m[A].has(symbol) and \
+            m[B] != 0 and not m[B].has(symbol) and \
+            m[P] != 0 and not m[P].has(symbol) and \
+            m[F].has(symbol) and \
+            m[G].has(symbol)
+    return result
+
+def solve_APpowFpBPpowG(f, symbol):
+    """ Solves the equation in the form of
+        A*(P**F) + B*(P**G) = 0
+    """
+    A, B, P, F, G = \
+        Wild("A"), Wild("B"), Wild("P"), \
+        Wild("F", exclude=[1]), Wild("G", exclude=[1])
+    m = f.match(A*(P**F) + B*(P**G))
+    result = False
+    if m[A] == -m[B] and m[P] > 0 and m[P] != 1:
+        # Example: 5**(2*(x**2)-5*x)-5**(x**2+2*x-10)
+        g1a = m[A]
+        g1b = m[P]
+        g1c = m[F]
+        g2a = m[B]
+        g2b = m[P]
+        g2c = m[G]
+        add_comment("Since")
+        add_ineq(g1b, 0, Gt)
+        add_comment("And")
+        add_ne(g1b, 1)
+        add_comment("We get")
+        f1 = g1c - g2c
+        result=solve(f1)
+        return result
+    else:
+        return False
+
 # Specific forms - end
 
 def to_exp_fixed_base(e, base, symbol, silent=True):
@@ -3612,8 +3880,9 @@ def _solve_linear(f, *symbols, **flags):
         add_comment("Rewrite the equation as")
         add_eq(f_num / sol, 0)
         if sol != 1:
-            add_comment("Solve the equation")
-            add_eq(f_num, 0)
+            #add_comment("Solve the equation")
+            #add_eq(f_num, 0)
+            return _solve(f_num, symbol, **flags)
 
     return result
 
@@ -4394,6 +4663,31 @@ def _solve(f, *symbols, **flags):
                 return _after_solve(result, check, checkdens, f, *symbols, **flags)
         except DontKnowHowToSolve:
             pass
+
+    # Specific forms of poly equations
+    if isPolyFunction(f, symbol):
+        try:
+            if is_APpowFpC(f, symbol):
+                result = solve_APpowFpC(f, symbol)
+            if is_APpowFpBPpowG(f, symbol):
+                result = solve_APpowFpBPpowG(f, symbol)
+            if is_APpowBFpDpC(f, symbol):
+                result = solve_APpowBFpDpC(f, symbol)
+            if is_APpowFpBQpowGpC(f, symbol):
+                result = solve_APpowFpBQpowGpC(f, symbol)
+            if result != False:
+                add_solution_type('solve-poly', f)
+                return _after_solve(result, check, checkdens, f, *symbols, **flags)
+        except DontKnowHowToSolve:
+            pass
+
+    '''
+    # /!\ Causes infinite recursion
+    f_ps = powsimp(f)
+    if f_ps != f:
+        result = _solve(f_ps, symbol, **flags)
+        add_solution_type('solve-powsimp', f)
+        return _after_solve(result, check, checkdens, f_ps, *symbols, **flags)'''
 
     f_num = simplify_log_eq(f, symbol)
     if f_num != f:

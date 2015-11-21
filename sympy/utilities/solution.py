@@ -5,7 +5,7 @@ from sympy.printing.latex import LatexPrinter
 from sympy.printing.mathml import MathMLPrinter
 from sympy.printing.str import StrPrinter
 from sympy.core import sympify
-from sympy.core.relational import Eq
+from sympy.core.relational import Eq, Ne
 from sympy.utilities.solution_en import solution_comment_table_en
 from sympy.utilities.solution_ru import solution_comment_table_ru
 from traceback import print_stack
@@ -85,7 +85,33 @@ def add_eq(l, r):
         e = repr(e)
     append_to_result(e)
 
-    
+def add_ne(l, r):
+    """Add an unequality into solution"""
+    if isinstance(l, basestring):
+        l = sympify(l)
+    if isinstance(r, basestring):
+        r = sympify(r)
+    e = Ne(l, r, evaluate = False)
+    try:
+        e = printer._print(e)
+    except:
+        e = repr(e)
+    append_to_result(e)
+
+def add_ineq(l, r, sign):
+    """Add an inequality into solution
+       'sign' can be: Lt, Le, Gt, Ge"""
+    if isinstance(l, basestring):
+        l = sympify(l)
+    if isinstance(r, basestring):
+        r = sympify(r)
+    e = sign(l, r, evaluate = False)
+    try:
+        e = printer._print(e)
+    except:
+        e = repr(e)
+    append_to_result(e)
+
 def add_exp(exp):
     """Add an expression into solution"""
     #print "-> " + str(exp)
