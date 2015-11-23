@@ -3944,15 +3944,15 @@ def _solve_linear(f, *symbols, **flags):
         add_comment("The solution to this equation is")
         add_eq(symbol, sol)
         result = [sol]
+        return result
 
     if f_num - f != 0:
         add_comment("Rewrite the equation as")
         add_eq(f_num / sol, 0)
         if sol != 1:
-            add_comment("Solve the equation")
-            add_eq(f_num, 0)
-            #result = _solve(f_num, symbol, **flags)
-            #return result
+
+            result = _solve(f_num, symbol, **flags)
+            return result
 
     return result
 
@@ -3973,6 +3973,23 @@ def _solve_pow1(f, *symbols, **flags):
             add_comment("Therefore we get")
             add_eq(m[B], m[C])
             return _solve(m[B] - m[C], symbol, **flags)
+    return False
+
+def _solve_log0(f, *symbols, **flags):
+    symbol = symbols[0]
+    A = Wild("A")
+    bs = get_log_bases(f, symbol)
+    if len(bs) == 1:
+        b = list(bs)[0]
+        m = f.match(log(A, b))
+        if m is None:
+            m = f.match(log(A))
+            if not m is None:
+                b = S.Exp1
+        if m is not None and m[A].has(symbol):
+            add_comment("Rewrite the equation as")
+            add_eq(m[A], 1)
+            return _solve(m[A] - 1, symbol, **flags)
     return False
 
 def _solve_log(f, *symbols, **flags):
@@ -4797,6 +4814,11 @@ def _solve(f, *symbols, **flags):
     result = _solve_pow1(f, *symbols, **flags)
     if result != False:
         add_solution_type('solve-power', f)
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
+
+    result = _solve_log0(f, *symbols, **flags)
+    if result != False:
+        add_solution_type('solve-log0', f)
         return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     result = _solve_log(f, *symbols, **flags)

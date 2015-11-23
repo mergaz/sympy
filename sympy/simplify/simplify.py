@@ -4056,7 +4056,7 @@ def logcombine(expr, force=False):
                 num = log1.pop(num)
                 den = log1.pop(den)
                 if len(num.args) > 0 and len(den.args) > 0:
-                    other.append(num*log(num.args[0]/den.args[0]))
+                    other.append(log(num.args[0]/den.args[0]))
                 else:
                     other.append(k*num)
             else:
