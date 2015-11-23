@@ -400,7 +400,7 @@ class Test:
         for f in files:
             if len(filenames) > 0:
                 filenames = filenames + ','
-            filenames = filenames + f[:-4]
+            filenames = filenames + os.path.basename(f)[:-4]
         self.filename = 'result_{1},{0:%Y.%m.%d}_{0:%S}.csv'.format(now, filenames)
         self.file = open(self.filename, 'wb')
         self.writer = csv.writer(self.file, delimiter=",")
