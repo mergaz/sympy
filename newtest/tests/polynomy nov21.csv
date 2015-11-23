@@ -1,8 +1,8 @@
 #
 solve; (x+7)*3-2*x-14; [-7]
-solve; x**2+1/(x**2-4)-4-1/(x**2-4); Reshenyy_net
-solve; (x-2)/(x**2-1)-(1-2*x)/(x**2-1);  Koreney_net
-solve; (5*x-15)/((x-3)/(x+2))-2/(x+2); Koreney_net
+solve; x**2+1/(x**2-4)-4-1/(x**2-4); []
+solve; (x-2)/(x**2-1)-(1-2*x)/(x**2-1);  []
+solve; (5*x-15)/((x-3)/(x+2))-2/(x+2); []
 solve; sqrt(x+1)-3; [8]
 solve; sqrt(x-2)-5; [27]
 solve; sqrt(4+x)-sqrt(2*x-1); [5]
@@ -18,30 +18,28 @@ solve; x+sqrt(x)-2*(x-1); [4]
 solve; sqrt(x-1)-x+3; [5]
 solve; sqrt(6+x-x**2)-1+x; [-1]
 solve; sqrt(5-x)-sqrt(5+x)-2; [-4]
-solve; sqrt(12+x)-sqrt(1-x)-1; [-8]
-solve; sqrt(x-2)+sqrt(x+6); []; #Net_koreney
+solve; sqrt(12+x)-sqrt(1-x)-1; [-3]
+solve; sqrt(x-2)+sqrt(x+6); []; []
 solve; sqrt(x+7)+sqrt(x-2)-9; [18]
-solve; abs(x-2)-x+2; x>=2
-solve; abs(3-x)-x+3; x>=3
 solve; sqrt((x+3)**2)-x-3; x>=3
 solve; sqrt((5-2*x)**2)-2*x+5; x>=2.5
 solve; (x**2+3*x)/2-(x+7)/4; [1, -3.5]
 solve; (x**2-3*x)/7+x-11; [-11, 7]
 solve; (2*(x**2))/3-(2-3*x)/4-(x**2-6)/6; [-1.5, -2/3]
 solve; (x**2+x)/4-(3-7*x)/20-0.3; [3/5, -3]
-solve; (x-1)**4-5*((x-1)**2)+4-0; []; #Net_koreney
-solve; (x+5)**4+8*((x+5)**2)-9-0; []; #Net_koreney
+solve; (x-1)**4-5*((x-1)**2)+4-0; []; []
+solve; (x+5)**4+8*((x+5)**2)-9-0; []; []
 solve; (4*(x**2))/(x-2)-(4*x)/(x+3)-(9*x+2)/(x**2+x-6); [-2, -1/2, 1/2]
-solve; (x**2)/(x+3)+x/(x-2)-(11*x-12)/(x**2+x-6); []; #Net_koreney
+solve; (x**2)/(x+3)+x/(x-2)-(11*x-12)/(x**2+x-6); []; []
 solve; 6**(2*x)-6**1/5; [1/10]
 solve; 3**x-27; [3]
 solve; 7**(1-3*x)-7**10; [-3]
 solve; 2**(2*x+1)-32; [2]
 solve; 4**(2+x)-1; [-2]
 solve; (1/5)**(4*x-3)-5; [1/2]
-solve; (1/sqrt(3))**(2*x+1)-(3*sqrt(3))**x; (3*sqrt(3))**x
+simplify; (1/sqrt(3))**(2*x+1)-(3*sqrt(3))**x; (3*sqrt(3))**x
 solve; (root(2, 3)**(x-1))-(2/(root(2, 3)))**(2*x); [-1/3]
-solve; (9**(3*x+4))*sqrt(3)-(27**(x-1))/sqrt(3); 27**(x-1)/sqrt(3)
+simplify; (9**(3*x+4))*sqrt(3)-(27**(x-1))/sqrt(3); 27**(x-1)/sqrt(3)
 solve; 8/(sqrt(2)**x)-(4**(3*x-2))*sqrt(2); [1]
 solve; root(x**2-4, 4); And(Or(-oo>=x, x>=-2), Or(2>=x, x>=oo))
 solve; root(x**2-5*x+6, 3); And(Or(-oo>=x, x>=-3), Or(2>=x, x>=oo))
@@ -49,58 +47,32 @@ solve; root((x-2)/(x+3), 6); And(Or(-oo>=x, x>=2), Or(3>=x, x>=oo))
 solve; root(x**2-5*x+6, 4); And(Or(-oo>=x, x>=-3), Or(2>=x, x>=oo))
 solve; root(x**3-x,8); And(Or(-1>=x, x>=0), Or(1>=x, x>=oo))
 solve; root(x**3-5*(x**2)+6*x, 6); And(Or(0>=x, x>=2), Or(3>=x, x>=oo))
-solve; abs(x)-1/2; [-1/2, 1/2]
-solve; abs(x-1)-4; [5,-5]
-solve; abs(3-x)-2; [1, 5]
-solve; abs(3*x)-3*x-6; [-1]
-solve; abs(2.5-x)+3-5; [0.5, 4.5]
-solve; abs(3.7+x)-2-6; [4.3, -11.7]
 solve; (3*x+4)**2+3*(x-2)-46; [1, -4]
-solve; 2*(1-1.5*x)+2*((x-2)**2)-1; [1, 2]
-solve; (5*x-3)*(x+2)-(x+4)**2-0; [(1+sqrt(353))/2, (1-sqrt(353))/2]
+solve; 2*(1-3/2*x)+2*((x-2)**2)-1; [1, 9/2]
+solve; (5*x-3)*(x+2)-(x+4)**2-0; [(1+sqrt(353))/8, (1-sqrt(353))/8]
 solve; x*(11-6*x)-20+(2*x-5)**2-0; [1/2, -5]
 solve; (x**3)-5*(x**2)+8*x-6-0;	[3]
-simplify;  2**3+(-3**3)-(-2)**2+(-1)**5;	-24
-simplify;  (1/2)**(-4);	16
-simplify;  (0.2)**(-4);	625
-simplify;  root(0.064, 3);	0.4
-simplify;  root((1/2)**12, 4);	1/8
 solve; 5*x**5+160;	[-2]
-simplify;  root(32, 5) - 0.5*root(0.064, 3);	1/8
-simplify;  root(3**12*(1/3)**8, 4); 	3
-solve; root(64*x**3*y**6, 3);	4*x*y**2
-solve; (root(root(27*x**3 ,4) ,3))**4;	3*x
-simplify;  (root(4, 3)-root(10, 3)+root(25, 3))*(root(2, 3)+root(5,3));	7
-simplify;  81**(3/4);	27
-simplify;  144**(3/4)/9**(3/4);	8
-simplify;  log(49, 7);	2
-simplify;  40*log(2, 10);	12
-simplify;  2*10**(-1)+(6**0-1/6)*(1/3)**(-2)*(1/3)**3*(-1/4)**(-1);	1.4
-simplify;  2**(4/5)*2**(11/5);	8
-solve; x**(1/3)*root(x, 2);	x**(5/6)
-simplify;  2**(2-3*root(5, 2))*8**root(5, 2);	4
-simplify;  5**(1/4)/2**(3/4)-2**(1/4)/5**(3/4)*root(1000, 4);	3
-solve; x**(1/12)*root(x*root(x, 4), 3);	root(x, 2)
-solve; (3*x*y-y**2)/(x-y)-(y*root(y, 2))/(root(x, 2)-root(y, 2))-(y*root(x, 2))/(root(x, 2)+root(y, 2)); 2*y
-simplify;  root(7+root(10, 5), 3);	2.04
+simplify; root(64*x**3*y**6, 3);	4*x*y**2
+simplify; (root(root(27*x**3 ,4) ,3))**4;	3*x
+simplify; x**(1/3)*root(x, 2);	x**(5/6)
+simplify; x**(1/12)*root(x*root(x, 4), 3);	root(x, 2)
+simplify; (3*x*y-y**2)/(x-y)-(y*root(y, 2))/(root(x, 2)-root(y, 2))-(y*root(x, 2))/(root(x, 2)+root(y, 2)); 2*y
 solve; 2**(2*x+1)-32;  [2]
 solve; 1/9**(2*x-5)-3**(5*x-8);	[2]
 solve; root(2, 3)**x-1-2/(root(2, 3)**(2*x));	[-1/3]
-simplify;  (0.125)**(-1/3)+(3/4)**2-(1/85)**0;	25/16
-simplify;  2*10**(-1)+(6**0-1/6)*1/3**(-2)*1/3**3*(-1/4)**(-1);	1.4
-solve; (root(125*x, 3)-root(8*x, 3))-(root(27*x, 3)-root(64*x, 3));	4*root(x, 3)
+simplify; (root(125*x, 3)-root(8*x, 3))-(root(27*x, 3)-root(64*x, 3));	4*root(x, 3)
 solve; (1/7)**(3*x+3)-7**(2*x);	 [-3/5]
-solve; (1/16)**(-0.75)+10000**0.25-(7*19/32)**(1/5);	16.5
 solve; (x**(4/3)-x**(-2/3))/(x**(1/3)-x**(-2/3));	x+1
 solve; x**(-1/4)-2; [1/16]
 solve; root(x-2, 2)-root(3*x-6, 2);	 [2]
-solve; root(64*(x**3)*(z**6), 3);	4*x*(z**2)
-solve; root((x*y)/z, 4)*root(((x**3)*z)/y, 2);	x
-solve; ((sqrt(root((x**2), 3)))**3)+2*((root(sqrt(x), 4))**8);	3*x
-solve; ((x-y)/(root(x, 3) - root(y, 3))) - ((x+y)/(root(x, 3) + root(y, 3)));	2*(root(x*y, 3))
-solve; (y**(1/12))*root((y*root(y, 4)), 3);	y**(1/2)
+simplify; root(64*(x**3)*(z**6), 3);	4*x*(z**2)
+simplify; root((x*y)/z, 4)*root(((x**3)*z)/y, 2);	x
+simplify; ((sqrt(root((x**2), 3)))**3)+2*((root(sqrt(x), 4))**8);	3*x
+simplify; ((x-y)/(root(x, 3) - root(y, 3))) - ((x+y)/(root(x, 3) + root(y, 3)));	2*(root(x*y, 3))
+simplify; (y**(1/12))*root((y*root(y, 4)), 3);	y**(1/2)
 solve; (root(2, 2))**x;	[3]
-solve; (x**(2.5))*(root(x, 2.5));	x**(5/7)
+simplify; (x**(2.5))*(root(x, 2.5));	x**(5/7)
 solve; (1/(3*x+1))-(2/(3*x-1))-((5*x)/(9*(x**2)-1)-(3*(x**2))/(1-9*(x**2)));	[3]
 solve; sqrt(x+3)-sqrt(5-x);	[1]
 solve; sqrt(1-2*x)-sqrt(13+x)-sqrt(x+4);	[-4]
@@ -118,10 +90,10 @@ solve; (2**(x+4))+(2**(x+2))-(5**(x+1))-3*(5**x);	[1]
 solve; x/(x+1)+(2*x)/(x-1)-(4*x)/(x**2-1);	[0]
 solve; (x-1)/(x-2)-2/x-1/(x-2); 	[2]
 solve; (x-3)*(x-5)-3*(x-5);	[6, 5]
-solve; (x-2)*(x**2+1)-2*(x**2+1);	[]; #Net_koreney
-solve; (x+3)/(2+x**2)<3; True;	#x ∈ R
+solve; (x-2)*(x**2+1)-2*(x**2+1); []
+solve; (x+3)/(2+x**2)<3;	And(-oo<x, x<oo)
 solve; 1/(3*x+1)-2/(3*x-1)-(5*x)/(9*(x**2)-1)-(3*(x**2))/(1-9*(x**2));	[3]
-solve; 3/(x-1)-(4*x-1)/(x+1)-(x**2+5)/(x**2-1)-5;	[]; #Net_koreney
+solve; 3/(x-1)-(4*x-1)/(x+1)-(x**2+5)/(x**2-1)-5;	[]
 solve; (x+2)/(x-2)-(x*(x-4))/(x**2-4)-(x-2)/(x+2)-(4*(3+x))/(4-x**2);	[6]
 solve; x**3-3*(x**2)+2*x-6>2*(x**3)-x**2+4*x-2; 	x<-2
 solve; x**3-3*(x**2)-4*x+12>-3*(x**3)+x**2+12*x-4; 	x>2
@@ -132,7 +104,7 @@ solve; sqrt(x)-1+x**2;	[0.5]
 solve; sqrt(5-x)<4; 	And(-11<x, x<=5)
 solve; sqrt(x**2-3*x)<2;	Or(And(-1<x, x<=0), And(3<=x, x<4))
 solve; sqrt(10+x-x**2)>=2;	And(-2<=x, x<=3)
-solve; sqrt(3*x-4)<-5;	Reshenyy_net
+solve; sqrt(3*x-4)<-5;	[]
 solve; sqrt(2*(x**2)+5*x-3)<=0;	[-3, 1/2]
 solve; sqrt(3*x+1)<=x+1;	Or(And(-1/3<=x, x<=0), And(x>=1))
 solve; sqrt(x+3)>x+1;	And(-3<=x, x<1)
@@ -158,4 +130,60 @@ solve; sqrt(4*x+5)<=1/2;	And(-1.25<=x, x<-1.1875)
 solve; sqrt(x**2-1)>1;	And(sqrt(2)<x, x<-sqrt(2))
 solve; sqrt(1-x**2)<1;	Or(And(-1<=x, x<0), And(0<x, x<=1))
 solve; sqrt(25-x**2)>4;	And(-3<x, x<3)
-solve; sqrt(25-x**2)<4;	Reshenyy_net
+solve; sqrt(25-x**2)<4;	[]
+solve; 4*(2**x)-1;	[-2]
+solve; (2**(3*x))*(3**x)-576;	[2]
+solve; 3**(x+1)-2*(3**(x-2))-25;	[2]
+solve; 3**x-7**x;	[0]
+solve; 3*(2**(x+1))+2*(5**(x-2))-5**x-2**(x-2);	[2]
+solve; 9**x-4*(3**x)-45-0;	[2]
+solve; 5**(2*(x**2)-5*x)-5**(x**2+2*x-10);	[5, 2]
+solve; 3**(abs(x-1))-3**(abs(x+3));	[-1]
+solve; root(3, x)*root(5, x)-225;	[]
+solve; 4**(x-1)-1;	[1]
+solve; 0.3**(3*x-2)-1;	[2/3]
+solve; 2**(2*x)-2**(4*sqrt(3));	[2*sqrt(3)]
+solve; (1/3)**(3*x)-(1/3)**(-2);	[-2/3]
+solve; 27**x-1/3;	[-1/3]
+solve; 400**x-1/20;	[-0.5]
+solve; (1/5)**x-25;	[-2]
+solve; (1/3)**x-1/81;	[4]
+solve; 3*(9**x)-81;	[1.5]
+solve; 2*(4**x)-64;	[2.5]
+solve; (3**(x+1/2))*(3**(x-2))-1;	[0.75]
+solve; (0.5**(x+7))*(0.5**(1-2*x))-2;	[-9]
+solve; (0.6**x)*(0.6**3)-(0.6**(2*x))/(0.6**5);	[8]
+solve; (6**(3*x))*1/6-6*((1/6)**(2*x));	[2/5]
+solve; 3**(2*x-1)+3**(2*x)-108;	[2]
+solve; 2**(3*x-2)-2**(3*x-2)-30;	[1]
+solve; 2**(x+1)+2**(x-1)+2**x-28;	[3]
+solve; 3**(x-1)-3**(x)+3**(x+1)-63;	[3]
+solve; 5**x-8**x;	[0]
+solve; (1/2)**x-(1/3)**x;	[0]
+solve; 3**x-5**(2*x);	[0]
+solve; 4**x-3**(x/2);	[0]
+solve; 10**x-root(100, 3);	[2/3]
+solve; 10**x-root(10000, 5);	[4/5]
+solve; 225**(2*(x**2)-24)-15;	[3.5, -3.5]
+solve; 10**x-1/(root(10000, 4));	[-1]
+solve; (sqrt(10))**x-10**(x**2-x);	[0, 1.5]
+solve; 100**(x**2-1)-10**(1-5**x);	[0.5, -3]
+solve; 7**(x-2)-3**(2-x);	[2]
+solve; 2**(x-3)-3**(3-x);	[3]
+solve; 3**((x+2)/4)-5**(x+2);	[-2]
+solve; 4**((x-3)/2)-3**(2*(x-3));	[3]
+solve; 3**(2*x+6)-2**(x+3);	[-3]
+solve; 5**(x-2)-4**(2*x-4);	[2]
+solve; (2**x)*(3*x)-36**(x**2);	[1/2]
+solve; 9*(-sqrt(x-1))-1/27;	[3.25]
+solve; sqrt(13-x**2)-3; [-2, 2]
+solve; x-sqrt(x+1)-5; [8]
+solve; 3**(6-x)-3**(3*x-2); [2]
+solve; 3**(x**2-x-2)-81; [-2, 3]
+solve; 7**(x+2)+4*(7**(x-1))-347; [1]
+solve; (1/5)**(1-x)-(1/5)**x-4.96; [2]
+solve; x/(x-2)-8/(x+5)-14/(x**2+3*x-10); [1]
+solve; y/(2*y-3)+1/(y+7)+17/(2*(y**2)+11*y-21); -2
+solve; sqrt(x)+x**2-18; [4]
+solve; x**3+5*x-6; [1]
+

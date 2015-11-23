@@ -1,4 +1,0 @@
-domain; 42/x + 12/(y-2); x; Interval(-oo, 0, true, true) + Interval(0, oo, true, true)
-domain; sqrt(5-x)<4; Interval(-oo, 5)
-domain; sqrt(x-2); Interval(2, oo)
-domain; tan(x); []

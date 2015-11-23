@@ -8,7 +8,7 @@ solve; x**2-4*abs(x)+3>0; Or(And(-oo>x, x<-3), And(-1<x, x<1) )
 solve; 2*(x**2)-5*abs(x)+3>=0; Or(And(-oo>x, x<=-1.5), And(-1<=x, x<=1), And(1.5<=x, x<oo) )
 solve; abs(x)-5; Or(And(-2>x, x<2) )
 solve; abs(x)<5; Or(And(-5>x, x<5) )
-solve; abs(x)>=5; Or(And(-oo>x, x<=-5), And(5>=x, x<oo) )
+solve; abs(x)>=5; Or(And(-oo>x, x<=-5), And(5=>x, x<∞) )
 solve; abs(x-10)-4; [6]
 solve; abs(x-10)<=4; Or(And(6>=x, x<=14) )
 solve; abs(x-10)>4; Or(And(-oo>x, x<6), And(14<x, x<oo) )
@@ -32,11 +32,12 @@ solve; abs(0.2*x-2)-3.6; [-8, 28]
 solve; abs(3-1.5*x)-2.5; [1/3, 3+2/3]
 solve; abs(2-3.5*x)-6.2; [-1.2, 2+12/35]
 solve; abs(0.4*x+1)-2.3; [-(8+1/4), 3+1/4]
-solve; abs(x)>=3; Or(And(-3>=x, x<=3) )
+solve; abs(x)>=3; Or(And(-3=>x, x<=3) )
 solve; x**2>abs(x); Or(And(1>x, x<-1) )
 solve; -abs(x)<4; Or(And(-oo>x, x<oo) )
-solve; sqrt(x)>=abs(x); Or(And(0>=x, x<=1) )
+solve; sqrt(x)>=abs(x); Or(And(0=>x, x<=1) )
 solve; abs(x)<=-x+4; x<=2
 solve; abs(x)>x-2; Or(And(-oo>x, x<oo) )
 solve; abs(x)>-x+4; x>2
 solve; -abs(x)>3-x; [0]
+
