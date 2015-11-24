@@ -31,6 +31,7 @@ from sympy.functions import (log, exp, LambertW, cos, sin, tan, cot, acot, acos,
                              Abs, re, im, arg, sqrt, atan2)
 from sympy.functions.elementary.trigonometric import (TrigonometricFunction,
                                                       HyperbolicFunction)
+from sympy.simplify.cse_main import cse
 from sympy.simplify.simplify import bottom_up
 from sympy.simplify import (simplify, collect, powsimp, posify, powdenest,
                             nsimplify, denom, logcombine, trigsimp, radsimp)
@@ -39,7 +40,7 @@ from sympy.simplify.fu import TR1, TR2i, TR5, TR6, TR7, TR8, TR9, TR10, TR11
 from sympy.simplify.fu_ext import (TRx2, TRx3, TRx4, TRx10, TRx11, TRx11i, TRx12i,
                                    TRx13i, TRx15, TRx15i, TRx16, TRx17, TRx19i)
 from sympy.matrices import Matrix, zeros
-from sympy.polys import roots, cancel, factor, Poly, together, degree
+from sympy.polys import roots, cancel, factor, Poly, together, degree, horner
 from sympy.polys.polyerrors import GeneratorsNeeded, PolynomialError
 from sympy.functions.elementary.piecewise import piecewise_fold, Piecewise
 
@@ -3921,6 +3922,53 @@ def _solve_abss(f, *symbols, **flags):
             return False
     return False
 
+def iflfactor(eq):
+    """Return the "I'm feeling lucky" factored form of eq.
+    http://stackoverflow.com/questions/15180488/factoring-polys-in-sympy
+    """
+    e = Mul(*[horner(e) if e.is_Add else e for e in
+        Mul.make_args(factor_terms(expand(eq)))])
+    r, e = cse(e)
+    s = [ri[0] for ri in r]
+    e = Mul(*[collect(ei.expand(), s) if ei.is_Add else ei for ei in
+        Mul.make_args(e[0])]).subs(r)
+    return e
+
+def _solve_factor(f, *symbols, **flags):
+    # first see if it really depends on symbol and whether there
+    # is a linear solution
+    symbol = symbols[0]
+
+    try:
+        m = iflfactor(f)
+    except:
+        try:
+            m = factor_terms(f)
+        except:
+            return False
+
+    sols = []
+    if m != f:
+        dct = m.as_powers_dict()
+        if dct.__len__() < 2:
+            return False
+
+        add_comment("Factorize the equation as")
+        add_eq(m, 0)
+
+        for k in dct:
+            key = dct[k]
+            if key.is_positive and k.has(symbol):
+                sol = _solve(k, symbol, **flags)
+                if sol != False:
+                    for soli in sol:
+                        sols.append(soli)
+
+    if len(sols) > 0:
+        return sols
+
+    return False
+
 def _solve_linear(f, *symbols, **flags):
     # first see if it really depends on symbol and whether there
     # is a linear solution
@@ -4798,6 +4846,11 @@ def _solve(f, *symbols, **flags):
         result = _solve(f_num, symbol, **flags)
         add_solution_type('solve-exp', f)
         return _after_solve(result, check, checkdens, f_num, *symbols, **flags)
+
+    result = _solve_factor(f, *symbols, **flags)
+    if result != False:
+        add_solution_type('solve-factor', f)
+        return _after_solve(result, check, checkdens, f, *symbols, **flags)
 
     # first see if it really depends on symbol and whether there
     # is a linear solution
